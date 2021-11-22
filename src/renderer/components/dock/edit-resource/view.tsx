@@ -6,7 +6,6 @@
 import React from "react";
 import { autorun, computed, makeObservable, observable } from "mobx";
 import { disposeOnUnmount, observer } from "mobx-react";
-import yaml from "js-yaml";
 import type { DockTab, TabId } from "../dock/store";
 import type { EditResourceTabStore } from "./store";
 import { InfoPanel } from "../info-panel";
@@ -14,11 +13,11 @@ import { Badge } from "../../badge";
 import { EditorPanel } from "../editor-panel";
 import { Spinner } from "../../spinner";
 import type { KubeObject } from "../../../../common/k8s-api/kube-object";
-import { createPatch } from "rfc6902";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import editResourceTabStoreInjectable from "./store.injectable";
 import { noop } from "../../../utils";
 import closeDockTabInjectable from "../dock/close-dock-tab.injectable";
+import yaml from "js-yaml";
 
 export interface EditResourceProps {
   tab: DockTab;
@@ -104,19 +103,9 @@ class NonInjectedEditResource extends React.Component<EditResourceProps & Depend
       return null;
     }
 
-    const store = this.props.editResourceStore.getStore(this.tabId);
-    const currentVersion = yaml.load(this.draft);
-    const firstVersion = yaml.load(this.props.editResourceStore.getData(this.tabId).firstDraft ?? this.draft);
-    const patches = createPatch(firstVersion, currentVersion);
-    const updatedResource = await store.patch(this.resource, patches);
+    const { kind, name } = await this.props.editResourceStore.commitEdits(this.tabId);
 
-    this.props.editResourceStore.clearInitialDraft(this.tabId);
-
-    return (
-      <p>
-        {updatedResource.kind} <b>{updatedResource.getName()}</b> updated.
-      </p>
-    );
+    return <p>{kind} <b>{name}</b> updated.</p>;
   };
 
   render() {

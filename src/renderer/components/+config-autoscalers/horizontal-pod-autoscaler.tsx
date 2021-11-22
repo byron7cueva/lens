@@ -3,14 +3,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import "./hpa.scss";
+import "./horizontal-pod-autoscaler.scss";
 
 import React from "react";
 import { observer } from "mobx-react";
 import type { RouteComponentProps } from "react-router";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
-import type { HorizontalPodAutoscaler } from "../../../common/k8s-api/endpoints/hpa.api";
-import { hpaStore } from "./hpa.store";
+import type { HorizontalPodAutoscaler } from "../../../common/k8s-api/endpoints/horizontal-pod-autoscaler.api";
+import { hpaStore } from "./horizontal-pod-autoscaler.store";
 import { Badge } from "../badge";
 import { cssNames } from "../../utils";
 import { KubeObjectStatusIcon } from "../kube-object-status-icon";

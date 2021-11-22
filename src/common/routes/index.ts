@@ -16,7 +16,7 @@ export * from "./events";
 export * from "./extensions";
 export * from "./helm-charts";
 export * from "./helm";
-export * from "./hpa";
+export * from "./horizontal-pod-autoscaler";
 export * from "./ingresses";
 export * from "./limit-ranges";
 export * from "./namespaces";
