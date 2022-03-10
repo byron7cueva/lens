@@ -14,16 +14,6 @@ import { appEventBus } from "../common/app-event-bus/event-bus";
 import { cloneJsonObject, promiseExecFile } from "../common/utils";
 import type { Patch } from "rfc6902";
 
-function sanitizeObject(resource: KubernetesObject | any) {
-  const cleaned = cloneJsonObject(resource);
-
-  delete cleaned.status;
-  delete cleaned.metadata?.resourceVersion;
-  delete cleaned.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"];
-
-  return cleaned;
-}
-
 export class ResourceApplier {
   constructor(protected cluster: Cluster) {}
 
@@ -150,4 +140,14 @@ export class ResourceApplier {
       return splitError[1] ?? error;
     }
   }
+}
+
+function sanitizeObject(resource: KubernetesObject | any) {
+  const cleaned = cloneJsonObject(resource);
+
+  delete cleaned.status;
+  delete cleaned.metadata?.resourceVersion;
+  delete cleaned.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"];
+
+  return cleaned;
 }
