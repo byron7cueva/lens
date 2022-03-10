@@ -108,10 +108,11 @@ export class ResourceApplier {
     const tmpDir = tempy.directory();
 
     const results = await Promise.allSettled(
-      resources.map((resource, index) => fse.writeFile(path.join(tmpDir, `${index}.yaml`), resource))
+      resources.map((resource, index) => fse.writeFile(path.join(tmpDir, `${index}.yaml`), resource)),
     );
 
     const firstError = results.find(result => result.status === "rejected") as PromiseRejectedResult;
+
     if (firstError) {
       await Promise.allSettled(
         resources.map((resource, index) => fse.unlink(path.join(tmpDir, `${index}.yaml`))),
