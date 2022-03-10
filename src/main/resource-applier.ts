@@ -117,9 +117,18 @@ export class ResourceApplier {
     const proxyKubeconfigPath = await this.cluster.getProxyKubeconfigPath();
     const tmpDir = tempy.directory();
 
-    await Promise.all(
+    const results = await Promise.allSettled(
       resources.map((resource, index) => fse.writeFile(path.join(tmpDir, `${index}.yaml`), resource))
     );
+
+    const firstError = results.find(result => result.status === "rejected") as PromiseRejectedResult;
+    if (firstError) {
+      await Promise.allSettled(
+        resources.map((resource, index) => fse.unlink(path.join(tmpDir, `${index}.yaml`))),
+      );
+
+      throw firstError.reason;
+    }
 
     args.unshift(
       subCmd,
