@@ -107,38 +107,32 @@ export class ResourceApplier {
     const proxyKubeconfigPath = await this.cluster.getProxyKubeconfigPath();
     const tmpDir = tempy.directory();
 
-    const results = await Promise.allSettled(
-      resources.map((resource, index) => fse.writeFile(path.join(tmpDir, `${index}.yaml`), resource)),
-    );
-
-    const firstError = results.find(result => result.status === "rejected") as PromiseRejectedResult;
-
-    if (firstError) {
-      await Promise.allSettled(
-        resources.map((resource, index) => fse.unlink(path.join(tmpDir, `${index}.yaml`))),
+    try {
+      await Promise.all(
+        resources.map((resource, index) => fse.writeFile(path.join(tmpDir, `${index}.yaml`), resource)),
       );
 
-      throw firstError.reason;
-    }
+      args.unshift(
+        subCmd,
+        "--kubeconfig", proxyKubeconfigPath,
+      );
+      args.push("-f", tmpDir);
 
-    args.unshift(
-      subCmd,
-      "--kubeconfig", proxyKubeconfigPath,
-    );
-    args.push("-f", tmpDir);
+      logger.info(`[RESOURCE-APPLIER] Executing ${kubectlPath}`, { args });
 
-    logger.info(`[RESOURCE-APPLIER] Executing ${kubectlPath}`, { args });
+      try {
+        const { stdout } = await promiseExecFile(kubectlPath, args);
 
-    try {
-      const { stdout } = await promiseExecFile(kubectlPath, args);
+        return stdout;
+      } catch (error) {
+        logger.error(`[RESOURCE-APPLIER] cmd errored: ${error}`);
 
-      return stdout;
-    } catch (error) {
-      logger.error(`[RESOURCE-APPLIER] cmd errored: ${error}`);
+        const splitError = String(error).split(`.yaml": `);
 
-      const splitError = String(error).split(`.yaml": `);
-
-      return splitError[1] ?? error;
+        return splitError[1] ?? error;
+      }
+    } finally {
+      await fse.remove(tmpDir);
     }
   }
 }
