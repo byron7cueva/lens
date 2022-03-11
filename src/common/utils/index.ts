@@ -14,7 +14,6 @@ export * from "./abort-controller";
 export * from "./app-version";
 export * from "./autobind";
 export * from "./camelCase";
-export * from "./cloneJson";
 export * from "./cluster-id-url-parsing";
 export * from "./collection-functions";
 export * from "./convertCpu";

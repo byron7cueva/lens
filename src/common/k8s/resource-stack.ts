@@ -5,7 +5,7 @@
 import fse from "fs-extra";
 import path from "path";
 import hb from "handlebars";
-import { ResourceApplier } from "../../main/resource-applier";
+import { ResourceApplier } from "../../main/k8s/resource-applier/applier";
 import type { KubernetesCluster } from "../catalog-entities";
 import logger from "../../main/logger";
 import { app } from "electron";

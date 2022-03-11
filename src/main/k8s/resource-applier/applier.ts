@@ -3,19 +3,41 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import type { Cluster } from "../common/cluster/cluster";
+import type { Cluster } from "../../../common/cluster/cluster";
 import type { KubernetesObject } from "@kubernetes/client-node";
-import fse from "fs-extra";
 import * as yaml from "js-yaml";
 import path from "path";
 import tempy from "tempy";
-import logger from "./logger";
-import { appEventBus } from "../common/app-event-bus/event-bus";
-import { cloneJsonObject, promiseExecFile } from "../common/utils";
+import logger from "../../logger";
+import { appEventBus } from "../../../common/app-event-bus/event-bus";
 import type { Patch } from "rfc6902";
+import type { ExecFile } from "../../child-process/exec-file.injectable";
+import type { WriteFile } from "../../../common/fs/write-file.injectable";
+import type { Unlink } from "../../../common/fs/unlink.injectable";
+import type { RemoveDir } from "../../../common/fs/remove.injectable";
+import type { PartialDeep } from "type-fest";
+import type { KubeObject } from "../../../common/k8s-api/kube-object";
 
-export class ResourceApplier {
-  constructor(protected cluster: Cluster) {}
+export interface ResourceApplierDependencies {
+  execFile: ExecFile;
+  writeFile: WriteFile;
+  unlink: Unlink;
+  removeDir: RemoveDir;
+}
+
+export interface K8sResourceApplier {
+  patch(name: string, kind: string, patch: Patch, ns?: string): Promise<string>;
+  apply(resource: PartialDeep<KubeObject>): Promise<string>;
+  /**
+   * @deprecated This function is only really for KubeObject's
+   */
+  apply(resource: any): Promise<string>;
+  kubectlApplyAll(resources: string[], extraArgs?: string[]): Promise<string>;
+  kubectlDeleteAll(resources: string[], extraArgs?: string[]): Promise<string>;
+}
+
+export class ResourceApplier implements K8sResourceApplier {
+  constructor(protected readonly dependencies: ResourceApplierDependencies, protected readonly cluster: Cluster) {}
 
   /**
    * Patch a kube resource's manifest, throwing any error that occurs.
@@ -48,7 +70,7 @@ export class ResourceApplier {
     );
 
     try {
-      const { stdout } = await promiseExecFile(kubectlPath, args);
+      const { stdout } = await this.dependencies.execFile(kubectlPath, args);
 
       return stdout;
     } catch (error) {
@@ -82,14 +104,14 @@ export class ResourceApplier {
     }
 
     try {
-      await fse.writeFile(fileName, content);
-      const { stdout } = await promiseExecFile(kubectlPath, args, { env: execEnv });
+      await this.dependencies.writeFile(fileName, content);
+      const { stdout } = await this.dependencies.execFile(kubectlPath, args, { env: execEnv });
 
       return JSON.parse(stdout);
     } catch (error) {
       throw error?.stderr ?? error;
     } finally {
-      await fse.unlink(fileName);
+      await this.dependencies.unlink(fileName);
     }
   }
 
@@ -109,7 +131,7 @@ export class ResourceApplier {
 
     try {
       await Promise.all(
-        resources.map((resource, index) => fse.writeFile(path.join(tmpDir, `${index}.yaml`), resource)),
+        resources.map((resource, index) => this.dependencies.writeFile(path.join(tmpDir, `${index}.yaml`), resource)),
       );
 
       args.unshift(
@@ -120,25 +142,21 @@ export class ResourceApplier {
 
       logger.info(`[RESOURCE-APPLIER] Executing ${kubectlPath}`, { args });
 
-      try {
-        const { stdout } = await promiseExecFile(kubectlPath, args);
+      const { stdout } = await this.dependencies.execFile(kubectlPath, args);
 
-        return stdout;
-      } catch (error) {
-        logger.error(`[RESOURCE-APPLIER] cmd errored: ${error}`);
+      return stdout;
+    } catch (error) {
+      logger.error(`[RESOURCE-APPLIER] cmd errored: ${error}`);
 
-        const splitError = String(error).split(`.yaml": `);
-
-        return splitError[1] ?? error;
-      }
+      throw String(error).split(`.yaml": `)[1] ?? error;
     } finally {
-      await fse.remove(tmpDir);
+      await this.dependencies.removeDir(tmpDir);
     }
   }
 }
 
 function sanitizeObject(resource: KubernetesObject | any) {
-  const cleaned = cloneJsonObject(resource);
+  const cleaned = JSON.parse(JSON.stringify(resource));
 
   delete cleaned.status;
   delete cleaned.metadata?.resourceVersion;
