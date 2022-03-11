@@ -7,8 +7,6 @@ import type { Cluster } from "../../../common/cluster/cluster";
 import type { KubernetesObject } from "@kubernetes/client-node";
 import * as yaml from "js-yaml";
 import path from "path";
-import tempy from "tempy";
-import logger from "../../logger";
 import { appEventBus } from "../../../common/app-event-bus/event-bus";
 import type { Patch } from "rfc6902";
 import type { ExecFile } from "../../child-process/exec-file.injectable";
@@ -17,12 +15,18 @@ import type { Unlink } from "../../../common/fs/unlink.injectable";
 import type { RemoveDir } from "../../../common/fs/remove.injectable";
 import type { PartialDeep } from "type-fest";
 import type { KubeObject } from "../../../common/k8s-api/kube-object";
+import type { LensLogger } from "../../../common/logger";
+import type { TempFile } from "../../../common/fs/temp-file.injectable";
+import type { TempDir } from "../../../common/fs/temp-dir.injectable";
 
 export interface ResourceApplierDependencies {
   execFile: ExecFile;
   writeFile: WriteFile;
   unlink: Unlink;
   removeDir: RemoveDir;
+  tempFile: TempFile;
+  tempDir: TempDir;
+  readonly logger: LensLogger;
 }
 
 export interface K8sResourceApplier {
@@ -85,7 +89,7 @@ export class ResourceApplier implements K8sResourceApplier {
     const kubectl = await this.cluster.ensureKubectl();
     const kubectlPath = await kubectl.getPath();
     const proxyKubeconfigPath = await this.cluster.getProxyKubeconfigPath();
-    const fileName = tempy.file({ name: "resource.yaml" });
+    const fileName = this.dependencies.tempFile({ name: "resource.yaml" });
 
     const args = [
       "apply",
@@ -94,7 +98,7 @@ export class ResourceApplier implements K8sResourceApplier {
       "-f", fileName,
     ];
 
-    logger.debug(`[RESOURCE-APPLIER]: shooting manifests with: ${kubectlPath}`, { args });
+    this.dependencies.logger.debug(`[RESOURCE-APPLIER]: shooting manifests with: ${kubectlPath}`, { args });
 
     const execEnv = { ...process.env };
     const httpsProxy = this.cluster.preferences?.httpsProxy;
@@ -107,7 +111,7 @@ export class ResourceApplier implements K8sResourceApplier {
       await this.dependencies.writeFile(fileName, content);
       const { stdout } = await this.dependencies.execFile(kubectlPath, args, { env: execEnv });
 
-      return JSON.parse(stdout);
+      return stdout;
     } catch (error) {
       throw error?.stderr ?? error;
     } finally {
@@ -119,15 +123,15 @@ export class ResourceApplier implements K8sResourceApplier {
     return this.kubectlCmdAll("apply", resources, extraArgs);
   }
 
-  public async kubectlDeleteAll(resources: string[], extraArgs?: string[]): Promise<string> {
+  public async kubectlDeleteAll(resources: string[], extraArgs: string[] = []): Promise<string> {
     return this.kubectlCmdAll("delete", resources, extraArgs);
   }
 
-  protected async kubectlCmdAll(subCmd: string, resources: string[], args: string[] = []): Promise<string> {
+  protected async kubectlCmdAll(subCmd: string, resources: string[], args: string[]): Promise<string> {
     const kubectl = await this.cluster.ensureKubectl();
     const kubectlPath = await kubectl.getPath();
     const proxyKubeconfigPath = await this.cluster.getProxyKubeconfigPath();
-    const tmpDir = tempy.directory();
+    const tmpDir = this.dependencies.tempDir();
 
     try {
       await Promise.all(
@@ -140,13 +144,13 @@ export class ResourceApplier implements K8sResourceApplier {
       );
       args.push("-f", tmpDir);
 
-      logger.info(`[RESOURCE-APPLIER] Executing ${kubectlPath}`, { args });
+      this.dependencies.logger.info(`[RESOURCE-APPLIER] Executing ${kubectlPath}`, { args });
 
       const { stdout } = await this.dependencies.execFile(kubectlPath, args);
 
       return stdout;
     } catch (error) {
-      logger.error(`[RESOURCE-APPLIER] cmd errored: ${error}`);
+      this.dependencies.logger.error(`[RESOURCE-APPLIER] cmd errored: ${error}`);
 
       throw String(error).split(`.yaml": `)[1] ?? error;
     } finally {

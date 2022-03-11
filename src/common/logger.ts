@@ -10,6 +10,13 @@ import { consoleFormat } from "winston-console-format";
 import { isDebugging, isTestEnv } from "./vars";
 import BrowserConsole from "winston-transport-browserconsole";
 
+export interface LensLogger {
+  info(message: string, meta?: Record<string, any>): void;
+  error(message: string, meta?: Record<string, any>): void;
+  warn(message: string, meta?: Record<string, any>): void;
+  debug(message: string, meta?: Record<string, any>): void;
+}
+
 const logLevel = process.env.LOG_LEVEL
   ? process.env.LOG_LEVEL
   : isDebugging

@@ -13,7 +13,6 @@ import { broadcastMainChannel, broadcastMessage, ipcMainHandle, ipcMainOn } from
 import { catalogEntityRegistry } from "../../catalog";
 import { pushCatalogToRenderer } from "../../catalog-pusher";
 import { ClusterManager } from "../../cluster-manager";
-import { ResourceApplier } from "../../k8s/resource-applier/applier";
 import { WindowManager } from "../../window-manager";
 import path from "path";
 import { remove } from "fs-extra";
@@ -26,6 +25,10 @@ import { showOpenDialog } from "../../ipc/dialog";
 import { windowActionHandleChannel, windowLocationChangedChannel, windowOpenAppMenuAsContextMenuChannel } from "../../../common/ipc/window";
 import { getNativeColorTheme } from "../../native-theme";
 import { getNativeThemeChannel } from "../../../common/ipc/native-theme";
+import { asLegacyGlobalFunctionForExtensionApi } from "../../../extensions/as-legacy-globals-for-extension-api/as-legacy-global-function-for-extension-api";
+import createK8sResourceApplierInjectable from "../../k8s/resource-applier/create.injectable";
+
+const createK8sResourceApplier = asLegacyGlobalFunctionForExtensionApi(createK8sResourceApplierInjectable);
 
 interface Dependencies {
   electronMenuItems: IComputedValue<MenuRegistration[]>;
@@ -109,10 +112,8 @@ export const initIpcMainHandlers = ({ electronMenuItems, directoryForLensLocalSt
     const cluster = ClusterStore.getInstance().getById(clusterId);
 
     if (cluster) {
-      const applier = new ResourceApplier(cluster);
-
       try {
-        const stdout = await applier.kubectlApplyAll(resources, extraArgs);
+        const stdout = await createK8sResourceApplier(cluster).kubectlApplyAll(resources, extraArgs);
 
         return { stdout };
       } catch (error: any) {
@@ -128,10 +129,8 @@ export const initIpcMainHandlers = ({ electronMenuItems, directoryForLensLocalSt
     const cluster = ClusterStore.getInstance().getById(clusterId);
 
     if (cluster) {
-      const applier = new ResourceApplier(cluster);
-
       try {
-        const stdout = await applier.kubectlDeleteAll(resources, extraArgs);
+        const stdout = await createK8sResourceApplier(cluster).kubectlDeleteAll(resources, extraArgs);
 
         return { stdout };
       } catch (error: any) {
