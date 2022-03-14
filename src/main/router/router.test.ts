@@ -13,6 +13,7 @@ import type { AsyncFnMock } from "@async-fn/jest";
 import asyncFn from "@async-fn/jest";
 import parseRequestInjectable from "./parse-request.injectable";
 import { contentTypes } from "./router-content-types";
+import createK8sResourceApplierInjectable from "../k8s/resource-applier/create.injectable";
 import mockFs from "mock-fs";
 
 describe("router", () => {
@@ -27,6 +28,12 @@ describe("router", () => {
     mockFs();
 
     di.override(parseRequestInjectable, () => () => Promise.resolve({ payload: "some-payload" }));
+    di.override(createK8sResourceApplierInjectable, () => () => ({
+      apply: jest.fn(),
+      kubectlApplyAll: jest.fn(),
+      kubectlDeleteAll: jest.fn(),
+      patch: jest.fn(),
+    }));
 
     await di.runSetups();
 

@@ -42,13 +42,14 @@ import { createClusterInjectionToken } from "../../common/cluster/create-cluster
 import directoryForTempInjectable from "../../common/app-paths/directory-for-temp/directory-for-temp.injectable";
 import createContextHandlerInjectable from "../context-handler/create-context-handler.injectable";
 import type { DiContainer } from "@ogre-tools/injectable";
+import readFileSyncInjectable from "../../common/fs/read-file-sync.injectable";
 
 console = new Console(process.stdout, process.stderr); // fix mockFS
 
 describe("kubeconfig manager tests", () => {
   let clusterFake: Cluster;
   let createKubeconfigManager: (cluster: Cluster) => KubeconfigManager;
-  let di: DiContainer; 
+  let di: DiContainer;
 
   beforeEach(async () => {
     di = getDiForUnitTesting({ doGeneralOverrides: true });
@@ -85,6 +86,7 @@ describe("kubeconfig manager tests", () => {
       throw new Error("you should never come here");
     });
 
+    di.override(readFileSyncInjectable, () => fse.readFileSync); // TODO: don't bypass injectables
     const createCluster = di.inject(createClusterInjectionToken);
 
     createKubeconfigManager = di.inject(createKubeconfigManagerInjectable);

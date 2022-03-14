@@ -6,7 +6,7 @@
 import fs from "fs";
 import mockFs from "mock-fs";
 import path from "path";
-import fse from "fs-extra";
+import fse, { readFileSync } from "fs-extra";
 import type { Cluster } from "../cluster/cluster";
 import { ClusterStore } from "../cluster-store/cluster-store";
 import { Console } from "console";
@@ -14,18 +14,13 @@ import { stdout, stderr } from "process";
 import getCustomKubeConfigDirectoryInjectable from "../app-paths/get-custom-kube-config-directory/get-custom-kube-config-directory.injectable";
 import clusterStoreInjectable from "../cluster-store/cluster-store.injectable";
 import type { ClusterModel } from "../cluster-types";
-import type {
-  DiContainer,
-} from "@ogre-tools/injectable";
-
-
+import type { DiContainer } from "@ogre-tools/injectable";
 import { getDisForUnitTesting } from "../../test-utils/get-dis-for-unit-testing";
 import { createClusterInjectionToken } from "../cluster/create-cluster-injection-token";
-
-import directoryForUserDataInjectable
-  from "../app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import kubeAuthProxyCaInjectable from "../../main/kube-auth-proxy/kube-auth-proxy-ca.injectable";
 import createKubeAuthProxyCertFilesInjectable from "../../main/kube-auth-proxy/create-kube-auth-proxy-cert-files.injectable";
+import directoryForUserDataInjectable from "../app-paths/directory-for-user-data/directory-for-user-data.injectable";
+import readFileSyncInjectable from "../fs/read-file-sync.injectable";
 
 console = new Console(stdout, stderr);
 
@@ -91,6 +86,7 @@ describe("cluster-store", () => {
     mainDi.override(directoryForUserDataInjectable, () => "some-directory-for-user-data");
     mainDi.override(createKubeAuthProxyCertFilesInjectable, () => ({} as any));
     mainDi.override(kubeAuthProxyCaInjectable, () => ({} as any));
+    mainDi.override(readFileSyncInjectable, () => readFileSync); // TODO: don't bypass injectables
 
     await dis.runSetups();
 
