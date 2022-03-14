@@ -4,6 +4,7 @@
  */
 
 import type { DiContainer } from "@ogre-tools/injectable";
+import path from "path";
 import directoryForKubeConfigsInjectable from "../../../../common/app-paths/directory-for-kube-configs/directory-for-kube-configs.injectable";
 import createAuthorizationReviewInjectable from "../../../../common/cluster/authorization-review.injectable";
 import createListNamespacesInjectable from "../../../../common/cluster/list-namespaces.injectable";
@@ -199,8 +200,12 @@ describe("ResourceApplier", () => {
       const resources = new Set(["foo", "bar"]);
       const onlyOnce = expectInSetOnce(resources);
 
-      writeFile.mockImplementation(async (path, contents) => {
-        expect(path).toMatch(/^some\/temp\/dir\/[0-9]+.yaml$/);
+      writeFile.mockImplementation(async (filePath, contents) => {
+        if (path.sep === "/") {
+          expect(filePath).toMatch(/^some\/temp\/dir\/[0-9]+.yaml$/);
+        } else {
+          expect(filePath).toMatch(/^some\\temp\\dir\\[0-9]+.yaml$/);
+        }
         onlyOnce(contents);
       });
 
