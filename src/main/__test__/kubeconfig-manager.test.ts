@@ -43,6 +43,7 @@ import directoryForTempInjectable from "../../common/app-paths/directory-for-tem
 import createContextHandlerInjectable from "../context-handler/create-context-handler.injectable";
 import type { DiContainer } from "@ogre-tools/injectable";
 import readFileSyncInjectable from "../../common/fs/read-file-sync.injectable";
+import type { ContextHandler } from "../context-handler/context-handler";
 
 console = new Console(process.stdout, process.stderr); // fix mockFS
 
@@ -82,9 +83,7 @@ describe("kubeconfig manager tests", () => {
 
     await di.runSetups();
 
-    di.override(createContextHandlerInjectable, () => () => {
-      throw new Error("you should never come here");
-    });
+    di.override(createContextHandlerInjectable, () => () => ({} as ContextHandler));
 
     di.override(readFileSyncInjectable, () => fse.readFileSync); // TODO: don't bypass injectables
     const createCluster = di.inject(createClusterInjectionToken);

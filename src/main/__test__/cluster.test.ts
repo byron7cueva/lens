@@ -44,6 +44,7 @@ import createAuthorizationReviewInjectable from "../../common/cluster/authorizat
 import createListNamespacesInjectable from "../../common/cluster/list-namespaces.injectable";
 import { readFileSync } from "fs-extra";
 import readFileSyncInjectable from "../../common/fs/read-file-sync.injectable";
+import setupClusterDependenciesInjectable from "../create-cluster/setup-cluster-dependencies.injectable";
 
 console = new Console(process.stdout, process.stderr); // fix mockFS
 
@@ -88,6 +89,7 @@ describe("create clusters", () => {
       throw new Error("you should never come here");
     });
     di.override(readFileSyncInjectable, () => readFileSync); // TODO: don't bypass injectables
+    di.override(setupClusterDependenciesInjectable, () => false);
 
     createCluster = di.inject(createClusterInjectionToken);
 

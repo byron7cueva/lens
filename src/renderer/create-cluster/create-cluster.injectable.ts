@@ -8,6 +8,7 @@ import directoryForKubeConfigsInjectable from "../../common/app-paths/directory-
 import { createClusterInjectionToken } from "../../common/cluster/create-cluster-injection-token";
 import readFileSyncInjectable from "../../common/fs/read-file-sync.injectable";
 import baseLoggerInjectable from "../../common/logger/logger.injectable";
+import { setupClusterDependenciesInjectionToken } from "../../common/cluster/setup-cluster.token";
 
 const createClusterInjectable = getInjectable({
   id: "create-cluster",
@@ -22,7 +23,7 @@ const createClusterInjectable = getInjectable({
       createListNamespaces: () => { throw new Error("Tried to access back-end feature in front-end."); },
       readFileSync: di.inject(readFileSyncInjectable),
       logger: di.inject(baseLoggerInjectable),
-      setupCluster: false,
+      setupCluster: di.inject(setupClusterDependenciesInjectionToken),
     };
 
     return (model) => new Cluster(dependencies, model);

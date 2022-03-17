@@ -13,6 +13,7 @@ import createAuthorizationReviewInjectable from "../../common/cluster/authorizat
 import createListNamespacesInjectable from "../../common/cluster/list-namespaces.injectable";
 import readFileSyncInjectable from "../../common/fs/read-file-sync.injectable";
 import baseLoggerInjectable from "../../common/logger/logger.injectable";
+import { setupClusterDependenciesInjectionToken } from "../../common/cluster/setup-cluster.token";
 
 const createClusterInjectable = getInjectable({
   id: "create-cluster",
@@ -27,7 +28,7 @@ const createClusterInjectable = getInjectable({
       createListNamespaces: di.inject(createListNamespacesInjectable),
       readFileSync: di.inject(readFileSyncInjectable),
       logger: di.inject(baseLoggerInjectable),
-      setupCluster: true,
+      setupCluster: di.inject(setupClusterDependenciesInjectionToken),
     };
 
     return (model) => new Cluster(dependencies, model);
