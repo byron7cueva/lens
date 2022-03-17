@@ -116,7 +116,7 @@ describe("HotbarStore", () => {
   beforeEach(async () => {
     const di = getDiForUnitTesting({ doGeneralOverrides: true });
 
-    di.override(writeFileInjectable, () => () => undefined);
+    di.override(writeFileInjectable, () => () => Promise.resolve());
     di.override(directoryForUserDataInjectable, () => "some-directory-for-user-data");
 
     await di.runSetups();
@@ -160,7 +160,7 @@ describe("HotbarStore", () => {
     it("initially adds catalog entity as first item", () => {
       const hotbarStore = HotbarStore.getInstance();
 
-      expect(hotbarStore.getActive().items[0].entity.name).toEqual("Catalog");
+      expect(hotbarStore.getActive().items[0]?.entity.name).toEqual("Catalog");
     });
 
     it("adds items", () => {
@@ -205,7 +205,7 @@ describe("HotbarStore", () => {
       hotbarStore.restackItems(1, 5);
 
       expect(hotbarStore.getActive().items[5]).toBeTruthy();
-      expect(hotbarStore.getActive().items[5].entity.uid).toEqual("test");
+      expect(hotbarStore.getActive().items[5]?.entity.uid).toEqual("test");
     });
 
     it("moves items down", () => {
@@ -281,7 +281,7 @@ describe("HotbarStore", () => {
       hotbarStore.addToHotbar(testCluster);
       hotbarStore.restackItems(1, 1);
 
-      expect(hotbarStore.getActive().items[1].entity.uid).toEqual("test");
+      expect(hotbarStore.getActive().items[1]?.entity.uid).toEqual("test");
     });
 
     it("new items takes first empty cell", () => {
@@ -292,7 +292,7 @@ describe("HotbarStore", () => {
       hotbarStore.restackItems(0, 3);
       hotbarStore.addToHotbar(minikubeCluster);
 
-      expect(hotbarStore.getActive().items[0].entity.uid).toEqual("minikube");
+      expect(hotbarStore.getActive().items[0]?.entity.uid).toEqual("minikube");
     });
 
     it("throws if invalid arguments provided", () => {
@@ -403,7 +403,7 @@ describe("HotbarStore", () => {
     it("allows to retrieve a hotbar", () => {
       const hotbar = HotbarStore.getInstance().getById("3caac17f-aec2-4723-9694-ad204465d935");
 
-      expect(hotbar.id).toBe("3caac17f-aec2-4723-9694-ad204465d935");
+      expect(hotbar?.id).toBe("3caac17f-aec2-4723-9694-ad204465d935");
     });
 
     it("clears cells without entity", () => {

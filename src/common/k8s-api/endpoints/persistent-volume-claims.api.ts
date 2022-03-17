@@ -3,13 +3,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeObject, LabelSelector } from "../kube-object";
-import { autoBind } from "../../utils";
+import { KubeObject, KubeObjectMetadata, LabelSelector } from "../kube-object";
 import { IMetrics, metricsApi } from "./metrics.api";
 import type { Pod } from "./pods.api";
 import { KubeApi } from "../kube-api";
-import type { KubeJsonApiData } from "../kube-json-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
+import { entries } from "../../utils";
 
 export class PersistentVolumeClaimsApi extends KubeApi<PersistentVolumeClaim> {
 }
@@ -25,72 +24,56 @@ export function getMetricsForPvc(pvc: PersistentVolumeClaim): Promise<IPvcMetric
   });
 }
 
-export interface IPvcMetrics<T = IMetrics> {
-  [key: string]: T;
-  diskUsage: T;
-  diskCapacity: T;
+export interface IPvcMetrics {
+  diskUsage: IMetrics;
+  diskCapacity: IMetrics;
 }
 
-export interface PersistentVolumeClaim {
-  spec: {
-    accessModes: string[];
-    storageClassName: string;
-    selector: LabelSelector;
-    resources: {
-      requests: {
-        storage: string; // 8Gi
-      };
+export interface PersistentVolumeClaimSpec {
+  accessModes: string[];
+  storageClassName: string;
+  selector?: LabelSelector;
+  resources?: {
+    requests?: {
+      storage: string; // 8Gi
     };
   };
-  status: {
-    phase: string; // Pending
-  };
 }
 
-export class PersistentVolumeClaim extends KubeObject {
+export interface PersistentVolumeClaimStatus {
+  phase: string; // Pending
+}
+
+export class PersistentVolumeClaim extends KubeObject<KubeObjectMetadata, PersistentVolumeClaimStatus, PersistentVolumeClaimSpec> {
   static kind = "PersistentVolumeClaim";
   static namespaced = true;
   static apiBase = "/api/v1/persistentvolumeclaims";
 
-  constructor(data: KubeJsonApiData) {
-    super(data);
-    autoBind(this);
-  }
-
-  getPods(allPods: Pod[]): Pod[] {
-    const pods = allPods.filter(pod => pod.getNs() === this.getNs());
-
-    return pods.filter(pod => {
-      return pod.getVolumes().filter(volume =>
-        volume.persistentVolumeClaim &&
-        volume.persistentVolumeClaim.claimName === this.getName(),
-      ).length > 0;
-    });
+  getPods(pods: Pod[]): Pod[] {
+    return pods
+      .filter(pod => pod.getNs() === this.getNs())
+      .filter(pod => (
+        pod.getVolumes()
+          .filter(volume => volume.persistentVolumeClaim?.claimName === this.getName())
+          .length > 0
+      ));
   }
 
   getStorage(): string {
-    if (!this.spec.resources || !this.spec.resources.requests) return "-";
-
-    return this.spec.resources.requests.storage;
+    return this.spec.resources?.requests?.storage ?? "-";
   }
 
   getMatchLabels(): string[] {
-    if (!this.spec.selector || !this.spec.selector.matchLabels) return [];
-
-    return Object.entries(this.spec.selector.matchLabels)
+    return entries(this.spec.selector?.matchLabels)
       .map(([name, val]) => `${name}:${val}`);
   }
 
   getMatchExpressions() {
-    if (!this.spec.selector || !this.spec.selector.matchExpressions) return [];
-
-    return this.spec.selector.matchExpressions;
+    return this.spec.selector?.matchExpressions ?? [];
   }
 
   getStatus(): string {
-    if (this.status) return this.status.phase;
-
-    return "-";
+    return this.status?.phase ?? "-";
   }
 }
 

@@ -38,7 +38,7 @@ export function hasTypedProperty<S extends object, K extends PropertyKey, V>(val
  * @param key The key to test if it is present on the object (must be a literal for tsc to do any meaningful typing)
  * @param isValid a function to check if the field (when present) is valid
  */
-export function hasOptionalProperty<S extends object, K extends PropertyKey, V>(val: S, key: K, isValid: (value: unknown) => value is V): val is (S & { [key in K]?: V }) {
+export function hasOptionalTypedProperty<S extends object, K extends PropertyKey, V>(val: S, key: K, isValid: (value: unknown) => value is V): val is (S & { [key in K]?: V }) {
   if (hasOwnProperty(val, key)) {
     return typeof val[key] === "undefined" || isValid(val[key]);
   }
@@ -74,11 +74,34 @@ export function isString(val: unknown): val is string {
 }
 
 /**
+ * checks if val is of type number
+ * @param val the value to be checked
+ */
+export function isNumber(val: unknown): val is number {
+  return typeof val === "number";
+}
+
+/**
+ * checks if val is of type boolean
+ * @param val the value to be checked
+ */
+export function isBoolean(val: unknown): val is boolean {
+  return typeof val === "boolean";
+}
+
+/**
  * checks if val is of type object and isn't null
  * @param val the value to be checked
  */
 export function isObject(val: unknown): val is object {
   return typeof val === "object" && val !== null;
+}
+
+/**
+ * checks if `val` is defined, useful for filtering out undefined values in a strict manner
+ */
+export function isDefined<T>(val: T | undefined | null): val is T {
+  return val != null;
 }
 
 /**
@@ -91,4 +114,30 @@ export function isObject(val: unknown): val is object {
  */
 export function bindPredicate<FnArgs extends any[], T>(fn: (arg1: unknown, ...args: FnArgs) => arg1 is T, ...boundArgs: FnArgs): (arg1: unknown) => arg1 is T {
   return (arg1: unknown): arg1 is T => fn(arg1, ...boundArgs);
+}
+
+/**
+ * A type guard for checking if the error is similar to a node unix error
+ */
+export function isCodedError(error: unknown): error is (Error & { code: string }) {
+  return isObject(error) && hasTypedProperty(error, "code", isString) && error instanceof Error;
+}
+
+export interface RequestLikeError extends Error {
+  statusCode?: number;
+  failed?: boolean;
+  timedOut?: boolean;
+  error?: string;
+}
+
+/**
+ * A type guard for checking if the error is similar in shape to a request package error
+ */
+export function isRequestError(error: unknown): error is RequestLikeError {
+  return isObject(error)
+    && hasOptionalTypedProperty(error, "statusCode", isNumber)
+    && hasOptionalTypedProperty(error, "failed", isBoolean)
+    && hasOptionalTypedProperty(error, "timedOut", isBoolean)
+    && hasOptionalTypedProperty(error, "error", isString)
+    && error instanceof Error;
 }

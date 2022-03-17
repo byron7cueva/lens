@@ -6,14 +6,14 @@
 import type { KubeObjectStore } from "./kube-object.store";
 
 import { action, observable, makeObservable } from "mobx";
-import { autoBind, iter } from "../utils";
+import { autoBind, isDefined, iter } from "../utils";
 import type { KubeApi } from "./kube-api";
 import type { KubeObject } from "./kube-object";
 import { IKubeObjectRef, parseKubeApi, createKubeApiURL } from "./kube-api-parse";
 
 export class ApiManager {
-  private apis = observable.map<string, KubeApi<KubeObject>>();
-  private stores = observable.map<string, KubeObjectStore<KubeObject>>();
+  private readonly apis = observable.map<string, KubeApi<KubeObject>>();
+  private readonly stores = observable.map<string, KubeObjectStore<KubeObject>>();
 
   constructor() {
     makeObservable(this);
@@ -70,13 +70,26 @@ export class ApiManager {
 
   @action
   registerStore<K extends KubeObject>(store: KubeObjectStore<K>, apis: KubeApi<K>[] = [store.api]) {
-    apis.filter(Boolean).forEach(api => {
-      if (api.apiBase) this.stores.set(api.apiBase, store);
-    });
+    for (const api of apis.filter(isDefined)) {
+      if (api.apiBase) {
+        this.stores.set(api.apiBase, store as never);
+      }
+    }
   }
 
-  getStore<S extends KubeObjectStore<KubeObject>>(api: string | KubeApi<KubeObject>): S | undefined {
-    return this.stores.get(this.resolveApi(api)?.apiBase) as S;
+  getStore(api: string | KubeApi<KubeObject>): KubeObjectStore<KubeObject> | undefined;
+  /**
+   * @deprecated use an actual cast instead of hiding it with this unused type param
+   */
+  getStore<S extends KubeObjectStore<KubeObject>>(api: string | KubeApi<KubeObject>): S | undefined ;
+  getStore(api: string | KubeApi<KubeObject>): KubeObjectStore<KubeObject> | undefined {
+    const { apiBase } = this.resolveApi(api) ?? {};
+
+    if (apiBase) {
+      return this.stores.get(apiBase);
+    }
+
+    return undefined;
   }
 
   lookupApiLink(ref: IKubeObjectRef, parentObject?: KubeObject): string {

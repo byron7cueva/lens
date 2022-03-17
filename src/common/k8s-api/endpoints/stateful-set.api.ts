@@ -3,14 +3,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { IAffinity, WorkloadKubeObject } from "../workload-kube-object";
-import { autoBind } from "../../utils";
 import { KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { IPodMetrics } from "./pods.api";
-import type { KubeJsonApiData } from "../kube-json-api";
+import type { IPodMetrics, PodSpec } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import type { LabelSelector } from "../kube-object";
+import { KubeObject, KubeObjectMetadata, LabelSelector } from "../kube-object";
+import type { PersistentVolumeClaimSpec } from "./persistent-volume-claims.api";
 
 export class StatefulSetApi extends KubeApi<StatefulSet> {
   protected getScaleApiUrl(params: { namespace: string; name: string }) {
@@ -56,74 +54,64 @@ export function getMetricsForStatefulSets(statefulSets: StatefulSet[], namespace
   });
 }
 
-export class StatefulSet extends WorkloadKubeObject {
+export interface StatefulSetSpec {
+  serviceName: string;
+  replicas: number;
+  selector: LabelSelector;
+  template: {
+    metadata: {
+      labels: {
+        app: string;
+      };
+    };
+    spec: PodSpec;
+  };
+  volumeClaimTemplates: {
+    metadata: {
+      name: string;
+    };
+    spec: PersistentVolumeClaimSpec;
+  }[];
+}
+
+export interface StatefulSetStatus {
+  observedGeneration: number;
+  replicas: number;
+  currentReplicas: number;
+  readyReplicas: number;
+  currentRevision: string;
+  updateRevision: string;
+  collisionCount: number;
+}
+
+export class StatefulSet extends KubeObject<KubeObjectMetadata, StatefulSetStatus, StatefulSetSpec, "namespace-scoped"> {
   static kind = "StatefulSet";
   static namespaced = true;
   static apiBase = "/apis/apps/v1/statefulsets";
 
-  constructor(data: KubeJsonApiData) {
-    super(data);
-    autoBind(this);
+  getSelectors(): string[] {
+    return KubeObject.stringifyLabels(this.spec.selector.matchLabels);
   }
 
-  declare spec: {
-    serviceName: string;
-    replicas: number;
-    selector: LabelSelector;
-    template: {
-      metadata: {
-        labels: {
-          app: string;
-        };
-      };
-      spec: {
-        containers: null | {
-          name: string;
-          image: string;
-          ports: {
-            containerPort: number;
-            name: string;
-          }[];
-          volumeMounts: {
-            name: string;
-            mountPath: string;
-          }[];
-        }[];
-        affinity?: IAffinity;
-        nodeSelector?: {
-          [selector: string]: string;
-        };
-        tolerations: {
-          key: string;
-          operator: string;
-          effect: string;
-          tolerationSeconds: number;
-        }[];
-      };
-    };
-    volumeClaimTemplates: {
-      metadata: {
-        name: string;
-      };
-      spec: {
-        accessModes: string[];
-        resources: {
-          requests: {
-            storage: string;
-          };
-        };
-      };
-    }[];
-  };
-  declare status: {
-    observedGeneration: number;
-    replicas: number;
-    currentReplicas: number;
-    readyReplicas: number;
-    currentRevision: string;
-    updateRevision: string;
-    collisionCount: number;
-  };
+  getNodeSelectors(): string[] {
+    return KubeObject.stringifyLabels(this.spec.template.spec.nodeSelector);
+  }
+
+  getTemplateLabels(): string[] {
+    return KubeObject.stringifyLabels(this.spec.template.metadata.labels);
+  }
+
+  getTolerations() {
+    return this.spec.template.spec.tolerations ?? [];
+  }
+
+  getAffinity() {
+    return this.spec.template.spec.affinity;
+  }
+
+  getAffinityNumber() {
+    return Object.keys(this.getAffinity() ?? {}).length;
+  }
 
   getReplicas() {
     return this.spec.replicas || 0;

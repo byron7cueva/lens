@@ -7,6 +7,7 @@ import { JsonApi, JsonApiData, JsonApiError } from "./json-api";
 import type { Response } from "node-fetch";
 import { LensProxy } from "../../main/lens-proxy";
 import { apiKubePrefix, isDebugging } from "../vars";
+import type { KubeObjectMetadata } from "./kube-object";
 
 export interface KubeJsonApiListMetadata {
   resourceVersion: string;
@@ -20,28 +21,16 @@ export interface KubeJsonApiDataList<T = KubeJsonApiData> {
   metadata: KubeJsonApiListMetadata;
 }
 
-export interface KubeJsonApiMetadata {
-  uid: string;
-  name: string;
-  namespace?: string;
-  creationTimestamp?: string;
-  resourceVersion: string;
-  continue?: string;
-  finalizers?: string[];
-  selfLink?: string;
-  labels?: {
-    [label: string]: string;
-  };
-  annotations?: {
-    [annotation: string]: string;
-  };
-  [key: string]: any;
-}
-
-export interface KubeJsonApiData extends JsonApiData {
+export interface KubeJsonApiData<
+  Metadata extends KubeObjectMetadata = KubeObjectMetadata,
+  Status = unknown,
+  Spec = unknown,
+> extends JsonApiData {
   kind: string;
   apiVersion: string;
-  metadata: KubeJsonApiMetadata;
+  metadata: Metadata;
+  status?: Status;
+  spec?: Spec;
 }
 
 export interface KubeJsonApiError extends JsonApiError {

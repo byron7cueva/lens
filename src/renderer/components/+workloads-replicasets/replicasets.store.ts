@@ -7,7 +7,7 @@ import { makeObservable } from "mobx";
 import { podsStore } from "../+workloads-pods/pods.store";
 import { apiManager } from "../../../common/k8s-api/api-manager";
 import { Deployment, ReplicaSet, replicaSetApi } from "../../../common/k8s-api/endpoints";
-import { PodStatus } from "../../../common/k8s-api/endpoints/pods.api";
+import { PodStatusPhase } from "../../../common/k8s-api/endpoints/pods.api";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { autoBind } from "../../utils";
 
@@ -31,10 +31,10 @@ export class ReplicaSetStore extends KubeObjectStore<ReplicaSet> {
     replicaSets.forEach(replicaSet => {
       const pods = this.getChildPods(replicaSet);
 
-      if (pods.some(pod => pod.getStatus() === PodStatus.FAILED)) {
+      if (pods.some(pod => pod.getStatus() === PodStatusPhase.FAILED)) {
         status.failed++;
       }
-      else if (pods.some(pod => pod.getStatus() === PodStatus.PENDING)) {
+      else if (pods.some(pod => pod.getStatus() === PodStatusPhase.PENDING)) {
         status.pending++;
       }
       else {

@@ -6,7 +6,7 @@ import { makeObservable } from "mobx";
 
 import { podsStore } from "../+workloads-pods/pods.store";
 import { apiManager } from "../../../common/k8s-api/api-manager";
-import { PodStatus, StatefulSet, statefulSetApi } from "../../../common/k8s-api/endpoints";
+import { PodStatusPhase, StatefulSet, statefulSetApi } from "../../../common/k8s-api/endpoints";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { autoBind } from "../../utils";
 
@@ -30,10 +30,10 @@ export class StatefulSetStore extends KubeObjectStore<StatefulSet> {
     statefulSets.forEach(statefulSet => {
       const pods = this.getChildPods(statefulSet);
 
-      if (pods.some(pod => pod.getStatus() === PodStatus.FAILED)) {
+      if (pods.some(pod => pod.getStatus() === PodStatusPhase.FAILED)) {
         status.failed++;
       }
-      else if (pods.some(pod => pod.getStatus() === PodStatus.PENDING)) {
+      else if (pods.some(pod => pod.getStatus() === PodStatusPhase.PENDING)) {
         status.pending++;
       }
       else {

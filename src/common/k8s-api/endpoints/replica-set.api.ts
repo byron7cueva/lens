@@ -3,15 +3,11 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import get from "lodash/get";
-import { autoBind } from "../../../renderer/utils";
-import { WorkloadKubeObject } from "../workload-kube-object";
 import { KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { IPodContainer, IPodMetrics, Pod } from "./pods.api";
-import type { KubeJsonApiData } from "../kube-json-api";
+import type { IPodMetrics, PodSpec } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import type { LabelSelector } from "../kube-object";
+import { KubeObject, KubeObjectMetadata, KubeObjectStatus, LabelSelector } from "../kube-object";
 
 export class ReplicaSetApi extends KubeApi<ReplicaSet> {
   protected getScaleApiUrl(params: { namespace: string; name: string }) {
@@ -53,61 +49,73 @@ export function getMetricsForReplicaSets(replicasets: ReplicaSet[], namespace: s
   });
 }
 
-export class ReplicaSet extends WorkloadKubeObject {
+export interface ReplicaSetSpec {
+  replicas?: number;
+  selector: LabelSelector;
+  template?: {
+    metadata: {
+      labels: {
+        app: string;
+      };
+    };
+    spec?: PodSpec;
+  };
+  minReadySeconds?: number;
+}
+
+export interface ReplicaSetStatus extends KubeObjectStatus {
+  replicas: number;
+  fullyLabeledReplicas?: number;
+  readyReplicas?: number;
+  availableReplicas?: number;
+  observedGeneration?: number;
+}
+
+export class ReplicaSet extends KubeObject<KubeObjectMetadata, ReplicaSetStatus, ReplicaSetSpec, "namespace-scoped"> {
   static kind = "ReplicaSet";
   static namespaced = true;
   static apiBase = "/apis/apps/v1/replicasets";
 
-  constructor(data: KubeJsonApiData) {
-    super(data);
-    autoBind(this);
+  getSelectors(): string[] {
+    return KubeObject.stringifyLabels(this.spec.selector.matchLabels);
   }
 
-  declare spec: {
-    replicas?: number;
-    selector: LabelSelector;
-    template?: {
-      metadata: {
-        labels: {
-          app: string;
-        };
-      };
-      spec?: Pod["spec"];
-    };
-    minReadySeconds?: number;
-  };
-  declare status: {
-    replicas: number;
-    fullyLabeledReplicas?: number;
-    readyReplicas?: number;
-    availableReplicas?: number;
-    observedGeneration?: number;
-    conditions?: {
-      type: string;
-      status: string;
-      lastUpdateTime: string;
-      lastTransitionTime: string;
-      reason: string;
-      message: string;
-    }[];
-  };
+  getNodeSelectors(): string[] {
+    return KubeObject.stringifyLabels(this.spec.template?.spec?.nodeSelector);
+  }
+
+  getTemplateLabels(): string[] {
+    return KubeObject.stringifyLabels(this.spec.template?.metadata.labels);
+  }
+
+  getTolerations() {
+    return this.spec.template?.spec?.tolerations ?? [];
+  }
+
+  getAffinity() {
+    return this.spec.template?.spec?.affinity;
+  }
+
+  getAffinityNumber() {
+    return Object.keys(this.getAffinity() ?? {}).length;
+  }
 
   getDesired() {
-    return this.spec.replicas || 0;
+    return this.spec.replicas ?? 0;
   }
 
   getCurrent() {
-    return this.status.availableReplicas || 0;
+    return this.status?.availableReplicas ?? 0;
   }
 
   getReady() {
-    return this.status.readyReplicas || 0;
+    return this.status?.readyReplicas ?? 0;
   }
 
   getImages() {
-    const containers: IPodContainer[] = get(this, "spec.template.spec.containers", []);
+    const containers = this.spec.template?.spec?.containers ?? [];
 
-    return [...containers].map(container => container.image);
+    return containers.map(container => container.image);
   }
 }
 

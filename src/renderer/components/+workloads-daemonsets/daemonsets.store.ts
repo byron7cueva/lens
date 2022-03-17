@@ -6,7 +6,7 @@ import { makeObservable } from "mobx";
 
 import { podsStore } from "../+workloads-pods/pods.store";
 import { apiManager } from "../../../common/k8s-api/api-manager";
-import { DaemonSet, daemonSetApi, Pod, PodStatus } from "../../../common/k8s-api/endpoints";
+import { DaemonSet, daemonSetApi, Pod, PodStatusPhase } from "../../../common/k8s-api/endpoints";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { autoBind } from "../../utils";
 
@@ -27,13 +27,13 @@ export class DaemonSetStore extends KubeObjectStore<DaemonSet> {
   getStatuses(daemonSets?: DaemonSet[]) {
     const status = { running: 0, failed: 0, pending: 0 };
 
-    daemonSets.forEach(daemonSet => {
+    daemonSets?.forEach(daemonSet => {
       const pods = this.getChildPods(daemonSet);
 
-      if (pods.some(pod => pod.getStatus() === PodStatus.FAILED)) {
+      if (pods.some(pod => pod.getStatus() === PodStatusPhase.FAILED)) {
         status.failed++;
       }
-      else if (pods.some(pod => pod.getStatus() === PodStatus.PENDING)) {
+      else if (pods.some(pod => pod.getStatus() === PodStatusPhase.PENDING)) {
         status.pending++;
       }
       else {

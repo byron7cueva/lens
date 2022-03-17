@@ -6,7 +6,7 @@
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { autoBind } from "../../utils";
 import { Job, jobApi } from "../../../common/k8s-api/endpoints/job.api";
-import { CronJob, Pod, PodStatus } from "../../../common/k8s-api/endpoints";
+import { CronJob, Pod, PodStatusPhase } from "../../../common/k8s-api/endpoints";
 import { podsStore } from "../+workloads-pods/pods.store";
 import { apiManager } from "../../../common/k8s-api/api-manager";
 
@@ -32,16 +32,16 @@ export class JobStore extends KubeObjectStore<Job> {
   getStatuses(jobs?: Job[]) {
     const status = { succeeded: 0, running: 0, failed: 0, pending: 0 };
 
-    jobs.forEach(job => {
+    jobs?.forEach(job => {
       const pods = this.getChildPods(job);
 
-      if (pods.some(pod => pod.getStatus() === PodStatus.FAILED)) {
+      if (pods.some(pod => pod.getStatus() === PodStatusPhase.FAILED)) {
         status.failed++;
       }
-      else if (pods.some(pod => pod.getStatus() === PodStatus.PENDING)) {
+      else if (pods.some(pod => pod.getStatus() === PodStatusPhase.PENDING)) {
         status.pending++;
       }
-      else if (pods.some(pod => pod.getStatus() === PodStatus.RUNNING)) {
+      else if (pods.some(pod => pod.getStatus() === PodStatusPhase.RUNNING)) {
         status.running++;
       }
       else {

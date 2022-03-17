@@ -477,9 +477,9 @@ describe("KubeApi", () => {
       it("if request ended", (done) => {
         const spy = jest.spyOn(request, "getResponse");
 
-        jest.spyOn(stream, "on").mockImplementation((eventName: string, callback: Function) => {
+        jest.spyOn(stream, "on").mockImplementation((event: string | symbol, callback: Function) => {
           // End the request in 100ms.
-          if (eventName === "end") {
+          if (event === "end") {
             setTimeout(() => {
               callback();
             }, 100);
@@ -535,9 +535,9 @@ describe("KubeApi", () => {
       it("retries only once if request ends and timeout is set", (done) => {
         const spy = jest.spyOn(request, "getResponse");
 
-        jest.spyOn(stream, "on").mockImplementation((eventName: string, callback: Function) => {
+        jest.spyOn(stream, "on").mockImplementation((event: string | symbol, callback: Function) => {
           // End the request in 100ms.
-          if (eventName === "end") {
+          if (event === "end") {
             setTimeout(() => {
               callback();
             }, 100);

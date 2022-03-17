@@ -26,6 +26,7 @@ import directoryForUserDataInjectable
   from "../app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import kubeAuthProxyCaInjectable from "../../main/kube-auth-proxy/kube-auth-proxy-ca.injectable";
 import createKubeAuthProxyCertFilesInjectable from "../../main/kube-auth-proxy/create-kube-auth-proxy-cert-files.injectable";
+import assert from "assert";
 
 console = new Console(stdout, stderr);
 
@@ -150,6 +151,8 @@ describe("cluster-store", () => {
       it("adds new cluster to store", async () => {
         const storedCluster = clusterStore.getById("foo");
 
+        assert(storedCluster);
+
         expect(storedCluster.id).toBe("foo");
         expect(storedCluster.preferences.terminalCWD).toBe("/some-directory-for-user-data");
         expect(storedCluster.preferences.icon).toBe(
@@ -250,6 +253,8 @@ describe("cluster-store", () => {
 
     it("allows to retrieve a cluster", () => {
       const storedCluster = clusterStore.getById("cluster1");
+
+      assert(storedCluster);
 
       expect(storedCluster.id).toBe("cluster1");
       expect(storedCluster.preferences.terminalCWD).toBe("/foo");
@@ -381,6 +386,7 @@ users:
     it("migrates to modern format with icon not in file", async () => {
       const { icon } = clusterStore.clustersList[0].preferences;
 
+      assert(icon);
       expect(icon.startsWith("data:;base64,")).toBe(true);
     });
   });

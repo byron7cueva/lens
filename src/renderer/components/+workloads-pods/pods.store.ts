@@ -9,7 +9,7 @@ import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { autoBind, cpuUnitsToNumber, unitsToBytes } from "../../utils";
 import { Pod, PodMetrics, podMetricsApi, podsApi } from "../../../common/k8s-api/endpoints";
 import { apiManager } from "../../../common/k8s-api/api-manager";
-import type { WorkloadKubeObject } from "../../../common/k8s-api/workload-kube-object";
+import type { KubeObject } from "../../../common/k8s-api/kube-object";
 
 export class PodsStore extends KubeObjectStore<Pod> {
   api = podsApi;
@@ -25,13 +25,15 @@ export class PodsStore extends KubeObjectStore<Pod> {
 
   async loadKubeMetrics(namespace?: string) {
     try {
-      this.kubeMetrics.replace(await podMetricsApi.list({ namespace }));
+      const metrics = await podMetricsApi.list({ namespace });
+
+      this.kubeMetrics.replace(metrics ?? []);
     } catch (error) {
       console.warn("loadKubeMetrics failed", error);
     }
   }
 
-  getPodsByOwner(workload: WorkloadKubeObject): Pod[] {
+  getPodsByOwner(workload: KubeObject): Pod[] {
     if (!workload) return [];
 
     return this.items.filter(pod => {

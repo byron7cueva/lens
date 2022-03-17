@@ -18,7 +18,7 @@ import { IKubeApiParsed, parseKubeApi } from "../kube-api-parse";
 /**
  * [<input-url>, <expected-result>]
  */
-type KubeApiParseTestData = [string, Required<IKubeApiParsed>];
+type KubeApiParseTestData = [string, IKubeApiParsed];
 
 const tests: KubeApiParseTestData[] = [
   ["/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions/prometheuses.monitoring.coreos.com", {
@@ -125,6 +125,6 @@ describe("parseApi unit tests", () => {
   });
 
   it.each(throwtests)("testing %j should throw", (url) => {
-    expect(() => parseKubeApi(url)).toThrowError("invalid apiPath");
+    expect(() => parseKubeApi(url as any)).toThrowError("invalid apiPath");
   });
 });

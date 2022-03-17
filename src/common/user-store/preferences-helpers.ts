@@ -6,7 +6,7 @@
 import moment from "moment-timezone";
 import path from "path";
 import os from "os";
-import { getAppVersion } from "../utils";
+import { extendOnlyMap, getAppVersion } from "../utils";
 import type { editor } from "monaco-editor";
 import merge from "lodash/merge";
 import { SemVer } from "semver";
@@ -145,22 +145,22 @@ export interface DownloadMirror {
 }
 
 export const defaultPackageMirror = "default";
-export const packageMirrors = new Map<string, DownloadMirror>([
+export const packageMirrors = extendOnlyMap<string, DownloadMirror, typeof defaultPackageMirror | "china">([
   [defaultPackageMirror, {
     url: "https://storage.googleapis.com/kubernetes-release/release",
     label: "Default (Google)",
     platforms: new Set(["darwin", "win32", "linux"]),
-  }],
+  } as DownloadMirror],
   ["china", {
     url: "https://mirror.azure.cn/kubernetes/kubectl",
     label: "China (Azure)",
     platforms: new Set(["win32", "linux"]),
-  }],
+  } as DownloadMirror],
 ]);
 
 const downloadMirror: PreferenceDescription<string> = {
   fromStore(val) {
-    return packageMirrors.has(val) ? val : defaultPackageMirror;
+    return (packageMirrors.has(val) && val) || defaultPackageMirror;
   },
   toStore(val) {
     if (!val || val === defaultPackageMirror) {
@@ -292,7 +292,11 @@ const terminalConfig: PreferenceDescription<TerminalConfig, TerminalConfig> = {
   },
 };
 
-const updateChannels = new Map([
+export interface UpdateChannelInfo {
+  label: string;
+}
+
+const updateChannels = extendOnlyMap<string, UpdateChannelInfo, "latest" | "beta" | "alpha">([
   ["latest", {
     label: "Stable",
   }],
@@ -307,7 +311,7 @@ const defaultUpdateChannel = new SemVer(getAppVersion()).prerelease[0]?.toString
 
 const updateChannel: PreferenceDescription<string> = {
   fromStore(val) {
-    return updateChannels.has(val) ? val : defaultUpdateChannel;
+    return (updateChannels.has(val) && val) || defaultUpdateChannel;
   },
   toStore(val) {
     if (!updateChannels.has(val) || val === defaultUpdateChannel) {

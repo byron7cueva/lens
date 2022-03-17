@@ -47,7 +47,7 @@ describe("user store tests", () => {
 
     mainDi = dis.mainDi;
 
-    mainDi.override(writeFileInjectable, () => () => undefined);
+    mainDi.override(writeFileInjectable, () => () => Promise.resolve());
     mainDi.override(directoryForUserDataInjectable, () => "some-directory-for-user-data");
 
     await dis.runSetups();

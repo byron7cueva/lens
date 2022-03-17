@@ -3,78 +3,75 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import get from "lodash/get";
-import { IAffinity, WorkloadKubeObject } from "../workload-kube-object";
-import { autoBind } from "../../utils";
 import { KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { KubeJsonApiData } from "../kube-json-api";
-import type { IPodContainer, IPodMetrics } from "./pods.api";
+import type { IPodMetrics, PodSpec } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import type { LabelSelector } from "../kube-object";
+import { KubeObject, KubeObjectMetadata, LabelSelector } from "../kube-object";
 
-export class DaemonSet extends WorkloadKubeObject {
+export interface DaemonSetSpec {
+  selector: LabelSelector;
+  template: {
+    metadata: {
+      creationTimestamp?: string;
+      labels: {
+        name: string;
+      };
+    };
+    spec: PodSpec;
+  };
+  updateStrategy: {
+    type: string;
+    rollingUpdate: {
+      maxUnavailable: number;
+    };
+  };
+  revisionHistoryLimit: number;
+}
+
+export interface DaemonSetStatus {
+  currentNumberScheduled: number;
+  numberMisscheduled: number;
+  desiredNumberScheduled: number;
+  numberReady: number;
+  observedGeneration: number;
+  updatedNumberScheduled: number;
+  numberAvailable: number;
+  numberUnavailable: number;
+}
+
+export class DaemonSet extends KubeObject<KubeObjectMetadata, DaemonSetStatus, DaemonSetSpec, "namespace-scoped"> {
   static kind = "DaemonSet";
   static namespaced = true;
   static apiBase = "/apis/apps/v1/daemonsets";
 
-  constructor(data: KubeJsonApiData) {
-    super(data);
-    autoBind(this);
+  getSelectors(): string[] {
+    return KubeObject.stringifyLabels(this.spec.selector.matchLabels);
   }
 
-  declare spec: {
-    selector: LabelSelector;
-    template: {
-      metadata: {
-        creationTimestamp?: string;
-        labels: {
-          name: string;
-        };
-      };
-      spec: {
-        containers: IPodContainer[];
-        initContainers?: IPodContainer[];
-        restartPolicy: string;
-        terminationGracePeriodSeconds: number;
-        dnsPolicy: string;
-        hostPID: boolean;
-        affinity?: IAffinity;
-        nodeSelector?: {
-          [selector: string]: string;
-        };
-        securityContext: {};
-        schedulerName: string;
-        tolerations: {
-          key: string;
-          operator: string;
-          effect: string;
-          tolerationSeconds: number;
-        }[];
-      };
-    };
-    updateStrategy: {
-      type: string;
-      rollingUpdate: {
-        maxUnavailable: number;
-      };
-    };
-    revisionHistoryLimit: number;
-  };
-  declare status: {
-    currentNumberScheduled: number;
-    numberMisscheduled: number;
-    desiredNumberScheduled: number;
-    numberReady: number;
-    observedGeneration: number;
-    updatedNumberScheduled: number;
-    numberAvailable: number;
-    numberUnavailable: number;
-  };
+  getNodeSelectors(): string[] {
+    return KubeObject.stringifyLabels(this.spec.template.spec.nodeSelector);
+  }
+
+  getTemplateLabels(): string[] {
+    return KubeObject.stringifyLabels(this.spec.template.metadata.labels);
+  }
+
+  getTolerations() {
+    return this.spec.template.spec.tolerations ?? [];
+  }
+
+  getAffinity() {
+    return this.spec.template.spec.affinity;
+  }
+
+  getAffinityNumber() {
+    return Object.keys(this.getAffinity() ?? {}).length;
+  }
 
   getImages() {
-    const containers: IPodContainer[] = get(this, "spec.template.spec.containers", []);
-    const initContainers: IPodContainer[] = get(this, "spec.template.spec.initContainers", []);
+    const containers = this.spec.template?.spec?.containers ?? [];
+    const initContainers = this.spec.template?.spec?.initContainers ?? [];
 
     return [...containers, ...initContainers].map(container => container.image);
   }

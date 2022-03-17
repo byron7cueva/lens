@@ -6,7 +6,7 @@ import { makeObservable } from "mobx";
 
 import { podsStore } from "../+workloads-pods/pods.store";
 import { apiManager } from "../../../common/k8s-api/api-manager";
-import { Deployment, deploymentApi, PodStatus } from "../../../common/k8s-api/endpoints";
+import { Deployment, deploymentApi, PodStatusPhase } from "../../../common/k8s-api/endpoints";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { autoBind } from "../../utils";
 
@@ -29,13 +29,13 @@ export class DeploymentStore extends KubeObjectStore<Deployment> {
   getStatuses(deployments?: Deployment[]) {
     const status = { running: 0, failed: 0, pending: 0 };
 
-    deployments.forEach(deployment => {
+    deployments?.forEach(deployment => {
       const pods = this.getChildPods(deployment);
 
-      if (pods.some(pod => pod.getStatus() === PodStatus.FAILED)) {
+      if (pods.some(pod => pod.getStatus() === PodStatusPhase.FAILED)) {
         status.failed++;
       }
-      else if (pods.some(pod => pod.getStatus() === PodStatus.PENDING)) {
+      else if (pods.some(pod => pod.getStatus() === PodStatusPhase.PENDING)) {
         status.pending++;
       }
       else {

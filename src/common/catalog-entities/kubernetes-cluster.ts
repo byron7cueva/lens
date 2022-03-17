@@ -8,7 +8,7 @@ import { CatalogEntity, CatalogEntityActionContext, CatalogEntityContextMenuCont
 import { ClusterStore } from "../cluster-store/cluster-store";
 import { broadcastMessage } from "../ipc";
 import { app } from "electron";
-import type { CatalogEntitySpec } from "../catalog/catalog-entity";
+import type { CatalogEntityConstructor, CatalogEntitySpec } from "../catalog/catalog-entity";
 import { IpcRendererNavigationEvents } from "../../renderer/navigation/events";
 import { requestClusterActivation, requestClusterDisconnection } from "../../renderer/ipc";
 import KubeClusterCategoryIcon from "./icons/kubernetes.svg";
@@ -146,7 +146,7 @@ class KubernetesClusterCategory extends CatalogCategory {
     versions: [
       {
         name: "v1alpha1",
-        entityClass: KubernetesCluster,
+        entityClass: KubernetesCluster as CatalogEntityConstructor<KubernetesCluster>,
       },
     ],
     names: {

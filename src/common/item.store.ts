@@ -44,8 +44,7 @@ export abstract class ItemStore<Item extends ItemObject> {
     return this.items.length;
   }
 
-  getByName(name: string, ...args: any[]): Item;
-  getByName(name: string): Item {
+  getByName(name: string): Item | undefined {
     return this.items.find(item => item.getName() === name);
   }
 
@@ -115,7 +114,6 @@ export abstract class ItemStore<Item extends ItemObject> {
     }
   }
 
-  protected async loadItem(...args: any[]): Promise<Item>;
   @action
   protected async loadItem(request: () => Promise<Item>, sortItems = true) {
     const item = await Promise.resolve(request()).catch(() => null);
@@ -133,9 +131,9 @@ export abstract class ItemStore<Item extends ItemObject> {
         if (sortItems) items = this.sortItems(items);
         this.items.replace(items);
       }
-
-      return item;
     }
+
+    return item;
   }
 
   @action

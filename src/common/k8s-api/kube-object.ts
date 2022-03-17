@@ -6,16 +6,20 @@
 // Base class for all kubernetes objects
 
 import moment from "moment";
-import type { KubeJsonApiData, KubeJsonApiDataList, KubeJsonApiListMetadata, KubeJsonApiMetadata } from "./kube-json-api";
-import { autoBind, formatDuration } from "../utils";
+import type { KubeJsonApiData, KubeJsonApiDataList, KubeJsonApiListMetadata } from "./kube-json-api";
+import { autoBind, formatDuration, hasOptionalTypedProperty, hasTypedProperty, isObject, isString, isNumber, bindPredicate, isTypedArray, isRecord } from "../utils";
 import type { ItemObject } from "../item.store";
 import { apiKube } from "./index";
 import type { JsonApiParams } from "./json-api";
 import * as resourceApplierApi from "./endpoints/resource-applier.api";
-import { hasOptionalProperty, hasTypedProperty, isObject, isString, bindPredicate, isTypedArray, isRecord } from "../../common/utils/type-narrowing";
 import type { Patch } from "rfc6902";
+import type { JsonValue } from "type-fest";
 
-export type KubeObjectConstructor<K extends KubeObject> = (new (data: KubeJsonApiData | any) => K) & {
+export type KubeJsonApiDataFor<K extends KubeObject> = K extends KubeObject<infer Metadata, infer Status, infer Spec>
+  ? KubeJsonApiData<Metadata, Status, Spec>
+  : never;
+
+export type KubeObjectConstructor<K extends KubeObject> = (new (data: KubeJsonApiDataFor<K>) => K) & {
   kind?: string;
   namespaced?: boolean;
   apiBase?: string;
@@ -25,18 +29,14 @@ export interface KubeObjectMetadata {
   uid: string;
   name: string;
   namespace?: string;
-  creationTimestamp: string;
+  creationTimestamp?: string;
   resourceVersion: string;
   selfLink: string;
   deletionTimestamp?: string;
   finalizers?: string[];
   continue?: string; // provided when used "?limit=" query param to fetch objects list
-  labels?: {
-    [label: string]: string;
-  };
-  annotations?: {
-    [annotation: string]: string;
-  };
+  labels?: Record<string, string | undefined>;
+  annotations?: Record<string, string | undefined>;
   ownerReferences?: {
     apiVersion: string;
     kind: string;
@@ -45,6 +45,7 @@ export interface KubeObjectMetadata {
     controller: boolean;
     blockOwnerDeletion: boolean;
   }[];
+  [key: string]: JsonValue | undefined;
 }
 
 export interface KubeStatusData {
@@ -53,6 +54,16 @@ export interface KubeStatusData {
   code: number;
   message?: string;
   reason?: string;
+}
+
+export function isKubeStatusData(object: unknown): object is KubeStatusData {
+  return isObject(object)
+    && hasTypedProperty(object, "kind", isString)
+    && hasTypedProperty(object, "apiVersion", isString)
+    && hasTypedProperty(object, "code", isNumber)
+    && hasOptionalTypedProperty(object, "message", isString)
+    && hasOptionalTypedProperty(object, "reason", isString)
+    && object.kind === "Status";
 }
 
 export class KubeStatus {
@@ -111,22 +122,61 @@ export type LabelMatchExpression = {
   }
 );
 
+export interface Toleration {
+  key: string;
+  operator: string;
+  effect: string;
+  value: string;
+  tolerationSeconds: number;
+}
+
+export interface NodeAffinity {
+  nodeSelectorTerms?: LabelSelector[];
+  weight: number;
+  preference: LabelSelector;
+}
+
+export interface PodAffinity {
+  labelSelector: LabelSelector;
+  topologyKey: string;
+}
+
+export interface SpecificAffinity<T> {
+  requiredDuringSchedulingIgnoredDuringExecution?: T[];
+  preferredDuringSchedulingIgnoredDuringExecution?: T[];
+}
+
+export interface Affinity {
+  nodeAffinity?: SpecificAffinity<NodeAffinity>;
+  podAffinity?: SpecificAffinity<PodAffinity>;
+  podAntiAffinity?: SpecificAffinity<PodAffinity>;
+}
+
 export interface LabelSelector {
   matchLabels?: Record<string, string | undefined>;
   matchExpressions?: LabelMatchExpression[];
 }
 
-export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata, Status = any, Spec = any> implements ItemObject {
+export type KubeObjectScope = "namespace-scoped" | "cluster-scoped";
+export type GetNamespaceResult<Namespaced extends KubeObjectScope> = (
+  Namespaced extends "namespace-scoped"
+    ? string
+    : Namespaced extends "cluster-scoped"
+      ? undefined
+      : string | undefined
+);
+
+export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata, Status = unknown, Spec = unknown, Namespaced extends KubeObjectScope = KubeObjectScope> implements ItemObject {
   static readonly kind?: string;
   static readonly namespaced?: boolean;
   static readonly apiBase?: string;
 
-  apiVersion: string;
-  kind: string;
-  metadata: Metadata;
+  apiVersion!: string;
+  kind!: string;
+  metadata!: Metadata;
   status?: Status;
-  spec?: Spec;
-  managedFields?: any;
+  spec!: Spec;
+  managedFields?: object;
 
   static create(data: KubeJsonApiData) {
     return new KubeObject(data);
@@ -148,49 +198,49 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
   static isKubeJsonApiListMetadata(object: unknown): object is KubeJsonApiListMetadata {
     return (
       isObject(object)
-      && hasOptionalProperty(object, "resourceVersion", isString)
-      && hasOptionalProperty(object, "selfLink", isString)
+      && hasOptionalTypedProperty(object, "resourceVersion", isString)
+      && hasOptionalTypedProperty(object, "selfLink", isString)
     );
   }
 
-  static isKubeJsonApiMetadata(object: unknown): object is KubeJsonApiMetadata {
+  static isKubeJsonApiMetadata(object: unknown): object is KubeObjectMetadata {
     return (
       isObject(object)
       && hasTypedProperty(object, "uid", isString)
       && hasTypedProperty(object, "name", isString)
       && hasTypedProperty(object, "resourceVersion", isString)
-      && hasOptionalProperty(object, "selfLink", isString)
-      && hasOptionalProperty(object, "namespace", isString)
-      && hasOptionalProperty(object, "creationTimestamp", isString)
-      && hasOptionalProperty(object, "continue", isString)
-      && hasOptionalProperty(object, "finalizers", bindPredicate(isTypedArray, isString))
-      && hasOptionalProperty(object, "labels", bindPredicate(isRecord, isString, isString))
-      && hasOptionalProperty(object, "annotations", bindPredicate(isRecord, isString, isString))
+      && hasOptionalTypedProperty(object, "selfLink", isString)
+      && hasOptionalTypedProperty(object, "namespace", isString)
+      && hasOptionalTypedProperty(object, "creationTimestamp", isString)
+      && hasOptionalTypedProperty(object, "continue", isString)
+      && hasOptionalTypedProperty(object, "finalizers", bindPredicate(isTypedArray, isString))
+      && hasOptionalTypedProperty(object, "labels", bindPredicate(isRecord, isString, isString))
+      && hasOptionalTypedProperty(object, "annotations", bindPredicate(isRecord, isString, isString))
     );
   }
 
-  static isPartialJsonApiMetadata(object: unknown): object is Partial<KubeJsonApiMetadata> {
+  static isPartialJsonApiMetadata(object: unknown): object is Partial<KubeObjectMetadata> {
     return (
       isObject(object)
-      && hasOptionalProperty(object, "uid", isString)
-      && hasOptionalProperty(object, "name", isString)
-      && hasOptionalProperty(object, "resourceVersion", isString)
-      && hasOptionalProperty(object, "selfLink", isString)
-      && hasOptionalProperty(object, "namespace", isString)
-      && hasOptionalProperty(object, "creationTimestamp", isString)
-      && hasOptionalProperty(object, "continue", isString)
-      && hasOptionalProperty(object, "finalizers", bindPredicate(isTypedArray, isString))
-      && hasOptionalProperty(object, "labels", bindPredicate(isRecord, isString, isString))
-      && hasOptionalProperty(object, "annotations", bindPredicate(isRecord, isString, isString))
+      && hasOptionalTypedProperty(object, "uid", isString)
+      && hasOptionalTypedProperty(object, "name", isString)
+      && hasOptionalTypedProperty(object, "resourceVersion", isString)
+      && hasOptionalTypedProperty(object, "selfLink", isString)
+      && hasOptionalTypedProperty(object, "namespace", isString)
+      && hasOptionalTypedProperty(object, "creationTimestamp", isString)
+      && hasOptionalTypedProperty(object, "continue", isString)
+      && hasOptionalTypedProperty(object, "finalizers", bindPredicate(isTypedArray, isString))
+      && hasOptionalTypedProperty(object, "labels", bindPredicate(isRecord, isString, isString))
+      && hasOptionalTypedProperty(object, "annotations", bindPredicate(isRecord, isString, isString))
     );
   }
 
   static isPartialJsonApiData(object: unknown): object is Partial<KubeJsonApiData> {
     return (
       isObject(object)
-      && hasOptionalProperty(object, "kind", isString)
-      && hasOptionalProperty(object, "apiVersion", isString)
-      && hasOptionalProperty(object, "metadata", KubeObject.isPartialJsonApiMetadata)
+      && hasOptionalTypedProperty(object, "kind", isString)
+      && hasOptionalTypedProperty(object, "apiVersion", isString)
+      && hasOptionalTypedProperty(object, "metadata", KubeObject.isPartialJsonApiMetadata)
     );
   }
 
@@ -204,7 +254,7 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
     );
   }
 
-  static stringifyLabels(labels?: { [name: string]: string }): string[] {
+  static stringifyLabels(labels?: Record<string, string | undefined>): string[] {
     if (!labels) return [];
 
     return Object.entries(labels).map(([name, value]) => `${name}=${value}`);
@@ -227,7 +277,7 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
     ...KubeObject.nonEditablePathPrefixes,
   ]);
 
-  constructor(data: KubeJsonApiData) {
+  constructor(data: KubeJsonApiData<Metadata, Status, Spec>) {
     if (typeof data !== "object") {
       throw new TypeError(`Cannot create a KubeObject from ${typeof data}`);
     }
@@ -252,13 +302,20 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
     return this.metadata.resourceVersion;
   }
 
+  getDescriptor() {
+    const ns = this.getNs();
+    const res = ns ? `${ns}/` : "";
+
+    return res + this.getName();
+  }
+
   getName() {
     return this.metadata.name;
   }
 
-  getNs() {
+  getNs(): GetNamespaceResult<Namespaced> {
     // avoid "null" serialization via JSON.stringify when post data
-    return this.metadata.namespace || undefined;
+    return (this.metadata.namespace || undefined) as never;
   }
 
   /**
@@ -275,6 +332,10 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
    * NOTE: Generally you can use `getCreationTimestamp` instead.
    */
   getTimeDiffFromNow(): number {
+    if (!this.metadata.creationTimestamp) {
+      return 0;
+    }
+
     return Date.now() - new Date(this.metadata.creationTimestamp).getTime();
   }
 

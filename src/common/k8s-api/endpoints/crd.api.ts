@@ -3,11 +3,10 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeCreationError, KubeObject } from "../kube-object";
+import { KubeObject, KubeObjectMetadata, KubeObjectStatus } from "../kube-object";
 import { KubeApi } from "../kube-api";
 import { crdResourcesURL } from "../../routes";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import type { KubeJsonApiData } from "../kube-json-api";
 
 interface AdditionalPrinterColumnsCommon {
   name: string;
@@ -24,7 +23,7 @@ type AdditionalPrinterColumnsV1Beta = AdditionalPrinterColumnsCommon & {
   JSONPath: string;
 };
 
-export interface CRDVersion {
+export interface CustomResourceDefinitionVersion {
   name: string;
   served: boolean;
   storage: boolean;
@@ -49,7 +48,7 @@ export interface CustomResourceDefinitionSpec {
    * @deprecated for apiextensions.k8s.io/v1 but used in v1beta1
    */
   validation?: object;
-  versions?: CRDVersion[];
+  versions?: CustomResourceDefinitionVersion[];
   conversion: {
     strategy?: string;
     webhook?: any;
@@ -60,43 +59,21 @@ export interface CustomResourceDefinitionSpec {
   additionalPrinterColumns?: AdditionalPrinterColumnsV1Beta[];
 }
 
-export interface CustomResourceDefinition {
-  spec: CustomResourceDefinitionSpec;
-  status: {
-    conditions: {
-      lastTransitionTime: string;
-      message: string;
-      reason: string;
-      status: string;
-      type?: string;
-    }[];
-    acceptedNames: {
-      plural: string;
-      singular: string;
-      kind: string;
-      shortNames: string[];
-      listKind: string;
-    };
-    storedVersions: string[];
+export interface CustomResourceDefinitionStatus extends KubeObjectStatus {
+  acceptedNames: {
+    plural: string;
+    singular: string;
+    kind: string;
+    shortNames: string[];
+    listKind: string;
   };
+  storedVersions: string[];
 }
 
-export interface CRDApiData extends KubeJsonApiData {
-  spec: object; // TODO: make better
-}
-
-export class CustomResourceDefinition extends KubeObject {
+export class CustomResourceDefinition extends KubeObject<KubeObjectMetadata, CustomResourceDefinitionStatus, CustomResourceDefinitionSpec> {
   static kind = "CustomResourceDefinition";
   static namespaced = false;
   static apiBase = "/apis/apiextensions.k8s.io/v1/customresourcedefinitions";
-
-  constructor(data: CRDApiData) {
-    super(data);
-
-    if (!data.spec || typeof data.spec !== "object") {
-      throw new KubeCreationError("Cannot create a CustomResourceDefinition from an object without spec", data);
-    }
-  }
 
   getResourceUrl() {
     return crdResourcesURL({
@@ -135,12 +112,12 @@ export class CustomResourceDefinition extends KubeObject {
     return this.spec.scope;
   }
 
-  getPreferedVersion(): CRDVersion {
+  getPreferedVersion(): CustomResourceDefinitionVersion {
     const { apiVersion } = this;
 
     switch (apiVersion) {
       case "apiextensions.k8s.io/v1":
-        for (const version of this.spec.versions) {
+        for (const version of this.spec.versions ?? []) {
           if (version.storage) {
             return version;
           }
@@ -152,7 +129,8 @@ export class CustomResourceDefinition extends KubeObject {
         const additionalPrinterColumns = apc?.map(({ JSONPath, ...apc }) => ({ ...apc, jsonPath: JSONPath }));
 
         return {
-          name: this.spec.version,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          name: this.spec.version!,
           served: true,
           storage: true,
           schema: this.spec.validation,
@@ -173,7 +151,7 @@ export class CustomResourceDefinition extends KubeObject {
   }
 
   getStoredVersions() {
-    return this.status.storedVersions.join(", ");
+    return this.status?.storedVersions.join(", ") ?? "";
   }
 
   getNames() {

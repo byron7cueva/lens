@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { CatalogCategory, CatalogEntity, CatalogEntityContextMenuContext, CatalogEntityMetadata, CatalogEntityStatus } from "../catalog";
+import { CatalogCategory, CatalogEntity, CatalogEntityConstructor, CatalogEntityContextMenuContext, CatalogEntityMetadata, CatalogEntityStatus } from "../catalog";
 import { catalogCategoryRegistry } from "../catalog/catalog-category-registry";
 import { productName } from "../vars";
 import { WeblinkStore } from "../weblink-store";
@@ -46,7 +46,7 @@ export class WebLink extends CatalogEntity<CatalogEntityMetadata, WebLinkStatus,
     }
 
     catalogCategoryRegistry
-      .getCategoryForEntity<WebLinkCategory>(this)
+      .getCategoryForEntity(this)
       ?.emit("contextMenuOpen", this, context);
   }
 }
@@ -63,7 +63,7 @@ export class WebLinkCategory extends CatalogCategory {
     versions: [
       {
         name: "v1alpha1",
-        entityClass: WebLink,
+        entityClass: WebLink as CatalogEntityConstructor<WebLink>,
       },
     ],
     names: {

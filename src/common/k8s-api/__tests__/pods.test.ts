@@ -3,6 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import assert from "assert";
 import { Pod } from "../endpoints";
 
 interface GetDummyPodOptions {
@@ -12,16 +13,15 @@ interface GetDummyPodOptions {
   initDead?: number;
 }
 
-function getDummyPodDefaultOptions(): Required<GetDummyPodOptions> {
-  return {
+function getDummyPod(rawOpts?: GetDummyPodOptions): Pod {
+  const opts = {
+    ...(rawOpts ?? {}),
     running: 0,
     dead: 0,
     initDead: 0,
     initRunning: 0,
   };
-}
 
-function getDummyPod(opts: GetDummyPodOptions = getDummyPodDefaultOptions()): Pod {
   const pod = new Pod({
     apiVersion: "v1",
     kind: "Pod",
@@ -31,34 +31,32 @@ function getDummyPod(opts: GetDummyPodOptions = getDummyPodDefaultOptions()): Po
       resourceVersion: "v1",
       selfLink: "http",
     },
+    spec: {
+      containers: [],
+      initContainers: [],
+      serviceAccount: "dummy",
+      serviceAccountName: "dummy",
+    },
+    status: {
+      phase: "Running",
+      conditions: [],
+      hostIP: "10.0.0.1",
+      podIP: "10.0.0.1",
+      startTime: "now",
+      containerStatuses: [],
+      initContainerStatuses: [],
+    },
   });
-
-  pod.spec = {
-    containers: [],
-    initContainers: [],
-    serviceAccount: "dummy",
-    serviceAccountName: "dummy",
-  };
-
-  pod.status = {
-    phase: "Running",
-    conditions: [],
-    hostIP: "10.0.0.1",
-    podIP: "10.0.0.1",
-    startTime: "now",
-    containerStatuses: [],
-    initContainerStatuses: [],
-  };
 
   for (let i = 0; i < opts.running; i += 1) {
     const name = `container_r_${i}`;
 
-    pod.spec.containers.push({
+    pod.spec.containers?.push({
       image: "dummy",
       imagePullPolicy: "dummy",
       name,
     });
-    pod.status.containerStatuses.push({
+    pod.status?.containerStatuses?.push({
       image: "dummy",
       imageID: "dummy",
       name,
@@ -75,12 +73,12 @@ function getDummyPod(opts: GetDummyPodOptions = getDummyPodDefaultOptions()): Po
   for (let i = 0; i < opts.dead; i += 1) {
     const name = `container_d_${i}`;
 
-    pod.spec.containers.push({
+    pod.spec.containers?.push({
       image: "dummy",
       imagePullPolicy: "dummy",
       name,
     });
-    pod.status.containerStatuses.push({
+    pod.status?.containerStatuses?.push({
       image: "dummy",
       imageID: "dummy",
       name,
@@ -100,12 +98,12 @@ function getDummyPod(opts: GetDummyPodOptions = getDummyPodDefaultOptions()): Po
   for (let i = 0; i < opts.initRunning; i += 1) {
     const name = `container_ir_${i}`;
 
-    pod.spec.initContainers.push({
+    pod.spec.initContainers?.push({
       image: "dummy",
       imagePullPolicy: "dummy",
       name,
     });
-    pod.status.initContainerStatuses.push({
+    pod.status?.initContainerStatuses?.push({
       image: "dummy",
       imageID: "dummy",
       name,
@@ -122,12 +120,12 @@ function getDummyPod(opts: GetDummyPodOptions = getDummyPodDefaultOptions()): Po
   for (let i = 0; i < opts.initDead; i += 1) {
     const name = `container_id_${i}`;
 
-    pod.spec.initContainers.push({
+    pod.spec.initContainers?.push({
       image: "dummy",
       imagePullPolicy: "dummy",
       name,
     });
-    pod.status.initContainerStatuses.push({
+    pod.status?.initContainerStatuses?.push({
       image: "dummy",
       imageID: "dummy",
       name,
@@ -253,7 +251,7 @@ describe("Pods", () => {
     it("should return true if a condition isn't ready", () => {
       const pod = getDummyPod({ running: 1 });
 
-      pod.status.conditions.push({
+      pod.status?.conditions.push({
         type: "Ready",
         status: "foobar",
         lastProbeTime: 1,
@@ -266,7 +264,7 @@ describe("Pods", () => {
     it("should return false if a condition is non-ready", () => {
       const pod = getDummyPod({ running: 1 });
 
-      pod.status.conditions.push({
+      pod.status?.conditions.push({
         type: "dummy",
         status: "foobar",
         lastProbeTime: 1,
@@ -278,8 +276,11 @@ describe("Pods", () => {
 
     it("should return true if a current container is in a crash loop back off", () => {
       const pod = getDummyPod({ running: 1 });
+      const firstStatus = pod.status?.containerStatuses?.[0];
 
-      pod.status.containerStatuses[0].state = {
+      assert(firstStatus);
+
+      firstStatus.state = {
         waiting: {
           reason: "CrashLookBackOff",
           message: "too much foobar",
@@ -292,6 +293,8 @@ describe("Pods", () => {
     it("should return true if a current phase isn't running", () => {
       const pod = getDummyPod({ running: 1 });
 
+      assert(pod.status);
+
       pod.status.phase = "not running";
 
       expect(pod.hasIssues()).toStrictEqual(true);
@@ -299,6 +302,8 @@ describe("Pods", () => {
 
     it("should return false if a current phase is running", () => {
       const pod = getDummyPod({ running: 1 });
+
+      assert(pod.status);
 
       pod.status.phase = "Running";
 

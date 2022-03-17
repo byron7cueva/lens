@@ -207,7 +207,7 @@ describe("HelmChart tests", () => {
         keywords: [1, "a", false, {}, "b"] as any,
       });
 
-      expect(chart.keywords).toStrictEqual(["a", "b"]);
+      expect(chart?.keywords).toStrictEqual(["a", "b"]);
     });
 
     it("should filter non-string sources", () => {
@@ -221,7 +221,7 @@ describe("HelmChart tests", () => {
         sources: [1, "a", false, {}, "b"] as any,
       });
 
-      expect(chart.sources).toStrictEqual(["a", "b"]);
+      expect(chart?.sources).toStrictEqual(["a", "b"]);
     });
 
     it("should filter invalid maintainers", () => {
@@ -239,7 +239,7 @@ describe("HelmChart tests", () => {
         }] as any,
       });
 
-      expect(chart.maintainers).toStrictEqual([{
+      expect(chart?.maintainers).toStrictEqual([{
         name: "a",
         email: "b",
         url: "c",

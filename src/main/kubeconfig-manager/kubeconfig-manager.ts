@@ -11,6 +11,8 @@ import fs from "fs-extra";
 import { dumpConfigYaml } from "../../common/kube-helpers";
 import logger from "../logger";
 import { LensProxy } from "../lens-proxy";
+import { isCodedError } from "../../common/utils";
+import type { PartialDeep } from "type-fest";
 
 interface Dependencies {
   directoryForTemp: string;
@@ -42,7 +44,7 @@ export class KubeconfigManager {
     }
 
     if (this.tempFilePath === null || !(await fs.pathExists(this.tempFilePath))) {
-      await this.ensureFile();
+      return await this.ensureFile();
     }
 
     return this.tempFilePath;
@@ -61,7 +63,7 @@ export class KubeconfigManager {
     try {
       await fs.unlink(this.tempFilePath);
     } catch (error) {
-      if (error.code !== "ENOENT") {
+      if (isCodedError(error) && error.code !== "ENOENT") {
         throw error;
       }
     } finally {
@@ -72,7 +74,8 @@ export class KubeconfigManager {
   protected async ensureFile() {
     try {
       await this.contextHandler.ensureServer();
-      this.tempFilePath = await this.createProxyKubeconfig();
+
+      return this.tempFilePath = await this.createProxyKubeconfig();
     } catch (error) {
       throw Object.assign(new Error("Failed to creat temp config for auth-proxy"), { cause: error });
     }
@@ -94,13 +97,12 @@ export class KubeconfigManager {
       `kubeconfig-${id}`,
     );
     const kubeConfig = await cluster.getKubeconfig();
-    const proxyConfig: Partial<KubeConfig> = {
+    const proxyConfig: PartialDeep<KubeConfig> = {
       currentContext: contextName,
       clusters: [
         {
           name: contextName,
           server: this.resolveProxyUrl,
-          skipTLSVerify: undefined,
         },
       ],
       users: [
@@ -111,7 +113,7 @@ export class KubeconfigManager {
           user: "proxy",
           name: contextName,
           cluster: contextName,
-          namespace: cluster.defaultNamespace || kubeConfig.getContextObject(contextName).namespace,
+          namespace: cluster.defaultNamespace || kubeConfig.getContextObject(contextName)?.namespace,
         },
       ],
     };

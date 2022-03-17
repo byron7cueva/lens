@@ -4,6 +4,7 @@
  */
 
 import { runInAction } from "mobx";
+import { isDefined } from "./type-narrowing";
 
 /**
  * Get the value behind `key`. If it was not present, first insert `value`
@@ -17,7 +18,8 @@ export function getOrInsert<K, V>(map: Map<K, V>, key: K, value: V): V {
     map.set(key, value);
   }
 
-  return map.get(key);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  return map.get(key)!;
 }
 
 /**
@@ -45,7 +47,8 @@ export function getOrInsertWith<K, V>(map: Map<K, V>, key: K, builder: () => V):
     map.set(key, builder());
   }
 
-  return map.get(key);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  return map.get(key)!;
 }
 
 /**
@@ -72,7 +75,8 @@ export function strictGet<K, V>(map: Map<K, V>, key: K): V {
     throw new TypeError("key not in map");
   }
 
-  return map.get(key);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  return map.get(key)!;
 }
 
 /**
@@ -87,4 +91,37 @@ export function toggle<K>(set: Set<K>, key: K): void {
       set.add(key);
     }
   });
+}
+
+/**
+ * A helper function to also check for defined-ness
+ */
+export function includes<T>(src: T[], value: T | null | undefined): boolean {
+  return isDefined(value) && src.includes(value);
+}
+
+export interface ExtendOnlyMap<K, V, InitialKeys extends K> {
+    forEach(callbackfn: (value: V, key: K, map: ExtendOnlyMap<K, V, InitialKeys>) => void, thisArg?: any): void;
+
+    get(key: InitialKeys): V;
+    get(key: K): V | undefined;
+    get(key: null | undefined): undefined;
+    get(key: K | null | undefined): V | undefined;
+
+    has(key: InitialKeys): true;
+    has(key: K): boolean;
+    has(key: null | undefined): false;
+    has(key: K | null | undefined): boolean;
+
+    set(key: K, value: V): this;
+
+    readonly size: number;
+    [Symbol.iterator](): IterableIterator<[K, V]>;
+    entries(): IterableIterator<[K, V]>;
+    keys(): IterableIterator<K>;
+    values(): IterableIterator<V>;
+}
+
+export function extendOnlyMap<K, V, InitialKeys extends K>(initialValues: (readonly [InitialKeys, V])[]): ExtendOnlyMap<K, V, InitialKeys> {
+  return new Map(initialValues) as never;
 }

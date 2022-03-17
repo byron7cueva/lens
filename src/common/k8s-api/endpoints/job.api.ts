@@ -3,87 +3,75 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import get from "lodash/get";
-import { autoBind } from "../../utils";
-import { IAffinity, WorkloadKubeObject } from "../workload-kube-object";
 import { KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { KubeJsonApiData } from "../kube-json-api";
-import type { IPodContainer, IPodMetrics } from "./pods.api";
+import type { IPodContainer, IPodMetrics, PodSpec } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import type { LabelSelector } from "../kube-object";
+import { KubeObject, KubeObjectMetadata, KubeObjectStatus, LabelSelector } from "../kube-object";
 
-export class Job extends WorkloadKubeObject {
+export interface JobSpec {
+  parallelism?: number;
+  completions?: number;
+  backoffLimit?: number;
+  selector?: LabelSelector;
+  template: {
+    metadata: {
+      creationTimestamp?: string;
+      labels?: Partial<Record<string, string>>;
+      annotations?: Partial<Record<string, string>>;
+    };
+    spec: PodSpec;
+  };
+  containers?: IPodContainer[];
+  restartPolicy?: string;
+  terminationGracePeriodSeconds?: number;
+  dnsPolicy?: string;
+  serviceAccountName?: string;
+  serviceAccount?: string;
+  schedulerName?: string;
+}
+
+export interface JobStatus extends KubeObjectStatus {
+  startTime: string;
+  completionTime: string;
+  succeeded: number;
+}
+
+export class Job extends KubeObject<KubeObjectMetadata, JobStatus, JobSpec, "namespace-scoped"> {
   static kind = "Job";
   static namespaced = true;
   static apiBase = "/apis/batch/v1/jobs";
 
-  constructor(data: KubeJsonApiData) {
-    super(data);
-    autoBind(this);
+  getSelectors(): string[] {
+    return KubeObject.stringifyLabels(this.spec.selector?.matchLabels);
   }
 
-  declare spec: {
-    parallelism?: number;
-    completions?: number;
-    backoffLimit?: number;
-    selector?: LabelSelector;
-    template: {
-      metadata: {
-        creationTimestamp?: string;
-        labels?: {
-          [name: string]: string;
-        };
-        annotations?: {
-          [name: string]: string;
-        };
-      };
-      spec: {
-        containers: IPodContainer[];
-        restartPolicy: string;
-        terminationGracePeriodSeconds: number;
-        dnsPolicy: string;
-        hostPID: boolean;
-        affinity?: IAffinity;
-        nodeSelector?: {
-          [selector: string]: string;
-        };
-        tolerations?: {
-          key: string;
-          operator: string;
-          effect: string;
-          tolerationSeconds: number;
-        }[];
-        schedulerName: string;
-      };
-    };
-    containers?: IPodContainer[];
-    restartPolicy?: string;
-    terminationGracePeriodSeconds?: number;
-    dnsPolicy?: string;
-    serviceAccountName?: string;
-    serviceAccount?: string;
-    schedulerName?: string;
-  };
-  declare status: {
-    conditions: {
-      type: string;
-      status: string;
-      lastProbeTime: string;
-      lastTransitionTime: string;
-      message?: string;
-    }[];
-    startTime: string;
-    completionTime: string;
-    succeeded: number;
-  };
+  getNodeSelectors(): string[] {
+    return KubeObject.stringifyLabels(this.spec.template.spec.nodeSelector);
+  }
+
+  getTemplateLabels(): string[] {
+    return KubeObject.stringifyLabels(this.spec.template.metadata.labels);
+  }
+
+  getTolerations() {
+    return this.spec.template.spec.tolerations ?? [];
+  }
+
+  getAffinity() {
+    return this.spec.template.spec.affinity;
+  }
+
+  getAffinityNumber() {
+    return Object.keys(this.getAffinity() ?? {}).length;
+  }
 
   getDesiredCompletions() {
-    return this.spec.completions || 0;
+    return this.spec.completions ?? 0;
   }
 
   getCompletions() {
-    return this.status.succeeded || 0;
+    return this.status?.succeeded ?? 0;
   }
 
   getParallelism() {
@@ -93,13 +81,11 @@ export class Job extends WorkloadKubeObject {
   getCondition() {
     // Type of Job condition could be only Complete or Failed
     // https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.14/#jobcondition-v1-batch
-    return this.status.conditions?.find(({ status }) => status === "True");
+    return this.status?.conditions?.find(({ status }) => status === "True");
   }
 
   getImages() {
-    const containers: IPodContainer[] = get(this, "spec.template.spec.containers", []);
-
-    return [...containers].map(container => container.image);
+    return this.spec.template.spec.containers?.map(container => container.image) ?? [];
   }
 }
 
