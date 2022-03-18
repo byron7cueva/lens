@@ -8,7 +8,7 @@ import type { KubeObjectStore } from "./kube-object.store";
 import { action, observable, makeObservable } from "mobx";
 import { autoBind, isDefined, iter } from "../utils";
 import type { KubeApi } from "./kube-api";
-import type { KubeObject } from "./kube-object";
+import type { KubeJsonApiDataFor, KubeObject } from "./kube-object";
 import { IKubeObjectRef, parseKubeApi, createKubeApiURL } from "./kube-api-parse";
 
 export class ApiManager {
@@ -32,17 +32,17 @@ export class ApiManager {
     return iter.find(this.apis.values(), api => api.kind === kind && api.apiVersionWithGroup === apiVersion);
   }
 
-  registerApi<K extends KubeObject>(apiBase: string, api: KubeApi<K>) {
+  registerApi<K extends KubeObject, Data extends KubeJsonApiDataFor<K> = KubeJsonApiDataFor<K>>(apiBase: string, api: KubeApi<K, Data>) {
     if (!api.apiBase) return;
 
     if (!this.apis.has(apiBase)) {
       this.stores.forEach((store) => {
-        if (store.api === api) {
+        if (store.api as never === api) {
           this.stores.set(apiBase, store);
         }
       });
 
-      this.apis.set(apiBase, api);
+      this.apis.set(apiBase, api as never);
     }
   }
 

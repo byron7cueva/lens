@@ -48,7 +48,7 @@ class TestProvider extends PrometheusProvider {
     throw new Error("getQuery is not implemented.");
   }
 
-  async getPrometheusService(): Promise<PrometheusService> {
+  async getPrometheusService(): Promise<PrometheusService | undefined> {
     switch (this.alwaysFail) {
       case ServiceResult.Success:
         return {

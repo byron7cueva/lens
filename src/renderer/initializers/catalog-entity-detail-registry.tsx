@@ -9,40 +9,39 @@ import { CatalogEntityDetailRegistry, CatalogEntityDetailsProps } from "../../ex
 import { DrawerItem, DrawerTitle } from "../components/drawer";
 
 export function initCatalogEntityDetailRegistry() {
-  CatalogEntityDetailRegistry.getInstance()
-    .add([
-      {
-        apiVersions: [KubernetesCluster.apiVersion],
-        kind: KubernetesCluster.kind,
-        components: {
-          Details: ({ entity }: CatalogEntityDetailsProps<KubernetesCluster>) => (
-            <>
-              <DrawerTitle title="Kubernetes Information" />
-              <div className="box grow EntityMetadata">
-                <DrawerItem name="Distribution">
-                  {entity.metadata.distro || "unknown"}
-                </DrawerItem>
-                <DrawerItem name="Kubelet Version">
-                  {entity.metadata.kubeVersion || "unknown"}
-                </DrawerItem>
-              </div>
-            </>
-          ),
-        },
-      },
-      {
-        apiVersions: [WebLink.apiVersion],
-        kind: WebLink.kind,
-        components: {
-          Details: ({ entity }: CatalogEntityDetailsProps<WebLink>) => (
-            <>
-              <DrawerTitle title="More Information" />
-              <DrawerItem name="URL">
-                {entity.spec.url}
-              </DrawerItem>
-            </>
-          ),
-        },
-      },
-    ]);
+  const registry = CatalogEntityDetailRegistry.getInstance();
+
+  registry.add({
+    apiVersions: [KubernetesCluster.apiVersion],
+    kind: KubernetesCluster.kind,
+    components: {
+      Details: ({ entity }: CatalogEntityDetailsProps<KubernetesCluster>) => (
+        <>
+          <DrawerTitle title="Kubernetes Information" />
+          <div className="box grow EntityMetadata">
+            <DrawerItem name="Distribution">
+              {entity.metadata.distro || "unknown"}
+            </DrawerItem>
+            <DrawerItem name="Kubelet Version">
+              {entity.metadata.kubeVersion || "unknown"}
+            </DrawerItem>
+          </div>
+        </>
+      ),
+    },
+  });
+  registry.add({
+    apiVersions: [WebLink.apiVersion],
+    kind: WebLink.kind,
+    components: {
+      Details: ({ entity }: CatalogEntityDetailsProps<WebLink>) => (
+        <>
+          <DrawerTitle title="More Information" />
+          <DrawerItem name="URL">
+            {entity.spec.url}
+          </DrawerItem>
+        </>
+      ),
+    },
+  });
 }

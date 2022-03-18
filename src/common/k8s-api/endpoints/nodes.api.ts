@@ -3,12 +3,13 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeObject } from "../kube-object";
+import { BaseKubeObjectCondition, KubeObject } from "../kube-object";
 import { autoBind, cpuUnitsToNumber, iter, unitsToBytes } from "../../../renderer/utils";
 import { IMetrics, metricsApi } from "./metrics.api";
 import { KubeApi } from "../kube-api";
 import type { KubeJsonApiData } from "../kube-json-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
+import { TypedRegEx } from "typed-regex";
 
 export class NodesApi extends KubeApi<Node> {
 }
@@ -55,13 +56,11 @@ export function formatNodeTaint(taint: NodeTaint): string {
   return `${taint.key}:${taint.effect}`;
 }
 
-export interface NodeCondition {
-  type: string;
-  status: string;
+export interface NodeCondition extends BaseKubeObjectCondition {
+  /**
+   * Last time we got an update on a given condition.
+   */
   lastHeartbeatTime?: string;
-  lastTransitionTime?: string;
-  reason?: string;
-  message?: string;
 }
 
 export interface Node {
@@ -144,7 +143,7 @@ function* getTrueConditionTypes(conditions: IterableIterator<NodeCondition> | It
  * This regex is used in the `getRoleLabels()` method bellow, but placed here
  * as factoring out regexes is best practice.
  */
-const nodeRoleLabelKeyMatcher = /^.*node-role.kubernetes.io\/+(?<role>.+)$/;
+const nodeRoleLabelKeyMatcher = TypedRegEx("^.*node-role.kubernetes.io/+(?<role>.+)$");
 
 export class Node extends KubeObject {
   static kind = "Node";
@@ -181,9 +180,9 @@ export class Node extends KubeObject {
     const roleLabels: string[] = [];
 
     for (const labelKey of Object.keys(labels)) {
-      const match = nodeRoleLabelKeyMatcher.exec(labelKey);
+      const match = nodeRoleLabelKeyMatcher.match(labelKey);
 
-      if (match) {
+      if (match?.groups) {
         roleLabels.push(match.groups.role);
       }
     }
@@ -234,7 +233,7 @@ export class Node extends KubeObject {
   }
 
   getKubeletVersion() {
-    return this.status.nodeInfo.kubeletVersion;
+    return this.status.nodeInfo?.kubeletVersion;
   }
 
   getOperatingSystem(): string {

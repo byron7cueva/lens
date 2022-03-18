@@ -5,19 +5,20 @@
 
 import { computed, IComputedValue } from "mobx";
 import type { ClusterId } from "../../../common/cluster-types";
+import { isDefined } from "../../../common/utils";
 import type { LensMainExtension } from "../../../extensions/lens-main-extension";
 import { catalogEntityRegistry } from "../../catalog";
- 
+
 interface Dependencies {
   extensions: IComputedValue<LensMainExtension[]>;
 }
- 
-export const terminalShellEnvModify = ({ extensions }: Dependencies) => 
-  (clusterId: ClusterId, env: Record<string, string>) => {
+
+export const terminalShellEnvModify = ({ extensions }: Dependencies) =>
+  (clusterId: ClusterId, env: Record<string, string | undefined>) => {
     const terminalShellEnvModifiers = computed(() => (
       extensions.get()
         .map((extension) => extension.terminalShellEnvModifier)
-        .filter(Boolean)
+        .filter(isDefined)
     ))
       .get();
 
@@ -25,7 +26,7 @@ export const terminalShellEnvModify = ({ extensions }: Dependencies) =>
       return env;
     }
 
-    const entity = catalogEntityRegistry.getById(clusterId);
+    const entity = catalogEntityRegistry.findById(clusterId);
 
     if (entity) {
       const ctx = { catalogEntity: entity };

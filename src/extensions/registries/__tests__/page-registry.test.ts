@@ -14,6 +14,7 @@ import { ThemeStore } from "../../../renderer/theme.store";
 import { UserStore } from "../../../common/user-store";
 import { getDisForUnitTesting } from "../../../test-utils/get-dis-for-unit-testing";
 import mockFs from "mock-fs";
+import assert from "assert";
 
 jest.mock("electron", () => ({
   app: {
@@ -37,7 +38,7 @@ jest.mock("electron", () => ({
 
 console = new Console(stdout, stderr);
 
-let ext: LensExtension = null;
+let ext: LensExtension;
 
 describe("page registry tests", () => {
   beforeEach(async () => {
@@ -150,6 +151,8 @@ describe("page registry tests", () => {
       it("matching to first registered page without id", () => {
         const page = GlobalPageRegistry.getInstance().getByPageTarget({ extensionId: ext.name });
 
+        assert(page);
+
         expect(page.id).toEqual(undefined);
         expect(page.extensionId).toEqual(ext.name);
         expect(page.url).toEqual(getExtensionPageUrl({ extensionId: ext.name }));
@@ -160,6 +163,8 @@ describe("page registry tests", () => {
           pageId: "test-page",
           extensionId: ext.name,
         });
+
+        assert(page);
 
         expect(page.id).toEqual("test-page");
       });

@@ -27,7 +27,7 @@ export class StorageHelper<T> {
   static logPrefix = "[StorageHelper]:";
   readonly storage: StorageAdapter<T>;
 
-  private data = observable.box<T>(undefined, {
+  private data = observable.box<T | undefined>(undefined, {
     deep: true,
     equals: comparer.structural,
   });
@@ -114,9 +114,6 @@ export class StorageHelper<T> {
     }
   }
 
-  /**
-   * @deprecated Switch to using value for being reactive
-   */
   get(): T {
     return this.value;
   }

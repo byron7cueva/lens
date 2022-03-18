@@ -8,7 +8,7 @@ import { KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 
 export interface IResourceQuotaValues {
-  [quota: string]: string;
+  [quota: string]: string | undefined;
 
   // Compute Resource Quota
   "limits.cpu"?: string;

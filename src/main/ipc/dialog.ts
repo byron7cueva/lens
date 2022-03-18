@@ -3,10 +3,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { BrowserWindow, dialog, OpenDialogOptions } from "electron";
+import { dialog, OpenDialogOptions } from "electron";
+import { WindowManager } from "../window-manager";
 
 export async function showOpenDialog(dialogOptions: OpenDialogOptions): Promise<{ canceled: boolean; filePaths: string[] }> {
-  const { canceled, filePaths } = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), dialogOptions);
+  const window = await WindowManager.getInstance().ensureMainWindow();
+  const { canceled, filePaths } = await dialog.showOpenDialog(window, dialogOptions);
 
   return { canceled, filePaths };
 }

@@ -7,7 +7,7 @@ import { action, observable, IComputedValue, computed, ObservableMap, runInActio
 import type { CatalogEntity } from "../../../common/catalog";
 import { catalogEntityRegistry } from "../../catalog";
 import { FSWatcher, watch } from "chokidar";
-import fs from "fs";
+import fs, { Stats } from "fs";
 import path from "path";
 import type stream from "stream";
 import { bytesToUnits, Disposer, getOrInsertWith, iter, noop } from "../../../common/utils";
@@ -319,12 +319,13 @@ const watchFileChanges = (filePath: string, dependencies: Dependencies): [ICompu
           stabilityThreshold: 1000,
         },
         atomic: 150, // for "atomic writes"
+        alwaysStat: true,
       });
 
       const diffChangedConfig = diffChangedConfigFor(dependencies);
 
       watcher
-        .on("change", (childFilePath, stats) => {
+        .on("change", (childFilePath, stats: Stats): void => {
           const cleanup = cleanupFns.get(childFilePath);
 
           if (!cleanup) {
@@ -340,7 +341,7 @@ const watchFileChanges = (filePath: string, dependencies: Dependencies): [ICompu
             maxAllowedFileReadSize,
           }));
         })
-        .on("add", (childFilePath, stats) => {
+        .on("add", (childFilePath, stats: Stats): void => {
           if (isFolderSync) {
             const fileName = path.basename(childFilePath);
 
@@ -365,7 +366,7 @@ const watchFileChanges = (filePath: string, dependencies: Dependencies): [ICompu
         })
         .on("error", error => logger.error(`${logPrefix} watching file/folder failed: ${error}`, { filePath }));
     } catch (error) {
-      console.log(error.stack);
+      console.log((error as { stack: unknown }).stack);
       logger.warn(`${logPrefix} failed to start watching changes: ${error}`);
     }
   })();

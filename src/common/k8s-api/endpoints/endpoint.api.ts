@@ -7,34 +7,36 @@ import { autoBind } from "../../utils";
 import { KubeObject } from "../kube-object";
 import { KubeApi } from "../kube-api";
 import type { KubeJsonApiData } from "../kube-json-api";
-import { get } from "lodash";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 
 export interface EndpointPort {
+  appProtocol?: string;
   name?: string;
-  protocol: string;
+  protocol?: string;
   port: number;
 }
 
 export interface EndpointAddressDeclaration {
-  hostname: string;
+  hostname?: string;
   ip: string;
-  nodeName: string;
+  nodeName?: string;
+  targetRef?: TargetRef;
 }
 
-export interface EndpointSubset {
-  addresses: EndpointAddressDeclaration[];
-  notReadyAddresses: EndpointAddressDeclaration[];
-  ports: EndpointPort[];
+export interface EndpointSubsetData {
+  addresses?: EndpointAddressDeclaration[];
+  notReadyAddresses?: EndpointAddressDeclaration[];
+  ports?: EndpointPort[];
 }
 
 export interface TargetRef {
-  kind: string;
-  namespace: string;
-  name: string;
-  uid: string;
-  resourceVersion: string;
-  apiVersion: string;
+  apiVersion?: string;
+  fieldPath?: string;
+  kind?: string;
+  name?: string;
+  namespace?: string;
+  resourceVersion?: string;
+  uid?: string;
 }
 
 export interface EndpointAddressData extends EndpointAddressDeclaration {
@@ -42,9 +44,9 @@ export interface EndpointAddressData extends EndpointAddressDeclaration {
 }
 
 export class EndpointAddress implements EndpointAddressDeclaration {
-  hostname: string;
+  hostname?: string;
   ip: string;
-  nodeName: string;
+  nodeName?: string;
   targetRef?: Omit<TargetRef, "apiVersion">;
 
   static create(data: EndpointAddressData): EndpointAddress {
@@ -75,15 +77,15 @@ export class EndpointAddress implements EndpointAddressDeclaration {
   }
 }
 
-export class EndpointSubset implements EndpointSubset {
+export class EndpointSubset {
   addresses: EndpointAddressDeclaration[];
   notReadyAddresses: EndpointAddressDeclaration[];
   ports: EndpointPort[];
 
-  constructor(data: EndpointSubset) {
-    this.addresses = get(data, "addresses", []);
-    this.notReadyAddresses = get(data, "notReadyAddresses", []);
-    this.ports = get(data, "ports", []);
+  constructor(data: EndpointSubsetData) {
+    this.addresses = data.addresses ?? [];
+    this.notReadyAddresses = data.notReadyAddresses ?? [];
+    this.ports = data.ports ?? [];
   }
 
   getAddresses(): EndpointAddress[] {

@@ -41,15 +41,21 @@ export class ClusterPageMenuRegistry extends BaseRegistry<ClusterPageMenuRegistr
   }
 
   getSubItems(parent: ClusterPageMenuRegistration) {
+    const target = parent.target;
+
+    if (!target) {
+      return [];
+    }
+
     return this.getItems().filter((item) => (
       item.parentId === parent.id &&
-      item.target.extensionId === parent.target.extensionId
+      item.target?.extensionId === target.extensionId
     ));
   }
 
   getByPage({ id: pageId, extensionId }: RegisteredPage) {
     return this.getItems().find((item) => (
-      item.target.pageId == pageId &&
+      item.target?.pageId == pageId &&
       item.target.extensionId === extensionId
     ));
   }

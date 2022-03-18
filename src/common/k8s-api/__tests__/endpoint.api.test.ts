@@ -29,13 +29,13 @@ describe("endpoint tests", () => {
           ip: "1.1.1.1",
         }, {
           ip: "1.1.1.2",
-        }] as any,
+        }],
         notReadyAddresses: [],
         ports: [{
-          port: "81",
+          port: 81,
         }, {
-          port: "82",
-        }] as any,
+          port: 82,
+        }],
       });
 
       expect(sub.toString()).toBe("1.1.1.1:81, 1.1.1.1:82, 1.1.1.2:81, 1.1.1.2:82");

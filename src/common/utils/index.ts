@@ -29,7 +29,6 @@ export * from "./formatDuration";
 export * from "./getRandId";
 export * from "./hash-set";
 export * from "./n-fircate";
-export * from "./objects";
 export * from "./openBrowser";
 export * from "./paths";
 export * from "./promise-exec";
@@ -40,6 +39,7 @@ export * from "./splitArray";
 export * from "./tar";
 export * from "./toJS";
 export * from "./type-narrowing";
+export * from "./types";
 export * from "./wait-for-path";
 
 export type { Tuple } from "./tuple";
@@ -48,10 +48,12 @@ import * as iter from "./iter";
 import * as array from "./array";
 import * as tuple from "./tuple";
 import * as base64 from "./base64";
+import * as object from "./objects";
 
 export {
   iter,
   array,
   tuple,
   base64,
+  object,
 };

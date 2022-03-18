@@ -13,39 +13,43 @@ import { apiKube } from "./index";
 import type { JsonApiParams } from "./json-api";
 import * as resourceApplierApi from "./endpoints/resource-applier.api";
 import type { Patch } from "rfc6902";
-import type { JsonValue } from "type-fest";
+import assert from "assert";
 
 export type KubeJsonApiDataFor<K extends KubeObject> = K extends KubeObject<infer Metadata, infer Status, infer Spec>
   ? KubeJsonApiData<Metadata, Status, Spec>
   : never;
 
-export type KubeObjectConstructor<K extends KubeObject> = (new (data: KubeJsonApiDataFor<K>) => K) & {
+export interface KubeObjectConstructorData {
   kind?: string;
   namespaced?: boolean;
   apiBase?: string;
-};
+}
+
+export type KubeObjectConstructor<K extends KubeObject, Data extends KubeJsonApiDataFor<K> = KubeJsonApiDataFor<K>> = (new (data: Data) => K) & KubeObjectConstructorData;
+
+export interface OwnerReference {
+  apiVersion: string;
+  kind: string;
+  name: string;
+  uid: string;
+  controller: boolean;
+  blockOwnerDeletion: boolean;
+}
 
 export interface KubeObjectMetadata {
   uid: string;
   name: string;
   namespace?: string;
   creationTimestamp?: string;
-  resourceVersion: string;
-  selfLink: string;
+  resourceVersion?: string;
+  selfLink?: string;
   deletionTimestamp?: string;
   finalizers?: string[];
   continue?: string; // provided when used "?limit=" query param to fetch objects list
   labels?: Record<string, string | undefined>;
   annotations?: Record<string, string | undefined>;
-  ownerReferences?: {
-    apiVersion: string;
-    kind: string;
-    name: string;
-    uid: string;
-    controller: boolean;
-    blockOwnerDeletion: boolean;
-  }[];
-  [key: string]: JsonValue | undefined;
+  ownerReferences?: OwnerReference[];
+  [key: string]: unknown;
 }
 
 export interface KubeStatusData {
@@ -81,14 +85,33 @@ export class KubeStatus {
   }
 }
 
+export interface BaseKubeObjectCondition {
+  /**
+   * Last time the condition transit from one status to another.
+   *
+   * @type Date
+   */
+  lastTransitionTime?: string;
+  /**
+   * A human readable message indicating details about last transition.
+   */
+  message?: string;
+  /**
+   * brief (usually one word) readon for the condition's last transition.
+   */
+  reason?: string;
+  /**
+   * Status of the condition
+   */
+  status: "True" | "False" | "Unknown";
+  /**
+   * Type of the condition
+   */
+  type: string;
+}
+
 export interface KubeObjectStatus {
-  conditions?: {
-    lastTransitionTime: string;
-    message: string;
-    reason: string;
-    status: string;
-    type?: string;
-  }[];
+  conditions?: BaseKubeObjectCondition[];
 }
 
 export type KubeMetaField = keyof KubeObjectMetadata;
@@ -438,6 +461,8 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
    * @deprecated use KubeApi.delete instead
    */
   delete(params?: JsonApiParams) {
+    assert(this.selfLink, "selfLink must be present to delete self");
+
     return apiKube.del(this.selfLink, params);
   }
 }

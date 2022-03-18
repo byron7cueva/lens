@@ -9,15 +9,19 @@ import spdy from "spdy";
 import type httpProxy from "http-proxy";
 import { apiPrefix, apiKubePrefix } from "../common/vars";
 import type { Router } from "./router/router";
-import type { ContextHandler } from "./context-handler/context-handler";
+import type { ClusterContextHandler } from "./context-handler/context-handler";
 import logger from "./logger";
 import { Singleton } from "../common/utils";
 import type { Cluster } from "../common/cluster/cluster";
 import type { ProxyApiRequestArgs } from "./proxy-functions";
 import { appEventBus } from "../common/app-event-bus/event-bus";
 import { getBoolean } from "./utils/parse-query";
+import assert from "assert";
+import type { SetRequired } from "type-fest";
 
-type GetClusterForRequest = (req: http.IncomingMessage) => Cluster | null;
+type GetClusterForRequest = (req: http.IncomingMessage) => Cluster | undefined;
+
+export type ServerIncomingMessage = SetRequired<http.IncomingMessage, "url" | "method">;
 
 export interface LensProxyFunctions {
   getClusterForRequest: GetClusterForRequest;
@@ -53,13 +57,12 @@ const disallowedPorts = new Set([
 ]);
 
 export class LensProxy extends Singleton {
-  protected origin: string;
   protected proxyServer: http.Server;
   protected closed = false;
   protected retryCounters = new Map<string, number>();
   protected getClusterForRequest: GetClusterForRequest;
 
-  public port: number;
+  public port?: number;
 
   constructor(protected router: Router, protected proxy: httpProxy, { shellApiRequest, kubeApiUpgradeRequest, getClusterForRequest }: LensProxyFunctions) {
     super();
@@ -73,12 +76,12 @@ export class LensProxy extends Singleton {
         plain: true,
         protocols: ["http/1.1", "spdy/3.1"],
       },
-    }, (req: http.IncomingMessage, res: http.ServerResponse) => {
-      this.handleRequest(req, res);
+    }, (req, res) => {
+      this.handleRequest(req as ServerIncomingMessage, res);
     });
 
     this.proxyServer
-      .on("upgrade", (req: http.IncomingMessage, socket: net.Socket, head: Buffer) => {
+      .on("upgrade", (req: ServerIncomingMessage, socket: net.Socket, head: Buffer) => {
         const isInternal = req.url.startsWith(`${apiPrefix}?`);
         const cluster = getClusterForRequest(req);
 
@@ -178,7 +181,7 @@ export class LensProxy extends Singleton {
         const url = new URL(req.url, "http://localhost");
 
         if (url.searchParams.has("watch")) {
-          res.statusCode = proxyRes.statusCode;
+          res.statusCode = proxyRes.statusCode ?? -1;
           res.flushHeaders();
         }
       }
@@ -207,7 +210,7 @@ export class LensProxy extends Singleton {
             logger.debug(`Retrying proxy request to url: ${reqId}`);
             setTimeout(() => {
               this.retryCounters.set(reqId, retryCount + 1);
-              this.handleRequest(req, res)
+              this.handleRequest(req as ServerIncomingMessage, res)
                 .catch(error => logger.error(`[LENS-PROXY]: failed to handle request on proxy error: ${error}`));
             }, timeoutMs);
           }
@@ -224,8 +227,8 @@ export class LensProxy extends Singleton {
     return proxy;
   }
 
-  protected async getProxyTarget(req: http.IncomingMessage, contextHandler: ContextHandler): Promise<httpProxy.ServerOptions | void> {
-    if (req.url.startsWith(apiKubePrefix)) {
+  protected async getProxyTarget(req: http.IncomingMessage, contextHandler: ClusterContextHandler): Promise<httpProxy.ServerOptions | void> {
+    if (req.url?.startsWith(apiKubePrefix)) {
       delete req.headers.authorization;
       req.url = req.url.replace(apiKubePrefix, "");
 
@@ -233,20 +236,25 @@ export class LensProxy extends Singleton {
     }
   }
 
-  protected getRequestId(req: http.IncomingMessage) {
+  protected getRequestId(req: http.IncomingMessage): string {
+    assert(req.headers.host);
+
     return req.headers.host + req.url;
   }
 
-  protected async handleRequest(req: http.IncomingMessage, res: http.ServerResponse) {
+  protected async handleRequest(req: ServerIncomingMessage, res: http.ServerResponse) {
     const cluster = this.getClusterForRequest(req);
 
-    if (cluster) {
-      const proxyTarget = await this.getProxyTarget(req, cluster.contextHandler);
-
-      if (proxyTarget) {
-        return this.proxy.web(req, res, proxyTarget);
-      }
+    if (!cluster) {
+      throw new Error(`No cluster found for request: ${req.url}`);
     }
+
+    const proxyTarget = await this.getProxyTarget(req, cluster.contextHandler);
+
+    if (proxyTarget) {
+      return this.proxy.web(req, res, proxyTarget);
+    }
+
     this.router.route(cluster, req, res);
   }
 }

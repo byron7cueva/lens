@@ -31,8 +31,20 @@ interface Dependencies {
   authProxyCa: Promise<Buffer>;
 }
 
-export class ContextHandler {
-  public clusterUrl: UrlWithStringQuery;
+export interface ClusterContextHandler {
+  readonly clusterUrl: UrlWithStringQuery;
+  setupPrometheus(preferences?: ClusterPrometheusPreferences): void;
+  getPrometheusDetails(): Promise<PrometheusDetails>;
+  resolveAuthProxyUrl(): Promise<string>;
+  resolveAuthProxyCa(): Promise<Buffer>;
+  getApiTarget(isLongRunningRequest?: boolean): Promise<httpProxy.ServerOptions>;
+  restartServer(): Promise<void>;
+  ensureServer(): Promise<void>;
+  stopServer(): void;
+}
+
+export class ContextHandler implements ClusterContextHandler {
+  public readonly clusterUrl: UrlWithStringQuery;
   protected kubeAuthProxy?: KubeAuthProxy;
   protected apiTarget?: httpProxy.ServerOptions;
   protected prometheusProvider?: string;
@@ -45,7 +57,7 @@ export class ContextHandler {
 
   public setupPrometheus(preferences: ClusterPrometheusPreferences = {}) {
     this.prometheusProvider = preferences.prometheusProvider?.type;
-    this.prometheus = preferences.prometheus || null;
+    this.prometheus = preferences.prometheus;
   }
 
   public async getPrometheusDetails(): Promise<PrometheusDetails> {
@@ -81,7 +93,7 @@ export class ContextHandler {
   }
 
   protected async getPrometheusService(): Promise<PrometheusService> {
-    if (this.prometheus !== null && this.prometheusProvider !== null) {
+    if (this.prometheus && this.prometheusProvider) {
       return {
         id: this.prometheusProvider,
         namespace: this.prometheus.namespace,
@@ -116,14 +128,14 @@ export class ContextHandler {
     throw Object.assign(new Error("No Prometheus service found"), { cause: errors });
   }
 
-  async resolveAuthProxyUrl() {
-    await this.ensureServer();
+  async resolveAuthProxyUrl(): Promise<string> {
+    const kubeAuthProxy = await this.ensureServerHelper();
     const path = this.clusterUrl.path !== "/" ? this.clusterUrl.path : "";
 
-    return `https://127.0.0.1:${this.kubeAuthProxy.port}${this.kubeAuthProxy.apiPrefix}${path}`;
+    return `https://127.0.0.1:${kubeAuthProxy.port}${kubeAuthProxy.apiPrefix}${path}`;
   }
 
-  async resolveAuthProxyCa() {
+  async resolveAuthProxyCa(): Promise<Buffer> {
     return this.dependencies.authProxyCa;
   }
 
@@ -138,30 +150,32 @@ export class ContextHandler {
   }
 
   protected async newApiTarget(timeout: number): Promise<httpProxy.ServerOptions> {
-    await this.ensureServer();
-
+    const kubeAuthProxy = await this.ensureServerHelper();
     const caFileContents = await this.resolveAuthProxyCa();
     const clusterPath = this.clusterUrl.path !== "/" ? this.clusterUrl.path : "";
-    const apiPrefix = `${this.kubeAuthProxy.apiPrefix}${clusterPath}`;
+    const apiPrefix = `${kubeAuthProxy.apiPrefix}${clusterPath}`;
+    const headers: Record<string, string> = {};
+
+    if (this.clusterUrl.hostname) {
+      headers.Host = this.clusterUrl.hostname;
+    }
 
     return {
       target: {
         protocol: "https:",
         host: "127.0.0.1",
-        port: this.kubeAuthProxy.port,
+        port: kubeAuthProxy.port,
         path: apiPrefix,
         ca: caFileContents.toString(),
       },
       changeOrigin: true,
       timeout,
       secure: true,
-      headers: {
-        "Host": this.clusterUrl.hostname,
-      },
+      headers,
     };
   }
 
-  async ensureServer() {
+  protected async ensureServerHelper(): Promise<KubeAuthProxy> {
     if (!this.kubeAuthProxy) {
       const proxyEnv = Object.assign({}, process.env);
 
@@ -170,9 +184,23 @@ export class ContextHandler {
       }
       this.kubeAuthProxy = this.dependencies.createKubeAuthProxy(this.cluster, proxyEnv);
       await this.kubeAuthProxy.run();
+
+      return this.kubeAuthProxy;
     }
 
     await this.kubeAuthProxy.whenReady;
+
+    return this.kubeAuthProxy;
+  }
+
+  async ensureServer(): Promise<void> {
+    await this.ensureServerHelper();
+  }
+
+  async restartServer(): Promise<void> {
+    this.stopServer();
+
+    await this.ensureServerHelper();
   }
 
   stopServer() {

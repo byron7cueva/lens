@@ -12,7 +12,7 @@ interface PortForwardDialogOpenOptions {
 }
 
 export class PortForwardDialogModel {
-  portForward: ForwardedPort = null;
+  portForward?: ForwardedPort;
   useHttps = false;
   openInBrowser = false;
   onClose = noop;
@@ -41,7 +41,7 @@ export class PortForwardDialogModel {
   };
 
   close = () => {
-    this.portForward = null;
+    this.portForward = undefined;
     this.useHttps = false;
     this.openInBrowser = false;
   };

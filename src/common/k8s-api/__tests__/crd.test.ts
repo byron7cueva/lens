@@ -17,6 +17,12 @@ describe("Crds", () => {
           uid: "12345",
         },
         spec: {
+          group: "foo.bar",
+          names: {
+            kind: "Foo",
+            plural: "foos",
+          },
+          scope: "Namespaced",
           versions: [
             {
               name: "123",
@@ -45,6 +51,12 @@ describe("Crds", () => {
           uid: "12345",
         },
         spec: {
+          group: "foo.bar",
+          names: {
+            kind: "Foo",
+            plural: "foos",
+          },
+          scope: "Namespaced",
           versions: [
             {
               name: "123",
@@ -73,6 +85,12 @@ describe("Crds", () => {
           uid: "12345",
         },
         spec: {
+          group: "foo.bar",
+          names: {
+            kind: "Foo",
+            plural: "foos",
+          },
+          scope: "Namespaced",
           versions: [
             {
               name: "123",
@@ -101,6 +119,12 @@ describe("Crds", () => {
           uid: "12345",
         },
         spec: {
+          group: "foo.bar",
+          names: {
+            kind: "Foo",
+            plural: "foos",
+          },
+          scope: "Namespaced",
           version: "abc",
           versions: [
             {

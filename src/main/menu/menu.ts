@@ -2,7 +2,7 @@
  * Copyright (c) OpenLens Authors. All rights reserved.
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
-import { app, BrowserWindow, dialog, Menu, MenuItem, MenuItemConstructorOptions, webContents } from "electron";
+import { app, BrowserWindow, dialog, Menu, MenuItemConstructorOptions, webContents } from "electron";
 import { autorun, IComputedValue } from "mobx";
 import type { WindowManager } from "../window-manager";
 import { appName, isMac, isWindows, docsUrl, supportUrl, productName } from "../../common/vars";
@@ -72,7 +72,8 @@ export function getAppMenu(
       {
         label: `About ${productName}`,
         id: "about",
-        click(menuItem: MenuItem, browserWindow: BrowserWindow) {
+        async click(menuItem, browserWindow) {
+          browserWindow ??= await windowManager.ensureMainWindow();
           showAbout(browserWindow);
         },
       },
@@ -219,7 +220,9 @@ export function getAppMenu(
         accelerator: "CmdOrCtrl+[",
         id: "go-back",
         click() {
-          webContents.getAllWebContents().filter(wc => wc.getType() === "window").forEach(wc => wc.goBack());
+          webContents.getAllWebContents()
+            .filter(wc => wc.getType() === "window")
+            .forEach(wc => wc.goBack());
         },
       },
       {
@@ -227,7 +230,9 @@ export function getAppMenu(
         accelerator: "CmdOrCtrl+]",
         id: "go-forward",
         click() {
-          webContents.getAllWebContents().filter(wc => wc.getType() === "window").forEach(wc => wc.goForward());
+          webContents.getAllWebContents()
+            .filter(wc => wc.getType() === "window")
+            .forEach(wc => wc.goForward());
         },
       },
       {
@@ -261,26 +266,31 @@ export function getAppMenu(
       {
         label: "Documentation",
         id: "documentation",
-        click: async () => {
-          openBrowser(docsUrl).catch(error => {
+        async click() {
+          try {
+            await openBrowser(docsUrl);
+          } catch (error) {
             logger.error("[MENU]: failed to open browser", { error });
-          });
+          }
         },
       },
       {
         label: "Support",
         id: "support",
-        click: async () => {
-          openBrowser(supportUrl).catch(error => {
+        async click() {
+          try {
+            await openBrowser(supportUrl);
+          } catch (error) {
             logger.error("[MENU]: failed to open browser", { error });
-          });
+          }
         },
       },
       ...ignoreIf(isMac, [
         {
           label: `About ${productName}`,
           id: "about",
-          click(menuItem: MenuItem, browserWindow: BrowserWindow) {
+          async click(menuItem, browserWindow) {
+            browserWindow ??= await windowManager.ensureMainWindow();
             showAbout(browserWindow);
           },
         },
@@ -305,7 +315,9 @@ export function getAppMenu(
 
   // Modify menu from extensions-api
   for (const menuItem of electronMenuItems) {
-    if (!appMenu.has(menuItem.parentId)) {
+    const parentMenu = appMenu.get(menuItem.parentId);
+
+    if (!parentMenu) {
       logger.error(
         `[MENU]: cannot register menu item for parentId=${menuItem.parentId}, parent item doesn't exist`,
         { menuItem },
@@ -314,7 +326,8 @@ export function getAppMenu(
       continue;
     }
 
-    appMenu.get(menuItem.parentId).submenu.push(menuItem);
+    parentMenu.submenu ??= [];
+    parentMenu.submenu.push(menuItem);
   }
 
   if (!isMac) {

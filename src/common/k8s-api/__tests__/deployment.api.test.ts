@@ -7,7 +7,9 @@ import { Deployment, DeploymentApi } from "../endpoints/deployment.api";
 import type { KubeJsonApi } from "../kube-json-api";
 
 class DeploymentApiTest extends DeploymentApi {
-  public setRequest(request: any) {
+  declare protected request: KubeJsonApi;
+
+  public setRequest(request: KubeJsonApi) {
     this.request = request;
   }
 }

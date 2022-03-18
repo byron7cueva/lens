@@ -12,7 +12,7 @@ import logger from "../../main/logger";
 import { apiManager } from "./api-manager";
 import { apiBase, apiKube } from "./index";
 import { createKubeApiURL, parseKubeApi } from "./kube-api-parse";
-import { KubeObjectConstructor, KubeObject, KubeStatus, isKubeStatusData, KubeObjectMetadata, KubeJsonApiDataFor } from "./kube-object";
+import { KubeObjectConstructor, KubeObject, KubeStatus, isKubeStatusData, KubeObjectMetadata, KubeJsonApiDataFor, KubeObjectConstructorData } from "./kube-object";
 import byline from "byline";
 import type { IKubeWatchEvent } from "./kube-watch-event";
 import { KubeJsonApi, KubeJsonApiData } from "./kube-json-api";
@@ -26,7 +26,7 @@ import assert from "assert";
 /**
  * The options used for creating a `KubeApi`
  */
-export interface IKubeApiOptions<T extends KubeObject> {
+export interface IKubeApiOptions<T extends KubeObject, Data extends KubeJsonApiDataFor<T> = KubeJsonApiDataFor<T>> {
   /**
    * base api-path for listing all resources, e.g. "/api/v1/pods"
    *
@@ -51,7 +51,7 @@ export interface IKubeApiOptions<T extends KubeObject> {
   /**
    * The constructor for the kube objects returned from the API
    */
-  objectConstructor: KubeObjectConstructor<T>;
+  objectConstructor: KubeObjectConstructor<T, Data>;
 
   /**
    * The api instance to use for making requests
@@ -69,6 +69,26 @@ export interface IKubeApiOptions<T extends KubeObject> {
    * @deprecated should be specified by `objectConstructor`
    */
   kind?: string;
+}
+
+export type DerivedKubeApiOptions = Omit<IKubeApiOptions<KubeObject>, "objectConstructor" | "kind" | "isNamespaces">;
+
+/**
+ * @deprecated This type is only present for backwards compatable typescript support
+ */
+export interface IgnoredKubeApiOptions {
+  /**
+   * @deprecated this option is overridden and should not be used
+   */
+  objectConstructor?: any;
+  /**
+   * @deprecated this option is overridden and should not be used
+   */
+  kind?: any;
+  /**
+   * @deprecated this option is overridden and should not be used
+   */
+  isNamespaces?: any;
 }
 
 export interface IKubeApiQueryParams {
@@ -220,16 +240,20 @@ export function forRemoteCluster<
   });
 }
 
-export function ensureObjectSelfLink(api: KubeApi<KubeObject>, object: KubeJsonApiData) {
-  if (!object.metadata.selfLink) {
-    object.metadata.selfLink = createKubeApiURL({
-      apiPrefix: api.apiPrefix,
-      apiVersion: api.apiVersionWithGroup,
-      resource: api.apiResource,
-      namespace: api.isNamespaced ? object.metadata.namespace : undefined,
-      name: object.metadata.name,
-    });
-  }
+export interface KubeJsonApiDataWithSelflink<Metadata extends KubeObjectMetadata> extends KubeJsonApiData<Metadata> {
+  metadata: Metadata & ({
+    selfLink: string;
+  });
+}
+
+export function ensureObjectSelfLink<Metadata extends KubeObjectMetadata, Data extends KubeJsonApiData<Metadata>>(api: KubeApi<KubeObject, Data>, object: KubeJsonApiData<Metadata>): asserts object is KubeJsonApiDataWithSelflink<Metadata> {
+  object.metadata.selfLink ||= createKubeApiURL({
+    apiPrefix: api.apiPrefix,
+    apiVersion: api.apiVersionWithGroup,
+    resource: api.apiResource,
+    namespace: api.isNamespaced ? object.metadata.namespace : undefined,
+    name: object.metadata.name,
+  });
 }
 
 export type KubeApiWatchCallback<T extends KubeJsonApiData = KubeJsonApiData> = (data: IKubeWatchEvent<T>, error: any) => void;
@@ -276,7 +300,7 @@ export interface DeleteResourceDescriptor extends ResourceDescriptor {
   propagationPolicy?: PropagationPolicy;
 }
 
-export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>> {
+export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data extends KubeJsonApiDataFor<T> = KubeJsonApiDataFor<T>> {
   readonly kind: string;
   readonly apiVersion: string;
   apiBase: string;
@@ -286,7 +310,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>> {
   readonly apiResource: string;
   readonly isNamespaced: boolean;
 
-  public readonly objectConstructor: KubeObjectConstructor<T>;
+  public readonly objectConstructor: KubeObjectConstructor<T, Data> & Required<KubeObjectConstructorData>;
   protected readonly request: KubeJsonApi;
   protected readonly resourceVersions = new Map<string, string>();
   protected readonly watchDisposer: Disposer | undefined;
@@ -303,7 +327,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>> {
     apiBase: fullApiPathname = objectConstructor.apiBase,
     checkPreferredVersion: doCheckPreferredVersion = false,
     fallbackApiBases,
-  }: IKubeApiOptions<T>) {
+  }: IKubeApiOptions<T, Data>) {
     assert(fullApiPathname);
 
     const { apiBase, apiPrefix, apiGroup, apiVersion, resource } = parseKubeApi(fullApiPathname);
@@ -322,7 +346,11 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>> {
     this.apiVersion = apiVersion;
     this.apiResource = resource;
     this.request = request ?? apiKube;
-    this.objectConstructor = objectConstructor;
+    this.objectConstructor = Object.assign({}, objectConstructor, {
+      apiBase: fullApiPathname,
+      namespaced: this.isNamespaced,
+      kind: this.kind,
+    });
 
     this.parseResponse = this.parseResponse.bind(this);
     apiManager.registerApi(apiBase, this);
@@ -468,7 +496,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>> {
 
       return items.map((item) => {
         const object = new KubeObjectConstructor({
-          ...(item as KubeJsonApiDataFor<T>),
+          ...(item as Data),
           kind: this.kind,
           apiVersion,
         });
@@ -481,7 +509,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>> {
 
     // process a single item
     if (KubeObject.isJsonApiData(data)) {
-      const object = new KubeObjectConstructor(data as KubeJsonApiDataFor<T>);
+      const object = new KubeObjectConstructor(data as Data);
 
       ensureObjectSelfLink(this, object);
 
@@ -721,6 +749,8 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>> {
     ensureObjectSelfLink(this, event.object);
 
     const { namespace, resourceVersion } = event.object.metadata;
+
+    assert(resourceVersion, "watch events failed to return resourceVersion from kube api");
 
     this.setResourceVersion(namespace, resourceVersion);
     this.setResourceVersion("", resourceVersion);

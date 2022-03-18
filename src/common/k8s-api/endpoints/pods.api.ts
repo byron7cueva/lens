@@ -244,14 +244,18 @@ export interface PodSpec {
   affinity?: Affinity;
 }
 
+export interface PodCondition {
+  lastProbeTime?: number;
+  lastTransitionTime?: string;
+  message?: string;
+  reason?: string;
+  type: string;
+  status: string;
+}
+
 export interface PodStatus {
   phase: string;
-  conditions: {
-    type: string;
-    status: string;
-    lastProbeTime: number;
-    lastTransitionTime: string;
-  }[];
+  conditions: PodCondition[];
   hostIP: string;
   podIP: string;
   podIPs?: {

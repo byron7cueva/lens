@@ -8,7 +8,6 @@ declare module "win-ca/api"
 declare module "@hapi/call"
 declare module "@hapi/subtext"
 
-// Global path to static assets
 declare const __static: string;
 
 // Support import for custom module extensions

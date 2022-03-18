@@ -9,6 +9,7 @@ import * as yaml from "js-yaml";
 import { toCamelCase } from "../../common/utils/camelCase";
 import { execFile } from "child_process";
 import { execHelm } from "./exec";
+import assert from "assert";
 
 export async function listReleases(pathToKubeconfig: string, namespace?: string): Promise<Record<string, any>[]> {
   const args = [
@@ -212,10 +213,11 @@ async function getResources(name: string, namespace: string, kubeconfigPath: str
         })
         .on("error", reject);
 
+      assert(kubectl.stderr && kubectl.stdout && kubectl.stdin, "For some reason the IO streams are undefined");
+
       kubectl.stderr.on("data", output => stderr += output);
       kubectl.stdout.on("data", output => stdout += output);
-      kubectl.stdin.write(helmOutput);
-      kubectl.stdin.end();
+      kubectl.stdin.end(helmOutput);
     });
   } catch {
     return [];

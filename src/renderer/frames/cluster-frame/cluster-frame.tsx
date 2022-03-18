@@ -41,9 +41,6 @@ import { withInjectables } from "@ogre-tools/injectable-react";
 import namespaceStoreInjectable  from "../../components/+namespaces/namespace-store/namespace-store.injectable";
 import type { ClusterId } from "../../../common/cluster-types";
 import hostedClusterInjectable from "../../../common/cluster-store/hosted-cluster.injectable";
-import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
-import type { Disposer } from "../../../common/utils";
 import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
 import historyInjectable from "../../navigation/history.injectable";
 import type { History } from "history";
@@ -51,12 +48,13 @@ import type { IsAllowedResource } from "../../../common/utils/is-allowed-resourc
 import isAllowedResourceInjectable from "../../../common/utils/is-allowed-resource.injectable";
 import { HelmRoute } from "../../components/+helm/route";
 import type { KubeResource } from "../../../common/rbac";
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 
 interface Dependencies {
   history: History;
   namespaceStore: NamespaceStore;
   hostedClusterId: ClusterId;
-  subscribeStores: (stores: KubeObjectStore<KubeObject>[]) => Disposer;
+  subscribeStores: SubscribeStores;
   isAllowedResource: IsAllowedResource;
 }
 
@@ -86,15 +84,21 @@ class NonInjectedClusterFrame extends React.Component<Dependencies> {
       : routes.workloadsURL();
   }
 
-  getTabLayoutRoutes(menuItem: ClusterPageMenuRegistration) {
-    const routes: TabLayoutRoute[] = [];
-
+  getTabLayoutRoutes(menuItem: ClusterPageMenuRegistration): TabLayoutRoute[] {
     if (!menuItem.id) {
-      return routes;
+      return [];
     }
 
-    ClusterPageMenuRegistry.getInstance().getSubItems(menuItem).forEach((subMenu) => {
-      const page = ClusterPageRegistry.getInstance().getByPageTarget(subMenu.target);
+    const pageMenuRegistry = ClusterPageMenuRegistry.getInstance();
+    const pageRegistry = ClusterPageRegistry.getInstance();
+    const routes: TabLayoutRoute[] = [];
+
+    for (const subMenu of pageMenuRegistry.getSubItems(menuItem)) {
+      if (!subMenu.target) {
+        continue;
+      }
+
+      const page = pageRegistry.getByPageTarget(subMenu.target);
 
       if (page) {
         routes.push({
@@ -104,41 +108,67 @@ class NonInjectedClusterFrame extends React.Component<Dependencies> {
           component: page.components.Page,
         });
       }
-    });
+    }
 
     return routes;
   }
 
   renderExtensionTabLayoutRoutes() {
-    return ClusterPageMenuRegistry.getInstance().getRootItems().map((menu, index) => {
-      const tabRoutes = this.getTabLayoutRoutes(menu);
+    const pageMenuRegistry = ClusterPageMenuRegistry.getInstance();
+    const pageRegistry = ClusterPageRegistry.getInstance();
 
-      if (tabRoutes.length > 0) {
-        const pageComponent = () => <TabLayout tabs={tabRoutes}/>;
+    return pageMenuRegistry
+      .getRootItems()
+      .map((menu, index) => {
+        const tabRoutes = this.getTabLayoutRoutes(menu);
 
-        return <Route key={`extension-tab-layout-route-${index}`} component={pageComponent} path={tabRoutes.map((tab) => tab.routePath)}/>;
-      } else {
-        const page = ClusterPageRegistry.getInstance().getByPageTarget(menu.target);
+        if (tabRoutes.length > 0) {
+          return (
+            <Route
+              key={`extension-tab-layout-route-${index}`}
+              component={() => <TabLayout tabs={tabRoutes}/>}
+              path={tabRoutes.map((tab) => tab.routePath)}
+            />
+          );
+        } else {
+          const page = menu.target && pageRegistry.getByPageTarget(menu.target);
 
-        if (page) {
-          return <Route key={`extension-tab-layout-route-${index}`} path={page.url} component={page.components.Page}/>;
+          if (page) {
+            return (
+              <Route
+                key={`extension-tab-layout-route-${index}`}
+                path={page.url}
+                component={page.components.Page}
+              />
+            );
+          }
         }
-      }
 
-      return null;
-    });
+        return null;
+      });
   }
 
   renderExtensionRoutes() {
-    return ClusterPageRegistry.getInstance().getItems().map((page, index) => {
-      const menu = ClusterPageMenuRegistry.getInstance().getByPage(page);
+    const pageMenuRegistry = ClusterPageMenuRegistry.getInstance();
+    const pageRegistry = ClusterPageRegistry.getInstance();
 
-      if (!menu) {
-        return <Route key={`extension-route-${index}`} path={page.url} component={page.components.Page}/>;
-      }
+    return pageRegistry
+      .getItems()
+      .map((page, index) => {
+        const menu = pageMenuRegistry.getByPage(page);
 
-      return null;
-    });
+        if (!menu) {
+          return (
+            <Route
+              key={`extension-route-${index}`}
+              path={page.url}
+              component={page.components.Page}
+            />
+          );
+        }
+
+        return null;
+      });
   }
 
   render() {

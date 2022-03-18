@@ -14,6 +14,7 @@ import { contentTypes } from "./router-content-types";
 
 // TODO: Import causes side effect, sets value for __static
 import "../../common/vars";
+import type { ServerIncomingMessage } from "../lens-proxy";
 
 export interface RouterRequestOpts {
   req: http.IncomingMessage;
@@ -23,7 +24,7 @@ export interface RouterRequestOpts {
   url: URL;
 }
 
-export interface RouteParams extends Record<string, string> {
+export interface RouteParams extends Partial<Record<string, string>> {
   path?: string; // *-route
   namespace?: string;
   service?: string;
@@ -33,9 +34,9 @@ export interface RouteParams extends Record<string, string> {
   chart?: string;
 }
 
-export interface LensApiRequest<P = any> {
+export interface LensApiRequest {
   path: string;
-  payload: P;
+  payload: unknown;
   params: RouteParams;
   cluster: Cluster;
   query: URLSearchParams;
@@ -59,7 +60,7 @@ export class Router {
     });
   }
 
-  public async route(cluster: Cluster, req: http.IncomingMessage, res: http.ServerResponse): Promise<boolean> {
+  public async route(cluster: Cluster, req: ServerIncomingMessage, res: http.ServerResponse): Promise<boolean> {
     const url = new URL(req.url, "http://localhost");
     const path = url.pathname;
     const method = req.method.toLowerCase();
@@ -131,7 +132,7 @@ const handleRoute = (route: Route<unknown>) => async (request: LensApiRequest, r
   } catch(error) {
     const mappedResult = contentTypes.txt.resultMapper({
       statusCode: 500,
-      error: error.toString(),
+      error: error ? String(error) : "unknown error",
     });
 
     writeServerResponse(mappedResult);

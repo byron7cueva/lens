@@ -4,6 +4,11 @@
  */
 
 import { compile } from "path-to-regexp";
+import type { RouteProps } from "react-router";
+
+export interface UrlRouteProps extends RouteProps {
+  path: string;
+}
 
 export interface URLParams<P extends object = {}, Q extends object = {}> {
   params?: P;

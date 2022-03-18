@@ -62,10 +62,10 @@ export class LensExtension {
     return this.manifest.description;
   }
 
-  private dependencies: LensExtensionDependencies;
+  private readonly dependencies!: LensExtensionDependencies;
 
   [setLensExtensionDependencies] = (dependencies: LensExtensionDependencies) => {
-    this.dependencies = dependencies;
+    (this as any).dependencies = dependencies;
   };
 
   /**
@@ -80,7 +80,7 @@ export class LensExtension {
   }
 
   @action
-  async enable(register: (ext: LensExtension) => Promise<Disposer[]>) {
+  async enable(register: (ext: this) => Promise<Disposer[]>) {
     if (this._isEnabled) {
       return;
     }

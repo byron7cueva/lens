@@ -23,6 +23,15 @@ export function getOrInsert<K, V>(map: Map<K, V>, key: K, value: V): V {
 }
 
 /**
+ * Updates map and returns the value that was just inserted
+ */
+export function put<K, V>(map: Map<K, V>, key: K, value: V): V {
+  map.set(key, value);
+
+  return value;
+}
+
+/**
  * Like `getOrInsert` but specifically for when `V` is `Map<MK, MV>` so that
  * the typings are inferred correctly.
  */
@@ -98,30 +107,4 @@ export function toggle<K>(set: Set<K>, key: K): void {
  */
 export function includes<T>(src: T[], value: T | null | undefined): boolean {
   return isDefined(value) && src.includes(value);
-}
-
-export interface ExtendOnlyMap<K, V, InitialKeys extends K> {
-    forEach(callbackfn: (value: V, key: K, map: ExtendOnlyMap<K, V, InitialKeys>) => void, thisArg?: any): void;
-
-    get(key: InitialKeys): V;
-    get(key: K): V | undefined;
-    get(key: null | undefined): undefined;
-    get(key: K | null | undefined): V | undefined;
-
-    has(key: InitialKeys): true;
-    has(key: K): boolean;
-    has(key: null | undefined): false;
-    has(key: K | null | undefined): boolean;
-
-    set(key: K, value: V): this;
-
-    readonly size: number;
-    [Symbol.iterator](): IterableIterator<[K, V]>;
-    entries(): IterableIterator<[K, V]>;
-    keys(): IterableIterator<K>;
-    values(): IterableIterator<V>;
-}
-
-export function extendOnlyMap<K, V, InitialKeys extends K>(initialValues: (readonly [InitialKeys, V])[]): ExtendOnlyMap<K, V, InitialKeys> {
-  return new Map(initialValues) as never;
 }

@@ -59,6 +59,10 @@ export type KubernetesClusterStatusPhase = "connected" | "connecting" | "disconn
 export interface KubernetesClusterStatus extends CatalogEntityStatus {
 }
 
+export function isKubernetesCluster(item: unknown): item is KubernetesCluster {
+  return item instanceof KubernetesCluster;
+}
+
 export class KubernetesCluster<
   Metadata extends KubernetesClusterMetadata = KubernetesClusterMetadata,
   Status extends KubernetesClusterStatus = KubernetesClusterStatus,

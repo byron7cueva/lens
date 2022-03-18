@@ -7,8 +7,8 @@ import { comparer, computed, makeObservable, observable, reaction } from "mobx";
 import { autoBind, Singleton } from "./utils";
 import { UserStore } from "../common/user-store";
 import logger from "../main/logger";
-import lensDarkThemeJson from "./themes/lens-dark.json";
-import lensLightThemeJson from "./themes/lens-light.json";
+import lensDarkTheme from "./themes/lens-dark";
+import lensLightTheme from "./themes/lens-light";
 import type { SelectOption } from "./components/select";
 import type { MonacoEditorProps } from "./components/monaco-editor";
 import { defaultTheme } from "../common/vars";
@@ -30,10 +30,9 @@ export interface Theme {
 export class ThemeStore extends Singleton {
   private terminalColorPrefix = "terminal";
 
-  // bundled themes from `themes/${themeId}.json`
   private themes = observable.map<ThemeId, Theme>({
-    "lens-dark": lensDarkThemeJson as Theme,
-    "lens-light": lensLightThemeJson as Theme,
+    "lens-dark": lensDarkTheme,
+    "lens-light": lensLightTheme,
   });
 
   @observable osNativeTheme: "dark" | "light" | undefined;
@@ -42,16 +41,21 @@ export class ThemeStore extends Singleton {
     return UserStore.getInstance().colorTheme;
   }
 
-  @computed get terminalThemeId(): ThemeId {
+  @computed get terminalThemeId(): ThemeId | undefined {
     return UserStore.getInstance().terminalTheme;
   }
 
   @computed get activeTheme(): Theme {
-    return this.systemTheme ?? this.themes.get(this.activeThemeId) ?? this.themes.get(defaultTheme);
+    return this.systemTheme
+      ?? this.themes.get(this.activeThemeId)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      ?? this.themes.get(defaultTheme)!;
   }
 
   @computed get terminalColors(): [string, string][] {
-    const theme = this.themes.get(this.terminalThemeId) ?? this.activeTheme;
+    const theme = this.terminalThemeId
+      ? this.themes.get(this.terminalThemeId) ?? this.activeTheme
+      : this.activeTheme;
 
     return Object
       .entries(theme.colors)
@@ -100,9 +104,9 @@ export class ThemeStore extends Singleton {
     reaction(() => ({
       themeId: this.activeThemeId,
       terminalThemeId: this.terminalThemeId,
-    }), ({ themeId }) => {
+    }), () => {
       try {
-        this.applyTheme(themeId);
+        this.applyActiveTheme();
       } catch (err) {
         logger.error(err);
         UserStore.getInstance().resetTheme();
@@ -116,7 +120,7 @@ export class ThemeStore extends Singleton {
   bindNativeThemeUpdateEvent() {
     ipcRenderer.on(setNativeThemeChannel, (event, theme: "dark" | "light") => {
       this.osNativeTheme = theme;
-      this.applyTheme(theme);
+      this.applyActiveTheme();
     });
   }
 
@@ -126,12 +130,12 @@ export class ThemeStore extends Singleton {
     this.osNativeTheme = theme;
   }
 
-  getThemeById(themeId: ThemeId): Theme {
+  getThemeById(themeId: ThemeId): Theme | undefined {
     return this.themes.get(themeId);
   }
 
-  protected applyTheme(themeId: ThemeId) {
-    const theme = this.systemTheme ?? this.getThemeById(themeId);
+  protected applyActiveTheme() {
+    const theme = this.activeTheme;
 
     const colors = Object.entries({
       ...theme.colors,

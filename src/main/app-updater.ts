@@ -13,7 +13,7 @@ import { ipcMain, autoUpdater as electronAutoUpdater } from "electron";
 import { nextUpdateChannel } from "./utils/update-channel";
 import { UserStore } from "../common/user-store";
 
-let installVersion: null | string = null;
+let installVersion: undefined | string;
 
 export function isAutoUpdateEnabled() {
   return autoUpdater.isUpdaterActive() && isPublishConfigured;

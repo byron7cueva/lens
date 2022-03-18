@@ -3,10 +3,10 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeObject } from "../kube-object";
+import { KubeObject, KubeObjectMetadata } from "../kube-object";
 import type { KubeJsonApiData } from "../kube-json-api";
 import { autoBind } from "../../utils";
-import { KubeApi } from "../kube-api";
+import { DerivedKubeApiOptions, KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 
 export enum SecretType {
@@ -25,24 +25,25 @@ export interface ISecretRef {
   name: string;
 }
 
-export interface SecretData extends KubeJsonApiData {
+export interface SecretData extends KubeJsonApiData<KubeObjectMetadata, void, void> {
   type: SecretType;
-  data?: Record<string, string>;
+  data?: Partial<Record<string, string>>;
 }
 
-export class Secret extends KubeObject {
+export class Secret extends KubeObject<KubeObjectMetadata, void, void, "namespace-scoped"> {
   static kind = "Secret";
   static namespaced = true;
   static apiBase = "/api/v1/secrets";
 
-  declare type: SecretType;
-  declare data: Record<string, string>;
+  type: SecretType;
+  data: Partial<Record<string, string>>;
 
-  constructor(data: SecretData) {
-    super(data);
+  constructor({ data = {}, type, ...rest }: SecretData) {
+    super(rest);
     autoBind(this);
 
-    this.data ??= {};
+    this.data = data;
+    this.type = type;
   }
 
   getKeys(): string[] {
@@ -54,14 +55,15 @@ export class Secret extends KubeObject {
   }
 }
 
-let secretsApi: KubeApi<Secret>;
-
-if (isClusterPageContext()) {
-  secretsApi = new KubeApi({
-    objectConstructor: Secret,
-  });
+export class SecretApi extends KubeApi<Secret, SecretData> {
+  constructor(options: DerivedKubeApiOptions = {}) {
+    super({
+      ...options,
+      objectConstructor: Secret,
+    });
+  }
 }
 
-export {
-  secretsApi,
-};
+export const secretsApi = isClusterPageContext()
+  ? new SecretApi()
+  : undefined;

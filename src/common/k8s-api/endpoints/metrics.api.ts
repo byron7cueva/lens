@@ -19,8 +19,8 @@ export interface IMetrics {
 
 export interface IMetricsResult {
   metric: {
-    [name: string]: string;
-    instance: string;
+    [name: string]: string | undefined;
+    instance?: string;
     node?: string;
     pod?: string;
     kubernetes?: string;

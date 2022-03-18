@@ -9,16 +9,17 @@ import { isEqual } from "lodash";
 import { action, computed, makeObservable, observable, observe, reaction, when } from "mobx";
 import path from "path";
 import { broadcastMessage, ipcMainOn, ipcRendererOn, ipcMainHandle } from "../../common/ipc";
-import { Disposer, toJS } from "../../common/utils";
+import { Disposer, isDefined, toJS } from "../../common/utils";
 import logger from "../../main/logger";
-import type { KubernetesCluster } from "../common-api/catalog";
+import { CatalogEntity, KubernetesCluster } from "../common-api/catalog";
 import type { InstalledExtension } from "../extension-discovery/extension-discovery";
 import type { LensExtension, LensExtensionConstructor, LensExtensionId } from "../lens-extension";
-import type { LensRendererExtension } from "../lens-renderer-extension";
+import { LensRendererExtension } from "../lens-renderer-extension";
 import * as registries from "../registries";
 import type { LensExtensionState } from "../extensions-store/extensions-store";
 import { extensionLoaderFromMainChannel, extensionLoaderFromRendererChannel } from "../../common/ipc/extension-handling";
 import { requestExtensionLoaderInitialState } from "../../renderer/ipc";
+import assert from "assert";
 
 const logModule = "[EXTENSIONS-LOADER]";
 
@@ -185,7 +186,11 @@ export class ExtensionLoader {
   }
 
   setIsEnabled(lensExtensionId: LensExtensionId, isEnabled: boolean) {
-    this.extensions.get(lensExtensionId).isEnabled = isEnabled;
+    const extension = this.extensions.get(lensExtensionId);
+
+    assert(extension, `Must register extension ${lensExtensionId} with before enabling it`);
+
+    extension.isEnabled = isEnabled;
   }
 
   protected async initMain() {
@@ -245,7 +250,9 @@ export class ExtensionLoader {
   loadOnClusterManagerRenderer = () => {
     logger.debug(`${logModule}: load on main renderer (cluster manager)`);
 
-    return this.autoInitExtensions(async (extension: LensRendererExtension) => {
+    return this.autoInitExtensions(async (extension) => {
+      assert(extension instanceof LensRendererExtension);
+
       const removeItems = [
         registries.GlobalPageRegistry.getInstance().add(extension.globalPages, extension),
         registries.EntitySettingRegistry.getInstance().add(extension.entitySettings),
@@ -264,12 +271,17 @@ export class ExtensionLoader {
     });
   };
 
-  loadOnClusterRenderer = (getCluster: () => KubernetesCluster) => {
+  loadOnClusterRenderer = (getCluster: () => CatalogEntity) => {
     logger.debug(`${logModule}: load on cluster renderer (dashboard)`);
 
-    this.autoInitExtensions(async (extension: LensRendererExtension) => {
+    this.autoInitExtensions(async (extension) => {
+      const entity = getCluster();
+
+      assert(extension instanceof LensRendererExtension);
+      assert(entity instanceof KubernetesCluster);
+
       // getCluster must be a callback, as the entity might be available only after an extension has been loaded
-      if ((await extension.isEnabledForCluster(getCluster())) === false) {
+      if ((await extension.isEnabledForCluster(entity)) === false) {
         return [];
       }
 
@@ -334,7 +346,7 @@ export class ExtensionLoader {
         return null;
       })
       // Remove null values
-      .filter(extension => Boolean(extension));
+      .filter(isDefined);
 
     // We first need to wait until each extension's `onActivate` is resolved or rejected,
     // as this might register new catalog categories. Afterwards we can safely .enable the extension.
@@ -381,7 +393,7 @@ export class ExtensionLoader {
     try {
       return __non_webpack_require__(extAbsolutePath).default;
     } catch (error) {
-      if (ipcRenderer) {
+      if (window && error instanceof window.Error) {
         console.error(`${logModule}: can't load ${entryPointName} for "${extension.manifest.name}": ${error.stack || error}`, extension);
       } else {
         logger.error(`${logModule}: can't load ${entryPointName} for "${extension.manifest.name}": ${error}`, { extension });
@@ -391,12 +403,12 @@ export class ExtensionLoader {
     return null;
   }
 
-  getExtension(extId: LensExtensionId): InstalledExtension {
+  getExtension(extId: LensExtensionId) {
     return this.extensions.get(extId);
   }
 
-  getInstanceById<E extends LensExtension>(extId: LensExtensionId): E {
-    return this.instances.get(extId) as E;
+  getInstanceById(extId: LensExtensionId) {
+    return this.instances.get(extId);
   }
 
   toJSON(): Map<LensExtensionId, InstalledExtension> {

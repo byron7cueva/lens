@@ -30,12 +30,12 @@ export interface WizardProps<D> extends WizardCommonProps<D> {
 }
 
 interface State {
-  step?: number;
+  step: number;
 }
 
 export class Wizard<D> extends React.Component<WizardProps<D>, State> {
   public state: State = {
-    step: this.getValidStep(this.props.step),
+    step: this.getValidStep(this.props.step ?? 0),
   };
 
   get steps(): React.ReactElement<WizardStepProps<D>>[] {
@@ -69,9 +69,7 @@ export class Wizard<D> extends React.Component<WizardProps<D>, State> {
     if (step === this.step) return;
 
     this.setState({ step }, () => {
-      if (this.props.onChange) {
-        this.props.onChange(step);
-      }
+      this.props.onChange?.(step);
     });
   }
 
@@ -137,7 +135,7 @@ interface WizardStepState {
 }
 
 export class WizardStep<D> extends React.Component<WizardStepProps<D>, WizardStepState> {
-  private form: HTMLFormElement;
+  private form: HTMLFormElement | null = null;
   public state: WizardStepState = {};
   private unmounting = false;
 
@@ -152,16 +150,16 @@ export class WizardStep<D> extends React.Component<WizardStepProps<D>, WizardSte
   prev = () => {
     const { isFirst, prev, done } = this.props;
 
-    if (isFirst() && done) done();
-    else prev();
+    if (isFirst?.() && done) done();
+    else prev?.();
   };
 
   next = () => {
     const next = this.props.next;
-    const nextStep = this.props.wizard.nextStep;
+    const nextStep = this.props.wizard?.nextStep;
 
     if (nextStep !== next) {
-      const result = next();
+      const result = next?.();
 
       if (result instanceof Promise) {
         this.setState({ waiting: true });
@@ -171,23 +169,20 @@ export class WizardStep<D> extends React.Component<WizardStepProps<D>, WizardSte
         });
       }
       else if (typeof result === "boolean" && result) {
-        nextStep();
+        nextStep?.();
       }
     }
     else {
-      nextStep();
+      nextStep?.();
     }
   };
 
   //because submit MIGHT be called through pressing enter, it might be fired twice.
   //we'll debounce it to ensure it isn't
   submit = debounce(() => {
-    if (!this.form.noValidate) {
-      const valid = this.form.checkValidity();
-
-      if (!valid) return;
+    if (this.form?.noValidate && this.form.checkValidity()) {
+      this.next();
     }
-    this.next();
   }, 100);
 
   renderLoading() {
@@ -223,8 +218,8 @@ export class WizardStep<D> extends React.Component<WizardStepProps<D>, WizardSte
     waiting = (waiting !== undefined) ? waiting : this.state.waiting;
     className = cssNames(`WizardStep step${step}`, className);
     contentClass = cssNames("step-content", { scrollable }, contentClass);
-    prevLabel = prevLabel || (isFirst() ? "Cancel" : "Back");
-    nextLabel = nextLabel || (isLast() ? "Submit" : "Next");
+    prevLabel = prevLabel || (isFirst?.() ? "Cancel" : "Back");
+    nextLabel = nextLabel || (isLast?.() ? "Submit" : "Next");
 
     return (
       <form className={className}

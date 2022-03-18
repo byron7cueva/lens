@@ -10,6 +10,7 @@ import type { Cluster } from "../../common/cluster/cluster";
 import logger from "../logger";
 import { getPortFrom } from "../utils/get-port";
 import { makeObservable, observable, when } from "mobx";
+import assert from "assert";
 
 const startingServeRegex = /starting to serve on (?<address>.+)/i;
 
@@ -26,7 +27,7 @@ export class KubeAuthProxy {
     return this._port;
   }
 
-  protected _port: number;
+  protected _port!: number;
   protected proxyProcess?: ChildProcess;
   @observable protected ready = false;
 
@@ -61,7 +62,7 @@ export class KubeAuthProxy {
     });
 
     this.proxyProcess.on("exit", (code) => {
-      this.cluster.broadcastConnectUpdate(`proxy exited with code: ${code}`, code > 0);
+      this.cluster.broadcastConnectUpdate(`proxy exited with code: ${code}`, code ? code > 0: false);
       this.exit();
     });
 
@@ -69,6 +70,9 @@ export class KubeAuthProxy {
       this.cluster.broadcastConnectUpdate("Proxy disconnected communications", true );
       this.exit();
     });
+
+    assert(this.proxyProcess.stderr);
+    assert(this.proxyProcess.stdout);
 
     this.proxyProcess.stderr.on("data", (data: Buffer) => {
       if (data.includes("http: TLS handshake error")) {
@@ -106,10 +110,10 @@ export class KubeAuthProxy {
     if (this.proxyProcess) {
       logger.debug("[KUBE-AUTH]: stopping local proxy", this.cluster.getMeta());
       this.proxyProcess.removeAllListeners();
-      this.proxyProcess.stderr.removeAllListeners();
-      this.proxyProcess.stdout.removeAllListeners();
+      this.proxyProcess.stderr?.removeAllListeners();
+      this.proxyProcess.stdout?.removeAllListeners();
       this.proxyProcess.kill();
-      this.proxyProcess = null;
+      this.proxyProcess = undefined;
     }
   }
 }

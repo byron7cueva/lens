@@ -5,19 +5,29 @@
 
 import { promiseExecFile } from "../../common/utils/promise-exec";
 import type { BaseEncodingOptions } from "fs";
-import type { ExecFileOptions } from "child_process";
+import type { ExecFileOptions, ExecFileOptionsWithStringEncoding } from "child_process";
 import { helmBinaryPath } from "../../common/vars";
+import { isChildProcessError } from "../../common/utils";
 
 /**
  * ExecFile the bundled helm CLI
  * @returns STDOUT
  */
-export async function execHelm(args: string[], options?: BaseEncodingOptions & ExecFileOptions): Promise<string> {
+export async function execHelm(args: string[], { encoding, ...rest }: BaseEncodingOptions & ExecFileOptions = {}): Promise<string> {
+  const options: ExecFileOptionsWithStringEncoding = {
+    encoding: encoding ?? "utf-8",
+    ...rest,
+  };
+
   try {
     const { stdout } = await promiseExecFile(helmBinaryPath.get(), args, options);
 
     return stdout;
   } catch (error) {
-    throw error?.stderr || error;
+    if (isChildProcessError(error, "string")) {
+      throw error.stderr || error;
+    }
+
+    throw error;
   }
 }

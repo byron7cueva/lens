@@ -6,7 +6,7 @@
 import { ipcMain } from "electron";
 import { action, comparer, computed, makeObservable, observable, reaction, when } from "mobx";
 import { broadcastMessage } from "../ipc";
-import type { ContextHandler } from "../../main/context-handler/context-handler";
+import type { ClusterContextHandler } from "../../main/context-handler/context-handler";
 import { HttpError, KubeConfig } from "@kubernetes/client-node";
 import type { Kubectl } from "../../main/kubectl/kubectl";
 import type { KubeconfigManager } from "../../main/kubeconfig-manager/kubeconfig-manager";
@@ -28,7 +28,7 @@ import assert from "assert";
 export interface ClusterDependencies {
   readonly directoryForKubeConfigs: string;
   createKubeconfigManager: (cluster: Cluster) => KubeconfigManager;
-  createContextHandler: (cluster: Cluster) => ContextHandler;
+  createContextHandler: (cluster: Cluster) => ClusterContextHandler;
   createKubectl: (clusterVersion: string) => Kubectl;
   createAuthorizationReview: (config: KubeConfig) => CanI;
   createListNamespaces: (config: KubeConfig) => ListNamespaces;
@@ -48,7 +48,7 @@ export class Cluster implements ClusterModel, ClusterState {
    *
    * @internal
    */
-  protected readonly _contextHandler: ContextHandler | undefined;
+  protected readonly _contextHandler: ClusterContextHandler | undefined;
   protected readonly _proxyKubeconfigManager: KubeconfigManager | undefined;
   protected readonly eventsDisposer = disposer();
   protected activated = false;
@@ -391,8 +391,7 @@ export class Cluster implements ClusterModel, ClusterState {
   @action
   async reconnect() {
     logger.info(`[CLUSTER]: reconnect`, this.getMeta());
-    this.contextHandler?.stopServer();
-    await this.contextHandler?.ensureServer();
+    await this.contextHandler?.restartServer();
     this.disconnected = false;
   }
 

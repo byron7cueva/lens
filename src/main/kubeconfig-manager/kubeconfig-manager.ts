@@ -5,13 +5,13 @@
 
 import type { KubeConfig } from "@kubernetes/client-node";
 import type { Cluster } from "../../common/cluster/cluster";
-import type { ContextHandler } from "../context-handler/context-handler";
+import type { ClusterContextHandler } from "../context-handler/context-handler";
 import path from "path";
 import fs from "fs-extra";
 import { dumpConfigYaml } from "../../common/kube-helpers";
 import logger from "../logger";
 import { LensProxy } from "../lens-proxy";
-import { isCodedError } from "../../common/utils";
+import { isErrnoException } from "../../common/utils";
 import type { PartialDeep } from "type-fest";
 
 interface Dependencies {
@@ -28,7 +28,7 @@ export class KubeconfigManager {
    */
   protected tempFilePath: string | null | undefined = null;
 
-  protected contextHandler: ContextHandler;
+  protected readonly contextHandler: ClusterContextHandler;
 
   constructor(private dependencies: Dependencies, protected cluster: Cluster) {
     this.contextHandler = cluster.contextHandler;
@@ -63,7 +63,7 @@ export class KubeconfigManager {
     try {
       await fs.unlink(this.tempFilePath);
     } catch (error) {
-      if (isCodedError(error) && error.code !== "ENOENT") {
+      if (isErrnoException(error) && error.code !== "ENOENT") {
         throw error;
       }
     } finally {

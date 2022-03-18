@@ -17,7 +17,7 @@ export abstract class BaseClusterDetector {
 
   constructor(public readonly cluster: Cluster) {}
 
-  abstract detect(): Promise<ClusterDetectionResult>;
+  abstract detect(): Promise<ClusterDetectionResult | null>;
 
   protected async k8sRequest<T = any>(path: string, options: RequestPromiseOptions = {}): Promise<T> {
     return k8sRequest(this.cluster, path, options);

@@ -11,7 +11,7 @@ import AbortController from "abort-controller";
 import { delay } from "../../utils/delay";
 import { PassThrough } from "stream";
 import { ApiManager, apiManager } from "../api-manager";
-import { Ingress, Pod } from "../endpoints";
+import { Ingress } from "../endpoints";
 
 jest.mock("../api-manager");
 
@@ -226,7 +226,7 @@ describe("KubeApi", () => {
       expect.hasAssertions();
 
       const api = new TestKubeApi({
-        objectConstructor: Pod,
+        objectConstructor: TestKubeObject,
         checkPreferredVersion: true,
         fallbackApiBases: ["/api/v1beta1/pods"],
         request: {

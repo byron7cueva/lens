@@ -53,11 +53,11 @@ export interface KubeObjectStoreSubscribeParams {
   abortController?: AbortController;
 }
 
-export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T> {
+export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K>> extends ItemStore<K> {
   static defaultContext = observable.box<ClusterContext>(); // TODO: support multiple cluster contexts
 
   // TODO: remove this assertion
-  public api!: KubeApi<T>;
+  public api!: A;
   public readonly limit?: number;
   public readonly bufferSize: number = 50000;
   @observable private loadedNamespaces?: string[];
@@ -70,7 +70,7 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     return when(() => Boolean(this.loadedNamespaces));
   }
 
-  constructor(api?: KubeApi<T>) {
+  constructor(api?: A) {
     super();
     if (api) this.api = api;
 
@@ -84,7 +84,7 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
   }
 
   // TODO: Circular dependency: KubeObjectStore -> ClusterFrameContext -> NamespaceStore -> KubeObjectStore
-  @computed get contextItems(): T[] {
+  @computed get contextItems(): K[] {
     const namespaces = this.context?.contextNamespaces ?? [];
 
     return this.items.filter(item => {
@@ -108,9 +108,9 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     return { limit };
   }
 
-  getStatuses?(items: T[]): Record<string, number>;
+  getStatuses?(items: K[]): Record<string, number>;
 
-  getAllByNs(namespace: string | string[], strict = false): T[] {
+  getAllByNs(namespace: string | string[], strict = false): K[] {
     const namespaces = [namespace].flat();
 
     if (namespaces.length) {
@@ -124,11 +124,11 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     return [];
   }
 
-  getById(id: string) {
+  getById(id: string | undefined): K | undefined {
     return this.items.find(item => item.getId() === id);
   }
 
-  getByName(name: string, namespace?: string): T | undefined {
+  getByName(name: string, namespace?: string): K | undefined {
     return this.items.find(item => {
       return item.getName() === name && (
         namespace ? item.getNs() === namespace : true
@@ -136,19 +136,19 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     });
   }
 
-  getByPath(path: string): T | undefined {
+  getByPath(path: string): K | undefined {
     return this.items.find(item => item.selfLink === path);
   }
 
-  getByLabel(labels: string[] | { [label: string]: string }): T[] {
+  getByLabel(labels: string[] | { [label: string]: string }): K[] {
     if (Array.isArray(labels)) {
-      return this.items.filter((item: T) => {
+      return this.items.filter((item: K) => {
         const itemLabels = item.getLabels();
 
         return labels.every(label => itemLabels.includes(label));
       });
     } else {
-      return this.items.filter((item: T) => {
+      return this.items.filter((item: K) => {
         const itemLabels = item.metadata.labels || {};
 
         return Object.entries(labels)
@@ -157,7 +157,7 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     }
   }
 
-  protected async loadItems({ namespaces, reqInit, onLoadFailure }: KubeObjectStoreLoadingParams): Promise<T[]> {
+  protected async loadItems({ namespaces, reqInit, onLoadFailure }: KubeObjectStoreLoadingParams): Promise<K[]> {
     if (!this.context?.cluster?.isAllowedResource(this.api.kind)) {
       return [];
     }
@@ -199,7 +199,7 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     const results = await Promise.allSettled(
       namespaces.map(namespace => this.api.list({ namespace, reqInit }, this.query)),
     );
-    const res: T[] = [];
+    const res: K[] = [];
 
     for (const result of results) {
       switch (result.status) {
@@ -220,12 +220,12 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     return res;
   }
 
-  protected filterItemsOnLoad(items: T[]) {
+  protected filterItemsOnLoad(items: K[]) {
     return items;
   }
 
   @action
-  async loadAll({ namespaces, merge = true, reqInit, onLoadFailure }: KubeObjectStoreLoadAllParams = {}): Promise<void | T[]> {
+  async loadAll({ namespaces, merge = true, reqInit, onLoadFailure }: KubeObjectStoreLoadAllParams = {}): Promise<void | K[]> {
     await this.contextReady;
     namespaces ??= this.context.contextNamespaces;
     this.isLoading = true;
@@ -260,7 +260,7 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
   }
 
   @action
-  protected mergeItems(partialItems: T[], { merge = true, updateStore = true, sort = true, filter = true } = {}): T[] {
+  protected mergeItems(partialItems: K[], { merge = true, updateStore = true, sort = true, filter = true } = {}): K[] {
     let items = partialItems;
 
     // update existing items
@@ -284,14 +284,14 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     if (error) this.reset();
   }
 
-  protected async loadItem(params: { name: string; namespace?: string }): Promise<T | null> {
+  protected async loadItem(params: { name: string; namespace?: string }): Promise<K | null> {
     return this.api.get(params);
   }
 
   @action
-  async load(params: { name: string; namespace?: string }): Promise<T> {
+  async load(params: { name: string; namespace?: string }): Promise<K> {
     const { name, namespace } = params;
-    let item: T | null | undefined = this.getByName(name, namespace);
+    let item: K | null | undefined = this.getByName(name, namespace);
 
     if (!item) {
       item = await this.loadItem(params);
@@ -313,11 +313,11 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     return this.load({ name, namespace });
   }
 
-  protected async createItem(params: { name: string; namespace?: string }, data?: Partial<T>): Promise<T | null> {
+  protected async createItem(params: { name: string; namespace?: string }, data?: Partial<K>): Promise<K | null> {
     return this.api.create(params, data);
   }
 
-  async create(params: { name: string; namespace?: string }, data?: Partial<T>): Promise<T> {
+  async create(params: { name: string; namespace?: string }, data?: Partial<K>): Promise<K> {
     const newItem = await this.createItem(params, data);
 
     assert(newItem, "Failed to create item from kube");
@@ -328,7 +328,7 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     return newItem;
   }
 
-  private postUpdate(newItem: T): T {
+  private postUpdate(newItem: K): K {
     const index = this.items.findIndex(item => item.getId() === newItem.getId());
 
     ensureObjectSelfLink(this.api, newItem);
@@ -342,7 +342,7 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     return newItem;
   }
 
-  async patch(item: T, patch: Patch): Promise<T> {
+  async patch(item: K, patch: Patch): Promise<K> {
     const rawItem = await this.api.patch(
       {
         name: item.getName(), namespace: item.getNs(),
@@ -356,7 +356,7 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     return this.postUpdate(rawItem);
   }
 
-  async update(item: T, data: Partial<T>): Promise<T> {
+  async update(item: K, data: Partial<K>): Promise<K> {
     const rawItem = await this.api.update(
       {
         name: item.getName(),
@@ -370,7 +370,7 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     return this.postUpdate(rawItem);
   }
 
-  async remove(item: T) {
+  async remove(item: K) {
     await this.api.delete({ name: item.getName(), namespace: item.getNs() });
     this.selectedItemsIds.delete(item.getId());
   }
@@ -379,12 +379,12 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
     return Promise.all(this.selectedItems.map(this.remove));
   }
 
-  async removeItems(items: T[]) {
+  async removeItems(items: K[]) {
     await Promise.all(items.map(this.remove));
   }
 
   // collect items from watch-api events to avoid UI blowing up with huge streams of data
-  protected eventsBuffer = observable.array<IKubeWatchEvent<KubeJsonApiDataFor<T>>>([], { deep: false });
+  protected eventsBuffer = observable.array<IKubeWatchEvent<KubeJsonApiDataFor<K>>>([], { deep: false });
 
   protected bindWatchEventsUpdater(delay = 1000) {
     reaction(() => this.eventsBuffer.length, this.updateFromEventsBuffer, {
@@ -428,7 +428,7 @@ export abstract class KubeObjectStore<T extends KubeObject> extends ItemStore<T>
 
     const { signal } = abortController;
 
-    const callback: KubeApiWatchCallback<KubeJsonApiDataFor<T>> = (data, error) => {
+    const callback: KubeApiWatchCallback<KubeJsonApiDataFor<K>> = (data, error) => {
       if (!this.isLoaded || error?.type === "aborted") return;
 
       if (error instanceof Response) {

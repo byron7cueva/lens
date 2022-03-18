@@ -35,7 +35,7 @@ interface Dependencies {
 export function initCatalog({ openCommandDialog }: Dependencies) {
   catalogCategoryRegistry
     .getForGroupKind("entity.k8slens.dev", "WebLink")
-    .on("catalogAddMenu", ctx => {
+    ?.on("catalogAddMenu", ctx => {
       ctx.menuItems.push({
         title: "Add web link",
         icon: "public",
@@ -45,7 +45,7 @@ export function initCatalog({ openCommandDialog }: Dependencies) {
 
   catalogCategoryRegistry
     .getForGroupKind("entity.k8slens.dev", "KubernetesCluster")
-    .on("contextMenuOpen", (entity, context) => {
+    ?.on("contextMenuOpen", (entity, context) => {
       if (entity.metadata?.source == "local") {
         context.menuItems.push({
           title: "Remove",

@@ -6,11 +6,12 @@
 import moment from "moment-timezone";
 import path from "path";
 import os from "os";
-import { extendOnlyMap, getAppVersion } from "../utils";
+import { getAppVersion } from "../utils";
 import type { editor } from "monaco-editor";
 import merge from "lodash/merge";
 import { SemVer } from "semver";
 import { defaultTheme, defaultEditorFontFamily, defaultFontSize, defaultTerminalFontFamily } from "../vars";
+import { observable, ObservableMap } from "mobx";
 
 export interface KubeconfigSyncEntry extends KubeconfigSyncValue {
   filePath: string;
@@ -41,7 +42,12 @@ export const defaultEditorConfig: EditorConfiguration = {
     side: "right",
   },
 };
-interface PreferenceDescription<T, R = T> {
+
+export type StoreType<P> = P extends PreferenceDescription<unknown, infer Store>
+  ? Store
+  : never;
+
+export interface PreferenceDescription<T, R = T> {
   fromStore(val: T | undefined): R;
   toStore(val: R): T | undefined;
 }
@@ -145,22 +151,26 @@ export interface DownloadMirror {
 }
 
 export const defaultPackageMirror = "default";
-export const packageMirrors = extendOnlyMap<string, DownloadMirror, typeof defaultPackageMirror | "china">([
-  [defaultPackageMirror, {
-    url: "https://storage.googleapis.com/kubernetes-release/release",
-    label: "Default (Google)",
-    platforms: new Set(["darwin", "win32", "linux"]),
-  } as DownloadMirror],
+const defaultDownloadMirrorData: DownloadMirror = {
+  url: "https://storage.googleapis.com/kubernetes-release/release",
+  label: "Default (Google)",
+  platforms: new Set(["darwin", "win32", "linux"]),
+};
+
+export const packageMirrors = new Map<string, DownloadMirror>([
+  [defaultPackageMirror, defaultDownloadMirrorData],
   ["china", {
     url: "https://mirror.azure.cn/kubernetes/kubectl",
     label: "China (Azure)",
     platforms: new Set(["win32", "linux"]),
-  } as DownloadMirror],
+  }],
 ]);
 
 const downloadMirror: PreferenceDescription<string> = {
   fromStore(val) {
-    return (packageMirrors.has(val) && val) || defaultPackageMirror;
+    return !val || !packageMirrors.has(val)
+      ? defaultPackageMirror
+      : val;
   },
   toStore(val) {
     if (!val || val === defaultPackageMirror) {
@@ -257,9 +267,9 @@ const hiddenTableColumns: PreferenceDescription<[string, string[]][], Map<string
 
 const mainKubeFolder = path.join(os.homedir(), ".kube");
 
-const syncKubeconfigEntries: PreferenceDescription<KubeconfigSyncEntry[], Map<string, KubeconfigSyncValue>> = {
+const syncKubeconfigEntries: PreferenceDescription<KubeconfigSyncEntry[], ObservableMap<string, KubeconfigSyncValue>> = {
   fromStore(val) {
-    return new Map(
+    return observable.map(
       val
         ?.map(({ filePath, ...rest }) => [filePath, rest])
       ?? [[mainKubeFolder, {}]],
@@ -296,7 +306,7 @@ export interface UpdateChannelInfo {
   label: string;
 }
 
-const updateChannels = extendOnlyMap<string, UpdateChannelInfo, "latest" | "beta" | "alpha">([
+const updateChannels = new Map<string, UpdateChannelInfo>([
   ["latest", {
     label: "Stable",
   }],
@@ -311,7 +321,9 @@ const defaultUpdateChannel = new SemVer(getAppVersion()).prerelease[0]?.toString
 
 const updateChannel: PreferenceDescription<string> = {
   fromStore(val) {
-    return (updateChannels.has(val) && val) || defaultUpdateChannel;
+    return !val || !updateChannels.has(val)
+      ? defaultUpdateChannel
+      : val;
   },
   toStore(val) {
     if (!updateChannels.has(val) || val === defaultUpdateChannel) {

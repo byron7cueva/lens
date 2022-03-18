@@ -5,7 +5,7 @@
 
 // Base class for extensions-api registries
 import { action, observable, makeObservable } from "mobx";
-import { Singleton } from "../../common/utils";
+import { Disposer, Singleton } from "../../common/utils";
 import type { LensExtension } from "../lens-extension";
 
 export class BaseRegistry<T, I = T> extends Singleton {
@@ -21,7 +21,7 @@ export class BaseRegistry<T, I = T> extends Singleton {
   }
 
   @action
-  add(items: T | T[], extension?: LensExtension) {
+  add(items: T | T[], extension?: LensExtension): Disposer {
     const itemArray = [items].flat() as T[];
 
     itemArray.forEach(item => {

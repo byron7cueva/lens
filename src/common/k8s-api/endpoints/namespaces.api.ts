@@ -23,9 +23,9 @@ export interface Namespace {
 }
 
 export class Namespace extends KubeObject {
-  static kind = "Namespace";
-  static namespaced = false;
-  static apiBase = "/api/v1/namespaces";
+  static readonly kind = "Namespace";
+  static readonly namespaced = false;
+  static readonly apiBase = "/api/v1/namespaces";
 
   constructor(data: KubeJsonApiData) {
     super(data);

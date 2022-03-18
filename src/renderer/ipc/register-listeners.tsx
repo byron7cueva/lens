@@ -70,7 +70,7 @@ function ListNamespacesForbiddenHandler(event: IpcRendererEvent, ...[clusterId]:
   const lastDisplayedAt = notificationLastDisplayedAt.get(clusterId);
   const now = Date.now();
 
-  if (!notificationLastDisplayedAt.has(clusterId) || (now - lastDisplayedAt) > intervalBetweenNotifications) {
+  if (lastDisplayedAt === undefined || (now - lastDisplayedAt) > intervalBetweenNotifications) {
     notificationLastDisplayedAt.set(clusterId, now);
   } else {
     // don't bother the user too often
@@ -84,12 +84,18 @@ function ListNamespacesForbiddenHandler(event: IpcRendererEvent, ...[clusterId]:
     return;
   }
 
+  const cluster = ClusterStore.getInstance().getById(clusterId);
+
+  if (!cluster) {
+    return void console.error("A cluster apparently failed to list namespaces but it is not known about here", { clusterId });
+  }
+
   Notifications.info(
     (
       <div className="flex column gaps">
         <b>Add Accessible Namespaces</b>
         <p>
-          Cluster <b>{ClusterStore.getInstance().getById(clusterId).name}</b> does not have permissions to list namespaces.{" "}
+          Cluster <b>{cluster.name}</b> does not have permissions to list namespaces.{" "}
           Please add the namespaces you have access to.
         </p>
         <div className="flex gaps row align-left box grow">

@@ -16,6 +16,9 @@ import {
 import { Notifications } from "../../components/notifications";
 import * as routes from "../../../common/routes";
 import type { ExtensionInfo } from "../../components/+extensions/attempt-install-by-info/attempt-install-by-info";
+import assert from "assert";
+
+// TODO: make it so that the handlers are type safe and we don't need to do the asserts
 
 interface Dependencies {
   attemptInstallByInfo: (extensionInfo: ExtensionInfo) => Promise<void>;
@@ -63,6 +66,7 @@ export const bindProtocolAddRouteHandlers =
         .addInternalHandler(
           "/entity/:entityId/settings",
           ({ pathname: { entityId }}) => {
+            assert(entityId);
             const entity = catalogEntityRegistry.getById(entityId);
 
             if (entity) {
@@ -80,6 +84,7 @@ export const bindProtocolAddRouteHandlers =
         .addInternalHandler(
           "/cluster/:clusterId",
           ({ pathname: { clusterId }}) => {
+            assert(clusterId);
             const cluster = ClusterStore.getInstance().getById(clusterId);
 
             if (cluster) {
@@ -96,6 +101,7 @@ export const bindProtocolAddRouteHandlers =
         .addInternalHandler(
           "/cluster/:clusterId/settings",
           ({ pathname: { clusterId }}) => {
+            assert(clusterId);
             const cluster = ClusterStore.getInstance().getById(clusterId);
 
             if (cluster) {

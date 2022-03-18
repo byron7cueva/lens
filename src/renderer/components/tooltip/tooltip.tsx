@@ -52,8 +52,8 @@ const defaultProps: Partial<TooltipProps> = {
 export class Tooltip extends React.Component<TooltipProps> {
   static defaultProps = defaultProps as object;
 
-  @observable.ref elem: HTMLElement;
-  @observable activePosition: TooltipPosition;
+  @observable.ref elem?: HTMLDivElement;
+  @observable activePosition?: TooltipPosition;
   @observable isVisible = false;
 
   constructor(props: TooltipProps) {
@@ -61,21 +61,21 @@ export class Tooltip extends React.Component<TooltipProps> {
     makeObservable(this);
   }
 
-  get targetElem(): HTMLElement {
+  get targetElem(): HTMLElement | null {
     return document.getElementById(this.props.targetId);
   }
 
-  get hoverTarget(): HTMLElement {
+  get hoverTarget(): HTMLElement | null {
     if (this.props.tooltipOnParentHover) {
-      return this.targetElem.parentElement;
+      return this.targetElem?.parentElement ?? null;
     }
 
     return this.targetElem;
   }
 
   componentDidMount() {
-    this.hoverTarget.addEventListener("mouseenter", this.onEnterTarget);
-    this.hoverTarget.addEventListener("mouseleave", this.onLeaveTarget);
+    this.hoverTarget?.addEventListener("mouseenter", this.onEnterTarget);
+    this.hoverTarget?.addEventListener("mouseleave", this.onLeaveTarget);
   }
 
   componentDidUpdate() {
@@ -83,8 +83,8 @@ export class Tooltip extends React.Component<TooltipProps> {
   }
 
   componentWillUnmount() {
-    this.hoverTarget.removeEventListener("mouseenter", this.onEnterTarget);
-    this.hoverTarget.removeEventListener("mouseleave", this.onLeaveTarget);
+    this.hoverTarget?.removeEventListener("mouseenter", this.onEnterTarget);
+    this.hoverTarget?.removeEventListener("mouseleave", this.onLeaveTarget);
   }
 
   @boundMethod
@@ -102,6 +102,10 @@ export class Tooltip extends React.Component<TooltipProps> {
   refreshPosition() {
     const { preferredPositions } = this.props;
     const { elem, targetElem } = this;
+
+    if (!elem || !targetElem) {
+      return;
+    }
 
     let positions = new Set<TooltipPosition>([
       TooltipPosition.RIGHT,
@@ -122,7 +126,7 @@ export class Tooltip extends React.Component<TooltipProps> {
     }
 
     // reset position first and get all possible client-rect area for tooltip element
-    this.setPosition({ left: 0, top: 0 });
+    this.setPosition(elem, { left: 0, top: 0 });
 
     const selfBounds = elem.getBoundingClientRect();
     const targetBounds = targetElem.getBoundingClientRect();
@@ -135,7 +139,7 @@ export class Tooltip extends React.Component<TooltipProps> {
 
       if (fitsToWindow) {
         this.activePosition = pos;
-        this.setPosition({ top, left });
+        this.setPosition(elem, { top, left });
 
         return;
       }
@@ -146,20 +150,19 @@ export class Tooltip extends React.Component<TooltipProps> {
     const { left, top } = this.getPosition(fallbackPosition, selfBounds, targetBounds);
 
     this.activePosition = fallbackPosition;
-    this.setPosition({ left, top });
+    this.setPosition(elem, { left, top });
   }
 
-  protected setPosition(pos: { left: number; top: number }) {
-    const elemStyle = this.elem.style;
-
-    elemStyle.left = `${pos.left}px`;
-    elemStyle.top = `${pos.top}px`;
+  protected setPosition(elem: HTMLDivElement, pos: { left: number; top: number }) {
+    elem.style.left = `${pos.left}px`;
+    elem.style.top = `${pos.top}px`;
   }
 
   protected getPosition(position: TooltipPosition, tooltipBounds: DOMRect, targetBounds: DOMRect) {
     let left: number;
     let top: number;
-    const offset = this.props.offset;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const offset = this.props.offset!;
     const horizontalCenter = targetBounds.left + (targetBounds.width - tooltipBounds.width) / 2;
     const verticalCenter = targetBounds.top + (targetBounds.height - tooltipBounds.height) / 2;
     const topCenter = targetBounds.top - tooltipBounds.height - offset;
@@ -198,6 +201,8 @@ export class Tooltip extends React.Component<TooltipProps> {
         top = bottomCenter;
         left = targetBounds.right - tooltipBounds.width;
         break;
+      default:
+        throw new TypeError("Invalid props.postition value");
     }
 
     return {
@@ -209,7 +214,7 @@ export class Tooltip extends React.Component<TooltipProps> {
   }
 
   @boundMethod
-  bindRef(elem: HTMLElement) {
+  bindRef(elem: HTMLDivElement) {
     this.elem = elem;
   }
 

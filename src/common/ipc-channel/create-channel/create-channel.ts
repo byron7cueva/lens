@@ -6,5 +6,5 @@ import type { Channel } from "../channel";
 
 export const createChannel = <TInstance>(name: string): Channel<TInstance> => ({
   name,
-  _template: null,
+  _template: null as never,
 });

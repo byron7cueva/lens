@@ -70,7 +70,7 @@ export class KubeObjectDetails extends React.Component {
             try {
               await store.loadFromPath(path);
             } catch (err) {
-              this.loadingError = <>Resource loading has failed: <b>{err.toString()}</b></>;
+              this.loadingError = <>Resource loading has failed: <b>{String(err)}</b></>;
             } finally {
               this.isLoading = false;
             }

@@ -10,16 +10,16 @@ import { once } from "lodash";
 import { iter, Disposer } from "../utils";
 import type { CategoryColumnRegistration } from "../../renderer/components/+catalog/custom-category-columns";
 
-type ExtractEntityMetadataType<Entity> = Entity extends CatalogEntity<infer Metadata> ? Metadata : never;
-type ExtractEntityStatusType<Entity> = Entity extends CatalogEntity<any, infer Status> ? Status : never;
-type ExtractEntitySpecType<Entity> = Entity extends CatalogEntity<any, any, infer Spec> ? Spec : never;
+export type CatalogEntityDataFor<Entity> = Entity extends CatalogEntity<infer Metadata, infer Status, infer Spec>
+  ? CatalogEntityData<Metadata, Status, Spec>
+  : never;
+
+export type CatalogEntityInstanceFrom<Constructor> = Constructor extends CatalogEntityConstructor<infer Entity>
+  ? Entity
+  : never;
 
 export type CatalogEntityConstructor<Entity extends CatalogEntity> = (
-  (new (data: CatalogEntityData<
-    ExtractEntityMetadataType<Entity>,
-    ExtractEntityStatusType<Entity>,
-    ExtractEntitySpecType<Entity>
-  >) => Entity)
+  new (data: CatalogEntityDataFor<Entity>) => Entity
 );
 
 export interface CatalogCategoryVersion {

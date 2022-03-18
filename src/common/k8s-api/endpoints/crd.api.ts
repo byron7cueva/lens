@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeObject, KubeObjectMetadata, KubeObjectStatus } from "../kube-object";
+import { BaseKubeObjectCondition, KubeObject, KubeObjectMetadata } from "../kube-object";
 import { KubeApi } from "../kube-api";
 import { crdResourcesURL } from "../../routes";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
@@ -31,42 +31,70 @@ export interface CustomResourceDefinitionVersion {
   additionalPrinterColumns?: AdditionalPrinterColumnsV1[];
 }
 
+export interface CustomResourceDefinitionNames {
+  categories?: string[];
+  kind: string;
+  listKind?: string;
+  plural: string;
+  shortNames?: string[];
+  singular?: string;
+}
+
+export interface CustomResourceConversion {
+  strategy?: string;
+  webhook?: WebhookConversion;
+}
+
+export interface WebhookConversion {
+  clientConfig?: WebhookClientConfig[];
+  conversionReviewVersions: string[];
+}
+
+export interface WebhookClientConfig {
+  caBundle?: string;
+  url?: string;
+  service?: ServiceReference;
+}
+
+export interface ServiceReference {
+  name: string;
+  namespace: string;
+  path?: string;
+  port?: number;
+}
+
 export interface CustomResourceDefinitionSpec {
   group: string;
   /**
    * @deprecated for apiextensions.k8s.io/v1 but used in v1beta1
    */
   version?: string;
-  names: {
-    plural: string;
-    singular: string;
-    kind: string;
-    listKind: string;
-  };
+  names: CustomResourceDefinitionNames;
   scope: "Namespaced" | "Cluster";
   /**
    * @deprecated for apiextensions.k8s.io/v1 but used in v1beta1
    */
   validation?: object;
   versions?: CustomResourceDefinitionVersion[];
-  conversion: {
-    strategy?: string;
-    webhook?: any;
-  };
+  conversion?: CustomResourceConversion;
   /**
    * @deprecated for apiextensions.k8s.io/v1 but used in v1beta1
    */
   additionalPrinterColumns?: AdditionalPrinterColumnsV1Beta[];
+  preserveUnknownFields?: boolean;
 }
 
-export interface CustomResourceDefinitionStatus extends KubeObjectStatus {
-  acceptedNames: {
-    plural: string;
-    singular: string;
-    kind: string;
-    shortNames: string[];
-    listKind: string;
-  };
+export interface CustomResourceDefinitionConditionAcceptedNames {
+  plural: string;
+  singular: string;
+  kind: string;
+  shortNames: string[];
+  listKind: string;
+}
+
+export interface CustomResourceDefinitionStatus {
+  conditions?: BaseKubeObjectCondition[];
+  acceptedNames: CustomResourceDefinitionConditionAcceptedNames;
   storedVersions: string[];
 }
 

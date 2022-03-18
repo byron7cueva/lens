@@ -10,6 +10,7 @@ import { observer } from "mobx-react";
 import { BaseRegistry } from "./base-registry";
 import { LensExtension, LensExtensionId, sanitizeExtensionName } from "../lens-extension";
 import { createPageParam, PageParam, PageParamInit, searchParamsOptions } from "../../renderer/navigation";
+import { isDefined } from "../../common/utils";
 
 export interface PageRegistration {
   /**
@@ -52,9 +53,15 @@ export interface RegisteredPage {
 export function getExtensionPageUrl(target: PageTarget): string {
   const { extensionId, pageId = "", params: targetParams = {}} = target;
 
-  const pagePath = ["/extension", sanitizeExtensionName(extensionId), pageId]
-    .filter(Boolean)
-    .join("/").replace(/\/+/g, "/").replace(/\/$/, ""); // normalize multi-slashes (e.g. coming from page.id)
+  const pagePath = [
+    "/extension",
+    extensionId && sanitizeExtensionName(extensionId),
+    pageId,
+  ]
+    .filter(isDefined)
+    .join("/")
+    .replace(/\/+/g, "/")
+    .replace(/\/$/, ""); // normalize multi-slashes (e.g. coming from page.id)
 
   const pageUrl = new URL(pagePath, `http://localhost`);
 
@@ -84,7 +91,11 @@ class PageRegistry extends BaseRegistry<PageRegistration, RegisteredPage> {
     const url = getExtensionPageUrl({ extensionId, pageId });
 
     return {
-      id: pageId, extensionId, params, components, url,
+      id: pageId ?? "",
+      extensionId,
+      params,
+      components,
+      url,
     };
   }
 
@@ -100,7 +111,7 @@ class PageRegistry extends BaseRegistry<PageRegistration, RegisteredPage> {
   }
 
   protected normalizeParams(extensionId: LensExtensionId, params?: PageParams<string | Partial<PageParamInit>>): PageParams<PageParam> {
-    if (!params) return undefined;
+    if (!params) return {};
     const normalizedParams: PageParams<PageParam> = {};
 
     Object.entries(params).forEach(([paramName, paramValue]) => {

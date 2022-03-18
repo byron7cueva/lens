@@ -4,32 +4,32 @@
  */
 
 import type { RouteProps } from "react-router";
-import { buildURL, URLParams } from "../utils/buildUrl";
+import { buildURL, URLParams, UrlRouteProps } from "../utils/buildUrl";
 import type { KubeResource } from "../rbac";
 
 // Routes
-export const overviewRoute: RouteProps = {
+export const overviewRoute: UrlRouteProps = {
   path: "/workloads",
 };
-export const podsRoute: RouteProps = {
+export const podsRoute: UrlRouteProps = {
   path: "/pods",
 };
-export const deploymentsRoute: RouteProps = {
+export const deploymentsRoute: UrlRouteProps = {
   path: "/deployments",
 };
-export const daemonSetsRoute: RouteProps = {
+export const daemonSetsRoute: UrlRouteProps = {
   path: "/daemonsets",
 };
-export const statefulSetsRoute: RouteProps = {
+export const statefulSetsRoute: UrlRouteProps = {
   path: "/statefulsets",
 };
-export const replicaSetsRoute: RouteProps = {
+export const replicaSetsRoute: UrlRouteProps = {
   path: "/replicasets",
 };
-export const jobsRoute: RouteProps = {
+export const jobsRoute: UrlRouteProps = {
   path: "/jobs",
 };
-export const cronJobsRoute: RouteProps = {
+export const cronJobsRoute: UrlRouteProps = {
   path: "/cronjobs",
 };
 

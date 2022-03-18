@@ -12,7 +12,7 @@ import path from "path";
 import tempy from "tempy";
 import logger from "./logger";
 import { appEventBus } from "../common/app-event-bus/event-bus";
-import { cloneJsonObject } from "../common/utils";
+import { cloneJsonObject, isChildProcessError } from "../common/utils";
 import type { Patch } from "rfc6902";
 import { promiseExecFile } from "../common/utils/promise-exec";
 
@@ -54,7 +54,11 @@ export class ResourceApplier {
 
       return stdout;
     } catch (error) {
-      throw error.stderr ?? error;
+      if (isChildProcessError(error)) {
+        throw error.stderr ?? error;
+      }
+
+      throw error;
     }
   }
 
@@ -92,7 +96,11 @@ export class ResourceApplier {
 
       return stdout;
     } catch (error) {
-      throw error?.stderr ?? error;
+      if (isChildProcessError(error)) {
+        throw error.stderr ?? error;
+      }
+
+      throw error;
     } finally {
       await fs.unlink(fileName);
     }
