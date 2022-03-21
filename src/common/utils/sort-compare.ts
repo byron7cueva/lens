@@ -50,7 +50,7 @@ export function sortCompare<T>(left: T, right: T): Ordering {
 
 interface ChartVersion {
   version: string;
-  __version?: SemVer;
+  __version?: SemVer | null;
 }
 
 export function sortCompareChartVersions(left: ChartVersion, right: ChartVersion): Ordering {
@@ -73,13 +73,13 @@ export function sortCompareChartVersions(left: ChartVersion, right: ChartVersion
 
 export function sortCharts(charts: RawHelmChart[]) {
   interface ExtendedHelmChart extends RawHelmChart {
-    __version: SemVer;
+    __version?: SemVer | null;
   }
 
   const chartsWithVersion = Array.from(
     iter.map(
       charts,
-      (chart => {
+      chart => {
         const __version = coerce(chart.version, { includePrerelease: true, loose: true });
 
         if (!__version) {
@@ -89,7 +89,7 @@ export function sortCharts(charts: RawHelmChart[]) {
         (chart as ExtendedHelmChart).__version = __version;
 
         return chart as ExtendedHelmChart;
-      }),
+      },
     ),
   );
 

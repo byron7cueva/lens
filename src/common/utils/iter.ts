@@ -5,6 +5,48 @@
 
 export type Falsey = false | 0 | "" | null | undefined;
 
+export function pipeline<T>(src: Iterable<T>) {
+  return new Iterator<T>(src);
+}
+
+export class Iterator<T> {
+  #inner: Iterable<T>;
+
+  constructor(inner: Iterable<T>) {
+    this.#inner = inner;
+  }
+
+  /**
+   * Wrap the interior iterator with an filter
+   */
+  public filter(fn: (val: T) => any): Iterator<T> {
+    this.#inner = filter(this.#inner, fn);
+
+    return this;
+  }
+
+  /**
+   * Wrap the interior iterator with an filterMap
+   */
+  public filterMap<U>(fn: (val: T) => Falsey | U): Iterator<U> {
+    return new Iterator(filterMap(this.#inner, fn));
+  }
+
+  /**
+   * Consume the interior iterator until an element matches the callback and return that
+   */
+  public find(fn: (val: T) => any): T | undefined {
+    return find(this.#inner, fn);
+  }
+
+  /**
+   * Consume the interior iterator and produce a new type
+   */
+  public collect<U>(fn: (values: Iterable<T>) => U): U {
+    return fn(this.#inner);
+  }
+}
+
 /**
  * Create a new type safe empty Iterable
  * @returns An `Iterable` that yields 0 items

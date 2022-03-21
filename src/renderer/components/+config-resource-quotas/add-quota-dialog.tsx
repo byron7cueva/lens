@@ -53,9 +53,9 @@ export class AddQuotaDialog extends React.Component<AddQuotaDialogProps> {
   public defaultNamespace = "default";
 
   @observable quotaName = "";
-  @observable quotaSelectValue = "";
+  @observable quotaSelectValue: string | null = null;
   @observable quotaInputValue = "";
-  @observable namespace = this.defaultNamespace;
+  @observable namespace: string | null = this.defaultNamespace;
   @observable quotas = AddQuotaDialog.defaultQuotas;
 
   constructor(props: AddQuotaDialogProps) {
@@ -73,22 +73,32 @@ export class AddQuotaDialog extends React.Component<AddQuotaDialogProps> {
 
   @computed get quotaEntries() {
     return Object.entries(this.quotas)
-      .filter(([, value]) => !!value.trim());
+      .filter(([, value]) => !!value?.trim());
   }
 
-  @computed get quotaOptions() {
-    return Object.keys(this.quotas).map(quota => {
-      const isCompute = quota.endsWith(".cpu") || quota.endsWith(".memory");
-      const isStorage = quota.endsWith(".storage") || quota === "persistentvolumeclaims";
-      const isCount = quota.startsWith("count/");
-      const icon = isCompute ? "memory" : isStorage ? "storage" : isCount ? "looks_one" : "";
+  private getQuotaOptionLabelIconMaterial(quota: string) {
+    if (quota.endsWith(".cpu") || quota.endsWith(".memory")) {
+      return "memory";
+    }
 
-      return {
-        label: icon ? <span className="nobr"><Icon material={icon} /> {quota}</span> : quota,
-        value: quota,
-      };
-    });
+    if (quota.endsWith(".storage") || quota === "persistentvolumeclaims") {
+      return "storage";
+    }
+
+    if (quota.startsWith("count/")) {
+      return "looks_one";
+    }
+
+    return undefined;
   }
+
+  private formatQuotaOptionLabel = (quota: string) => {
+    const iconMaterial = this.getQuotaOptionLabelIconMaterial(quota);
+
+    return iconMaterial
+      ? <span className="nobr"><Icon material={iconMaterial} /> {quota}</span>
+      : quota;
+  };
 
   setQuota = () => {
     if (!this.quotaSelectValue) return;
@@ -109,13 +119,14 @@ export class AddQuotaDialog extends React.Component<AddQuotaDialogProps> {
   };
 
   addQuota = async () => {
-    try {
-      const { quotaName, namespace } = this;
-      const quotas = this.quotaEntries.reduce<IResourceQuotaValues>((quotas, [name, value]) => {
-        quotas[name] = value;
+    const { quotaName, namespace } = this;
 
-        return quotas;
-      }, {});
+    if (!quotaName || !namespace) {
+      return;
+    }
+
+    try {
+      const quotas = Object.fromEntries(this.quotaEntries);
 
       await resourceQuotaApi.create({ namespace, name: quotaName }, {
         spec: {
@@ -124,7 +135,7 @@ export class AddQuotaDialog extends React.Component<AddQuotaDialogProps> {
       });
       this.close();
     } catch (err) {
-      Notifications.error(err);
+      Notifications.checkedError(err, "Unknown error occured while creating ResourceQuota");
     }
   };
 
@@ -151,7 +162,7 @@ export class AddQuotaDialog extends React.Component<AddQuotaDialogProps> {
         <Wizard header={header} done={this.close}>
           <WizardStep
             contentClass="flex gaps column"
-            disabledNext={!this.namespace}
+            disabledNext={!this.namespace || !this.quotaName}
             nextLabel="Create"
             next={this.addQuota}
           >
@@ -172,7 +183,7 @@ export class AddQuotaDialog extends React.Component<AddQuotaDialogProps> {
               placeholder="Namespace"
               themeName="light"
               className="box grow"
-              onChange={({ value }) => this.namespace = value}
+              onChange={value => this.namespace = value}
             />
 
             <SubTitle title="Values" />
@@ -181,9 +192,11 @@ export class AddQuotaDialog extends React.Component<AddQuotaDialogProps> {
                 className="quota-select"
                 themeName="light"
                 placeholder="Select a quota.."
-                options={this.quotaOptions}
+                options={Object.keys(this.quotas)}
+                isMulti={false}
                 value={this.quotaSelectValue}
-                onChange={({ value }) => this.quotaSelectValue = value}
+                onChange={value => this.quotaSelectValue = value}
+                formatOptionLabel={this.formatQuotaOptionLabel}
               />
               <Input
                 maxLength={10}
@@ -195,21 +208,19 @@ export class AddQuotaDialog extends React.Component<AddQuotaDialogProps> {
               />
               <Button round primary onClick={this.setQuota}>
                 <Icon
-                  material={this.quotas[this.quotaSelectValue] ? "edit" : "add"}
+                  material={this.quotaSelectValue && this.quotas[this.quotaSelectValue] ? "edit" : "add"}
                   tooltip="Set quota"
                 />
               </Button>
             </div>
             <div className="quota-entries">
-              {this.quotaEntries.map(([quota, value]) => {
-                return (
-                  <div key={quota} className="quota gaps inline align-center">
-                    <div className="name">{quota}</div>
-                    <div className="value">{value}</div>
-                    <Icon material="clear" onClick={() => this.quotas[quota] = ""} />
-                  </div>
-                );
-              })}
+              {this.quotaEntries.map(([quota, value]) => (
+                <div key={quota} className="quota gaps inline align-center">
+                  <div className="name">{quota}</div>
+                  <div className="value">{value}</div>
+                  <Icon material="clear" onClick={() => this.quotas[quota] = ""} />
+                </div>
+              ))}
             </div>
           </WizardStep>
         </Wizard>

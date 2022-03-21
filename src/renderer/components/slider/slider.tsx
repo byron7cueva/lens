@@ -10,10 +10,11 @@ import "./slider.scss";
 import React, { Component } from "react";
 import { cssNames } from "../../utils";
 import MaterialSlider, { SliderClassKey, SliderProps as MaterialSliderProps } from "@material-ui/core/Slider";
+import assert from "assert";
 
 export interface SliderProps extends Omit<MaterialSliderProps, "onChange"> {
   className?: string;
-  onChange?(evt: React.FormEvent<any>, value: number): void;
+  onChange(evt: React.FormEvent<any>, value: number): void;
 }
 
 const defaultProps: Partial<SliderProps> = {
@@ -33,11 +34,15 @@ export class Slider extends Component<SliderProps> {
   };
 
   render() {
-    const { className, ...sliderProps } = this.props;
+    const { className, onChange, ...sliderProps } = this.props;
 
     return (
       <MaterialSlider
         {...sliderProps}
+        onChange={(event, value) => {
+          assert(!Array.isArray(value));
+          onChange?.(event, value);
+        }}
         classes={{
           root: cssNames("Slider", className),
           ...this.classNames,

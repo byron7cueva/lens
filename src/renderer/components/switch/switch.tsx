@@ -10,6 +10,7 @@ import { cssNames } from "../../utils";
 
 export interface SwitchProps extends Omit<HTMLProps<HTMLInputElement>, "onChange"> {
   onChange?: (checked: boolean, event: ChangeEvent<HTMLInputElement>) => void;
+  checked: boolean;
 }
 
 export function Switch({ children, disabled, onChange, ...props }: SwitchProps) {
