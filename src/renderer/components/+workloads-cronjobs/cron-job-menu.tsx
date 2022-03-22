@@ -17,7 +17,9 @@ export function CronJobMenu(props: KubeObjectMenuProps<CronJob>) {
   return (
     <>
       <MenuItem onClick={() => CronJobTriggerDialog.open(object)}>
-        <Icon material="play_circle_filled" tooltip="Trigger" interactive={toolbar}/>
+        <Icon material="play_circle_filled"
+          tooltip="Trigger"
+          interactive={toolbar}/>
         <span className="title">Trigger</span>
       </MenuItem>
 
@@ -36,7 +38,9 @@ export function CronJobMenu(props: KubeObjectMenuProps<CronJob>) {
               Resume CronJob <b>{object.getName()}</b>?
             </p>),
         })}>
-          <Icon material="play_circle_outline" tooltip="Resume" interactive={toolbar}/>
+          <Icon material="play_circle_outline"
+            tooltip="Resume"
+            interactive={toolbar}/>
           <span className="title">Resume</span>
         </MenuItem>
 
@@ -54,7 +58,9 @@ export function CronJobMenu(props: KubeObjectMenuProps<CronJob>) {
               Suspend CronJob <b>{object.getName()}</b>?
             </p>),
         })}>
-          <Icon material="pause_circle_filled" tooltip="Suspend" interactive={toolbar}/>
+          <Icon material="pause_circle_filled"
+            tooltip="Suspend"
+            interactive={toolbar}/>
           <span className="title">Suspend</span>
         </MenuItem>
       }

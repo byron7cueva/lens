@@ -3,19 +3,21 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 import { getInjectable } from "@ogre-tools/injectable";
-import type { Route } from "../../router/router";
 import { routeInjectionToken } from "../../router/router.injectable";
 import { getAppVersion } from "../../../common/utils";
+import { route } from "../../router/route";
 
 const getVersionRouteInjectable = getInjectable({
   id: "get-version-route",
 
-  instantiate: (): Route<{ version: string }> => ({
+  instantiate: () => route({
     method: "get",
     path: `/version`,
-
-    handler: () => ({ response: { version: getAppVersion() }}),
-  }),
+  })(() => ({
+    response: {
+      version: getAppVersion(),
+    },
+  })),
 
   injectionToken: routeInjectionToken,
 });

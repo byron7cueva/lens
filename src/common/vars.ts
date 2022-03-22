@@ -100,8 +100,8 @@ defineGlobal("__static", {
 });
 
 // Apis
-export const apiPrefix = "/api" as string; // local router apis
-export const apiKubePrefix = "/api-kube" as string; // k8s cluster apis
+export const apiPrefix = "/api"; // local router apis
+export const apiKubePrefix = "/api-kube"; // k8s cluster apis
 
 // Links
 export const issuesTrackerUrl = "https://github.com/lensapp/lens/issues" as string;

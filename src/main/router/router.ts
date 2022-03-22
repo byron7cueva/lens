@@ -5,45 +5,22 @@
 
 import Call from "@hapi/call";
 import type http from "http";
-import type httpProxy from "http-proxy";
 import { toPairs } from "lodash/fp";
 import path from "path";
 import type { Cluster } from "../../common/cluster/cluster";
-import type { LensApiResultContentType } from "./router-content-types";
 import { contentTypes } from "./router-content-types";
 
 // TODO: Import causes side effect, sets value for __static
 import "../../common/vars";
 import type { ServerIncomingMessage } from "../lens-proxy";
+import type { LensApiRequest, LensApiResult, Route } from "./route";
 
-export interface RouterRequestOpts {
+interface RouterRequestOpts {
   req: http.IncomingMessage;
   res: http.ServerResponse;
   cluster: Cluster;
-  params: RouteParams;
+  params: any;
   url: URL;
-}
-
-export interface RouteParams extends Partial<Record<string, string>> {
-  path?: string; // *-route
-  namespace?: string;
-  service?: string;
-  account?: string;
-  release?: string;
-  repo?: string;
-  chart?: string;
-}
-
-export interface LensApiRequest {
-  path: string;
-  payload: unknown;
-  params: RouteParams;
-  cluster: Cluster;
-  query: URLSearchParams;
-  raw: {
-    req: http.IncomingMessage;
-    res: http.ServerResponse;
-  };
 }
 
 interface Dependencies {
@@ -54,7 +31,7 @@ export class Router {
   protected router = new Call.Router();
   protected static rootPath = path.resolve(__static);
 
-  constructor(routes: Route<unknown>[], private dependencies: Dependencies) {
+  constructor(routes: Route<unknown, string>[], private dependencies: Dependencies) {
     routes.forEach(route => {
       this.router.add({ method: route.method, path: route.path }, handleRoute(route));
     });
@@ -78,7 +55,7 @@ export class Router {
     return false;
   }
 
-  protected async getRequest(opts: RouterRequestOpts): Promise<LensApiRequest> {
+  protected async getRequest(opts: RouterRequestOpts): Promise<LensApiRequest<string>> {
     const { req, res, url, cluster, params } = opts;
 
     const { payload } = await this.dependencies.parseRequest(req, null, {
@@ -92,37 +69,14 @@ export class Router {
       raw: {
         req, res,
       },
-      query: url.searchParams,
+      query: url.searchParams as never,
       payload,
       params,
     };
   }
 }
 
-export interface LensApiResult<TResult> {
-  statusCode?: number;
-  response?: TResult;
-  error?: any;
-  contentType?: LensApiResultContentType;
-  headers?: { [name: string]: string };
-  proxy?: httpProxy;
-}
-
-export type RouteHandler<TResponse> = (
-  request: LensApiRequest
-) =>
-  | Promise<LensApiResult<TResponse>>
-  | Promise<void>
-  | LensApiResult<TResponse>
-  | void;
-
-export interface Route<TResponse> {
-  path: string;
-  method: "get" | "post" | "put" | "patch" | "delete";
-  handler: RouteHandler<TResponse>;
-}
-
-const handleRoute = (route: Route<unknown>) => async (request: LensApiRequest, response: http.ServerResponse) => {
+const handleRoute = (route: Route<unknown, string>) => async (request: LensApiRequest<string>, response: http.ServerResponse) => {
   let result: LensApiResult<any> | void;
 
   const writeServerResponse = writeServerResponseFor(response);

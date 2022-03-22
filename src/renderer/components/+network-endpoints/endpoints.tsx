@@ -31,7 +31,8 @@ export class Endpoints extends React.Component<EndpointsProps> {
       <KubeObjectListLayout
         isConfigurable
         tableId="network_endpoints"
-        className="Endpoints" store={endpointStore}
+        className="Endpoints"
+        store={endpointStore}
         sortingCallbacks={{
           [columnId.name]: endpoint => endpoint.getName(),
           [columnId.namespace]: endpoint => endpoint.getNs(),

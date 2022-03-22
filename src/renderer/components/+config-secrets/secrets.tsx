@@ -64,7 +64,10 @@ export class Secrets extends React.Component<SecretsProps> {
             secret.getName(),
             <KubeObjectStatusIcon key="icon" object={secret} />,
             secret.getNs(),
-            secret.getLabels().map(label => <Badge scrollable key={label} label={label} expandable={false}/>),
+            secret.getLabels().map(label => <Badge scrollable
+              key={label}
+              label={label}
+              expandable={false}/>),
             secret.getKeys().join(", "),
             secret.type,
             <KubeObjectAge key="age" object={secret} />,

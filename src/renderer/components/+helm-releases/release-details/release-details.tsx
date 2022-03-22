@@ -231,7 +231,9 @@ class NonInjectedReleaseDetails extends Component<ReleaseDetailsProps & Dependen
             </span>
           </div>
         </DrawerItem>
-        <DrawerItem name="Status" className="status" labelsOnly>
+        <DrawerItem name="Status"
+          className="status"
+          labelsOnly>
           <Badge
             label={this.release.getStatus()}
             className={kebabCase(this.release.getStatus())}
@@ -249,7 +251,9 @@ class NonInjectedReleaseDetails extends Component<ReleaseDetailsProps & Dependen
   render() {
     const { hideDetails } = this.props;
     const title = this.release ? `Release: ${this.release.getName()}` : "";
-    const toolbar = <HelmReleaseMenu release={this.release} toolbar hideDetails={hideDetails}/>;
+    const toolbar = <HelmReleaseMenu release={this.release}
+      toolbar
+      hideDetails={hideDetails}/>;
 
     return (
       <Drawer

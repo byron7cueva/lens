@@ -113,7 +113,11 @@ export class Pods extends React.Component<PodsProps> {
           { title: "Status", className: "status", sortBy: columnId.status, id: columnId.status },
         ]}
         renderTableContents={pod => [
-          <Badge flat key="name" label={pod.getName()} tooltip={pod.getName()} expandable={false} />,
+          <Badge flat
+            key="name"
+            label={pod.getName()}
+            tooltip={pod.getName()}
+            expandable={false} />,
           <KubeObjectStatusIcon key="icon" object={pod} />,
           pod.getNs(),
           this.renderContainersStatus(pod),
@@ -123,7 +127,10 @@ export class Pods extends React.Component<PodsProps> {
             const detailsLink = getDetailsUrl(apiManager.lookupApiLink(ref, pod));
 
             return (
-              <Badge flat key={name} className="owner" tooltip={name}>
+              <Badge flat
+                key={name}
+                className="owner"
+                tooltip={name}>
                 <Link to={detailsLink} onClick={stopPropagation}>
                   {kind}
                 </Link>
@@ -131,7 +138,11 @@ export class Pods extends React.Component<PodsProps> {
             );
           }),
           pod.getNodeName() ?
-            <Badge flat key="node" className="node" tooltip={pod.getNodeName()} expandable={false}>
+            <Badge flat
+              key="node"
+              className="node"
+              tooltip={pod.getNodeName()}
+              expandable={false}>
               <Link to={getDetailsUrl(nodesApi.getUrl({ name: pod.getNodeName() }))} onClick={stopPropagation}>
                 {pod.getNodeName()}
               </Link>

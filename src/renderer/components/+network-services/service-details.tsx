@@ -92,7 +92,9 @@ class NonInjectedServiceDetails extends React.Component<ServiceDetailsProps & De
           {spec.clusterIP}
         </DrawerItem>
 
-        <DrawerItem name="Cluster IPs" hidden={!service.getClusterIps().length} labelsOnly>
+        <DrawerItem name="Cluster IPs"
+          hidden={!service.getClusterIps().length}
+          labelsOnly>
           {
             service.getClusterIps().map(label => (
               <Badge key={label} label={label}/>
@@ -118,7 +120,9 @@ class NonInjectedServiceDetails extends React.Component<ServiceDetailsProps & De
           <div>
             {
               service.getPorts().map((port) => (
-                <ServicePortComponent service={service} port={port} key={port.toString()}/>
+                <ServicePortComponent service={service}
+                  port={port}
+                  key={port.toString()}/>
               ))
             }
           </div>

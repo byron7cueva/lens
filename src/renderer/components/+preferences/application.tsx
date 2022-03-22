@@ -100,7 +100,9 @@ const NonInjectedApplication: React.FC<Dependencies> = ({ appPreferenceItems }) 
       <hr />
 
       {extensionSettings.map(setting => (
-        <ExtensionSettings key={setting.id} setting={setting} size="normal" />
+        <ExtensionSettings key={setting.id}
+          setting={setting}
+          size="normal" />
       ))}
 
       <section id="update-channel">

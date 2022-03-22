@@ -5,7 +5,7 @@
 
 import routerInjectable, { routeInjectionToken } from "./router.injectable";
 import { getDiForUnitTesting } from "../getDiForUnitTesting";
-import type { Router, RouteHandler, Route } from "./router";
+import type { Router } from "./router";
 import type { Cluster } from "../../common/cluster/cluster";
 import { Request } from "mock-http";
 import { getInjectable } from "@ogre-tools/injectable";
@@ -15,6 +15,7 @@ import { contentTypes } from "./router-content-types";
 import mockFs from "mock-fs";
 import type { MockInstance } from "jest-mock";
 import type { SetRequired } from "type-fest";
+import type { Route, RouteHandler } from "./route";
 
 type AsyncFnMock<
   TToBeMocked extends (...args: any[]) => any,
@@ -27,10 +28,10 @@ type AsyncFnMock<
 
 describe("router", () => {
   let router: Router;
-  let routeHandlerMock: AsyncFnMock<RouteHandler<any>>;
+  let routeHandlerMock: AsyncFnMock<RouteHandler<any, string>>;
 
   beforeEach(async () => {
-    routeHandlerMock = asyncFn() as AsyncFnMock<RouteHandler<any>>;
+    routeHandlerMock = asyncFn() as AsyncFnMock<RouteHandler<any, string>>;
 
     const di = getDiForUnitTesting({ doGeneralOverrides: true });
 
@@ -47,7 +48,7 @@ describe("router", () => {
         method: "get",
         path: "/some-path",
         handler: routeHandlerMock,
-      } as Route<any>),
+      } as Route<any, string>),
 
       injectionToken: routeInjectionToken,
     });

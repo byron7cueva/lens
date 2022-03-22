@@ -129,14 +129,18 @@ export class Icon extends React.PureComponent<IconProps> {
       const { className, children } = iconProps;
 
       return (
-        <NavLink className={className} to={link} ref={this.ref}>
+        <NavLink className={className}
+          to={link}
+          ref={this.ref}>
           {children}
         </NavLink>
       );
     }
 
     if (href) {
-      return <a {...iconProps} href={href} ref={this.ref} />;
+      return <a {...iconProps}
+        href={href}
+        ref={this.ref} />;
     }
 
     return <i {...iconProps} ref={this.ref} />;

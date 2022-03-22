@@ -142,11 +142,15 @@ export class Ingress extends KubeObject {
     return routes;
   }
 
-  getServiceNamePort(): IExtensionsBackend {
+  getServiceNamePort(): IExtensionsBackend | undefined {
     const { spec: { backend, defaultBackend } = {}} = this;
 
     const serviceName = defaultBackend?.service?.name ?? backend?.serviceName;
     const servicePort = defaultBackend?.service?.port.number ?? defaultBackend?.service?.port.name ?? backend?.servicePort;
+
+    if (!serviceName || !servicePort) {
+      return undefined;
+    }
 
     return {
       serviceName,
@@ -168,7 +172,7 @@ export class Ingress extends KubeObject {
     const httpPort = 80;
     const tlsPort = 443;
     // Note: not using the port name (string)
-    const servicePort = defaultBackend?.service.port.number ?? backend?.servicePort;
+    const servicePort = defaultBackend?.service?.port.number ?? backend?.servicePort;
 
     if (rules && rules.length > 0) {
       if (rules.some(rule => Object.prototype.hasOwnProperty.call(rule, "http"))) {

@@ -139,17 +139,21 @@ class NonInjectedInstallChart extends Component<InstallCharProps & Dependencies>
       return (
         <div className="InstallChartDone flex column gaps align-center justify-center">
           <p>
-            <Icon material="check" big sticker/>
+            <Icon material="check"
+              big
+              sticker/>
           </p>
           <p>Installation complete!</p>
           <div className="flex gaps align-center">
             <Button
-              autoFocus primary
+              autoFocus
+              primary
               label="View Helm Release"
               onClick={prevDefault(this.viewRelease)}
             />
             <Button
-              plain active
+              plain
+              active
               label="Show Notes"
               onClick={() => this.showNotes = true}
             />

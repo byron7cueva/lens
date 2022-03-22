@@ -104,7 +104,8 @@ export class ConfigMapDetails extends React.Component<ConfigMapDetailsProps> {
               }
               <Button
                 primary
-                label="Save" waiting={this.isSaving}
+                label="Save"
+                waiting={this.isSaving}
                 className="save-btn"
                 onClick={this.save}
               />

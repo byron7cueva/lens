@@ -64,7 +64,9 @@ export const NonInjectedNamespacesRoute = ({ namespaceStore, openAddNamespaceDia
       renderTableContents={namespace => [
         namespace.getName(),
         <KubeObjectStatusIcon key="icon" object={namespace} />,
-        namespace.getLabels().map(label => <Badge scrollable key={label} label={label}/>),
+        namespace.getLabels().map(label => <Badge scrollable
+          key={label}
+          label={label}/>),
         <KubeObjectAge key="age" object={namespace} />,
         { title: namespace.getStatus(), className: namespace.getStatus().toLowerCase() },
       ]}

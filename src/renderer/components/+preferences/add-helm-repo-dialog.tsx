@@ -136,12 +136,14 @@ export class AddHelmRepoDialog extends React.Component<AddHelmRepoDialogProps> {
         <SubTitle title="Chart Repository Credentials" />
         <Input
           placeholder="Username"
-          value={this.helmRepo.username} onChange= {v => this.helmRepo.username = v}
+          value={this.helmRepo.username}
+          onChange= {v => this.helmRepo.username = v}
         />
         <Input
           type="password"
           placeholder="Password"
-          value={this.helmRepo.password} onChange={v => this.helmRepo.password = v}
+          value={this.helmRepo.password}
+          onChange={v => this.helmRepo.password = v}
         />
       </>);
   }
@@ -159,22 +161,29 @@ export class AddHelmRepoDialog extends React.Component<AddHelmRepoDialogProps> {
         close={this.close}
       >
         <Wizard header={header} done={this.close}>
-          <WizardStep contentClass="flow column" nextLabel="Add" next={() => this.addCustomRepo()}>
+          <WizardStep contentClass="flow column"
+            nextLabel="Add"
+            next={() => this.addCustomRepo()}>
             <div className="flex column gaps">
               <Input
-                autoFocus required
+                autoFocus
+                required
                 placeholder="Helm repo name"
                 trim
                 validators={systemName}
-                value={this.helmRepo.name} onChange={v => this.helmRepo.name = v}
+                value={this.helmRepo.name}
+                onChange={v => this.helmRepo.name = v}
               />
               <Input
                 required
                 placeholder="URL"
                 validators={isUrl}
-                value={this.helmRepo.url} onChange={v => this.helmRepo.url = v}
+                value={this.helmRepo.url}
+                onChange={v => this.helmRepo.url = v}
               />
-              <Button plain className="accordion" onClick={() => this.showOptions = !this.showOptions} >
+              <Button plain
+                className="accordion"
+                onClick={() => this.showOptions = !this.showOptions} >
                 More
                 <Icon
                   small

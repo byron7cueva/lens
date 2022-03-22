@@ -37,7 +37,8 @@ export class Services extends React.Component<ServicesProps> {
       <KubeObjectListLayout
         isConfigurable
         tableId="network_services"
-        className="Services" store={serviceStore}
+        className="Services"
+        store={serviceStore}
         sortingCallbacks={{
           [columnId.name]: service => service.getName(),
           [columnId.namespace]: service => service.getNs(),

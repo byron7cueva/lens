@@ -4,25 +4,25 @@
  */
 
 import type { RouteProps } from "react-router";
-import { buildURL, URLParams } from "../utils/buildUrl";
+import { buildURL, URLParams, UrlRouteProps } from "../utils/buildUrl";
 
 // Routes
-export const serviceAccountsRoute: RouteProps = {
+export const serviceAccountsRoute: UrlRouteProps = {
   path: "/service-accounts",
 };
-export const podSecurityPoliciesRoute: RouteProps = {
+export const podSecurityPoliciesRoute: UrlRouteProps = {
   path: "/pod-security-policies",
 };
-export const rolesRoute: RouteProps = {
+export const rolesRoute: UrlRouteProps = {
   path: "/roles",
 };
-export const clusterRolesRoute: RouteProps = {
+export const clusterRolesRoute: UrlRouteProps = {
   path: "/cluster-roles",
 };
-export const roleBindingsRoute: RouteProps = {
+export const roleBindingsRoute: UrlRouteProps = {
   path: "/role-bindings",
 };
-export const clusterRoleBindingsRoute: RouteProps = {
+export const clusterRoleBindingsRoute: UrlRouteProps = {
   path: "/cluster-role-bindings",
 };
 

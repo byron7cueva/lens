@@ -54,7 +54,10 @@ export const CatalogMenu = observer((props: CatalogMenuProps) => {
           defaultExpandIcon={<Icon material="chevron_right" />}
           selected={props.activeItem || "browse"}
         >
-          <Item nodeId="browse" label="Browse" data-testid="*-tab" onClick={() => props.onItemClick("*")}/>
+          <Item nodeId="browse"
+            label="Browse"
+            data-testid="*-tab"
+            onClick={() => props.onItemClick("*")}/>
           <Item
             nodeId="catalog"
             label={<div className={styles.parent}>Categories</div>}

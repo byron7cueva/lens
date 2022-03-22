@@ -44,7 +44,9 @@ export class Checkbox extends React.PureComponent<CheckboxProps> {
       <label className={componentClass}>
         <input
           {...inputProps}
-          type="checkbox" checked={value} onChange={this.onChange}
+          type="checkbox"
+          checked={value}
+          onChange={this.onChange}
           ref={e => this.input = e}
         />
         <i className="box flex align-center"/>

@@ -225,7 +225,9 @@ export class Tooltip extends React.Component<TooltipProps> {
       formatter: !!formatters,
     });
     const tooltip = (
-      <div className={className} style={style} ref={this.bindRef}>
+      <div className={className}
+        style={style}
+        ref={this.bindRef}>
         {children}
       </div>
     );

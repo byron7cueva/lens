@@ -72,7 +72,9 @@ export class SearchInput extends React.Component<SearchInputProps> {
     let rightIcon = <Icon small material="search"/>;
 
     if (showClearIcon && value) {
-      rightIcon = <Icon small material="close" onClick={this.clear}/>;
+      rightIcon = <Icon small
+        material="close"
+        onClick={this.clear}/>;
     }
 
     return (

@@ -91,7 +91,10 @@ export class EntitySettings extends React.Component<EntitySettingsProps> {
             {this.entity.getName()}
           </div>
         </div>
-        <Tabs className="flex column" scrollable={false} onChange={this.onTabChange} value={this.activeTab}>
+        <Tabs className="flex column"
+          scrollable={false}
+          onChange={this.onTabChange}
+          value={this.activeTab}>
           { groups.map((group, groupIndex) => (
             <React.Fragment key={`group-${groupIndex}`}>
               <hr/>

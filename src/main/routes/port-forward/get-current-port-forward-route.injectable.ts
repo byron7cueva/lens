@@ -4,31 +4,31 @@
  */
 import { getInjectable } from "@ogre-tools/injectable";
 import { routeInjectionToken } from "../../router/router.injectable";
-import type { LensApiRequest, Route } from "../../router/router";
 import { apiPrefix } from "../../../common/vars";
 import { PortForward } from "./functionality/port-forward";
-
-const getCurrentPortForward = async (request: LensApiRequest) => {
-  const { params, query, cluster } = request;
-  const { namespace, resourceType, resourceName } = params;
-  const port = Number(query.get("port"));
-  const forwardPort = Number(query.get("forwardPort"));
-
-  const portForward = PortForward.getPortforward({
-    clusterId: cluster.id, kind: resourceType, name: resourceName,
-    namespace, port, forwardPort,
-  });
-
-  return { response: { port: portForward?.forwardPort ?? null }};
-};
+import { route } from "../../router/route";
 
 const getCurrentPortForwardRouteInjectable = getInjectable({
   id: "get-current-port-forward-route",
 
-  instantiate: (): Route<{ port: number }> => ({
+  instantiate: () => route({
     method: "get",
     path: `${apiPrefix}/pods/port-forward/{namespace}/{resourceType}/{resourceName}`,
-    handler: getCurrentPortForward,
+  })(async ({ params, query, cluster }) => {
+    const { namespace, resourceType, resourceName } = params;
+    const port = Number(query.get("port"));
+    const forwardPort = Number(query.get("forwardPort"));
+
+    const portForward = PortForward.getPortforward({
+      clusterId: cluster.id, kind: resourceType, name: resourceName,
+      namespace, port, forwardPort,
+    });
+
+    return {
+      response: {
+        port: portForward?.forwardPort ?? null,
+      },
+    };
   }),
 
   injectionToken: routeInjectionToken,

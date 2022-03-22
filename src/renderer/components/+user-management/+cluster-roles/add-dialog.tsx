@@ -75,7 +75,8 @@ export class AddClusterRoleDialog extends React.Component<AddClusterRoleDialogPr
           >
             <SubTitle title="ClusterRole Name" />
             <Input
-              required autoFocus
+              required
+              autoFocus
               placeholder="Name"
               iconLeft="supervisor_account"
               value={this.clusterRoleName}

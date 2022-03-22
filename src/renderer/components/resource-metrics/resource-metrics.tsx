@@ -11,28 +11,30 @@ import { useInterval } from "../../hooks";
 import type { KubeObject } from "../../../common/k8s-api/kube-object";
 import { cssNames } from "../../utils";
 import { Spinner } from "../spinner";
+import type { MetricsTab } from "../chart/options";
+import type { IMetrics } from "../../../common/k8s-api/endpoints/metrics.api";
+
+export type AtLeastOneMetricTab = [MetricsTab, ...MetricsTab[]];
 
 export interface ResourceMetricsProps extends React.HTMLProps<any> {
-  tabs: React.ReactNode[];
-  object?: KubeObject;
+  tabs: AtLeastOneMetricTab;
+  object: KubeObject;
   loader?: () => void;
   interval?: number;
   className?: string;
-  params?: {
-    [key: string]: any;
-  };
+  metrics: Partial<Record<string, IMetrics>> | null | undefined;
 }
 
-export interface IResourceMetricsValue<T extends KubeObject = any, P = any> {
-  object: T;
-  tabId: number;
-  params?: P;
+export interface ResourceMetricsValue {
+  object: KubeObject;
+  tab: MetricsTab;
+  metrics: Partial<Record<string, IMetrics>> | null | undefined;
 }
 
-export const ResourceMetricsContext = createContext<IResourceMetricsValue>(null);
+export const ResourceMetricsContext = createContext<ResourceMetricsValue | null>(null);
 
-export function ResourceMetrics({ object, loader, interval = 60, tabs, children, className, params }: ResourceMetricsProps) {
-  const [tabId, setTabId] = useState<number>(0);
+export function ResourceMetrics({ object, loader, interval = 60, tabs, children, className, metrics }: ResourceMetricsProps) {
+  const [tab, setTab] = useState<MetricsTab>(tabs[0]);
 
   useEffect(() => {
     if (loader) loader();
@@ -49,15 +51,18 @@ export function ResourceMetrics({ object, loader, interval = 60, tabs, children,
           <RadioGroup
             asButtons
             className="flex box grow gaps"
-            value={tabs[tabId]}
-            onChange={value => setTabId(tabs.findIndex(tab => tab == value))}
+            value={tab}
+            onChange={value => setTab(value as MetricsTab)}
           >
             {tabs.map((tab, index) => (
-              <Radio key={index} className="box grow" label={tab} value={tab}/>
+              <Radio key={index}
+                className="box grow"
+                label={tab}
+                value={tab}/>
             ))}
           </RadioGroup>
         </div>
-        <ResourceMetricsContext.Provider value={{ object, tabId, params }}>
+        <ResourceMetricsContext.Provider value={{ object, tab, metrics }}>
           <div className="graph">
             {children}
           </div>

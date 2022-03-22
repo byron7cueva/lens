@@ -85,7 +85,9 @@ export class SecretDetails extends React.Component<SecretDetailsProps> {
     }
 
     return (
-      <div key={name} className="data" data-testid={`${name}-secret-entry`}>
+      <div key={name}
+        className="data"
+        data-testid={`${name}-secret-entry`}>
         <div className="name">{name}</div>
         <div className="flex gaps align-center">
           <Input
@@ -120,7 +122,8 @@ export class SecretDetails extends React.Component<SecretDetailsProps> {
         {secrets.map(this.renderSecret)}
         <Button
           primary
-          label="Save" waiting={this.isSaving}
+          label="Save"
+          waiting={this.isSaving}
           className="save-btn"
           onClick={this.saveSecret}
         />

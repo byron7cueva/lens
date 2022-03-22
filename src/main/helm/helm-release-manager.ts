@@ -10,6 +10,8 @@ import { toCamelCase } from "../../common/utils/camelCase";
 import { execFile } from "child_process";
 import { execHelm } from "./exec";
 import assert from "assert";
+import type { JsonObject, JsonValue } from "type-fest";
+import { isObject, json } from "../../common/utils";
 
 export async function listReleases(pathToKubeconfig: string, namespace?: string): Promise<Record<string, any>[]> {
   const args = [
@@ -26,17 +28,17 @@ export async function listReleases(pathToKubeconfig: string, namespace?: string)
 
   args.push("--kubeconfig", pathToKubeconfig);
 
-  const output = JSON.parse(await execHelm(args));
+  const output = json.parse(await execHelm(args));
 
   if (!Array.isArray(output) || output.length == 0) {
     return [];
   }
 
-  return output.map(toCamelCase);
+  return output.filter(isObject).map(toCamelCase);
 }
 
 
-export async function installChart(chart: string, values: any, name: string | undefined = "", namespace: string, version: string, kubeconfigPath: string) {
+export async function installChart(chart: string, values: JsonValue, name: string | undefined = "", namespace: string, version: string, kubeconfigPath: string) {
   const valuesFilePath = tempy.file({ name: "values.yaml" });
 
   await fse.writeFile(valuesFilePath, yaml.dump(values));
@@ -111,9 +113,13 @@ export async function getRelease(name: string, namespace: string, kubeconfigPath
     "--output", "json",
   ];
 
-  const release = JSON.parse(await execHelm(args, {
+  const release = json.parse(await execHelm(args, {
     maxBuffer: 32 * 1024 * 1024 * 1024, // 32 MiB
   }));
+
+  if (!isObject(release) || Array.isArray(release)) {
+    return undefined;
+  }
 
   release.resources = await getResources(name, namespace, kubeconfigPath, kubectlPath);
 
@@ -156,7 +162,7 @@ export async function getValues(name: string, { namespace, all = false, kubeconf
 }
 
 export async function getHistory(name: string, namespace: string, kubeconfigPath: string) {
-  return JSON.parse(await execHelm([
+  return json.parse(await execHelm([
     "history",
     name,
     "--output", "json",
@@ -194,7 +200,7 @@ async function getResources(name: string, namespace: string, kubeconfigPath: str
   try {
     const helmOutput = await execHelm(helmArgs);
 
-    return new Promise((resolve, reject) => {
+    return new Promise<JsonObject[]>((resolve, reject) => {
       let stdout = "";
       let stderr = "";
       const kubectl = execFile(kubectlPath, kubectlArgs);
@@ -203,7 +209,9 @@ async function getResources(name: string, namespace: string, kubeconfigPath: str
         .on("exit", (code, signal) => {
           if (typeof code === "number") {
             if (code === 0) {
-              resolve(JSON.parse(stdout).items);
+              const output = json.parse(stdout) as { items: JsonObject[] };
+
+              resolve(output.items);
             } else {
               reject(stderr);
             }

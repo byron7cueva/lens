@@ -112,7 +112,9 @@ export class CustomResourceDefinitions extends React.Component {
                       <div className="flex gaps align-center">
                         <Icon small material="folder"/>
                         <span>{group}</span>
-                        {isSelected && <Icon small material="check" className="box right"/>}
+                        {isSelected && <Icon small
+                          material="check"
+                          className="box right"/>}
                       </div>
                     );
                   }}
@@ -130,7 +132,9 @@ export class CustomResourceDefinitions extends React.Component {
           { title: "Age", className: "age", sortBy: columnId.age, id: columnId.age },
         ]}
         renderTableContents={crd => [
-          <Link key="link" to={crd.getResourceUrl()} onClick={stopPropagation}>
+          <Link key="link"
+            to={crd.getResourceUrl()}
+            onClick={stopPropagation}>
             {crd.getResourceKind()}
           </Link>,
           crd.getGroup(),

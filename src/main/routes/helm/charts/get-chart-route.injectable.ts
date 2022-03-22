@@ -4,30 +4,26 @@
  */
 import { getInjectable } from "@ogre-tools/injectable";
 import { routeInjectionToken } from "../../../router/router.injectable";
-import type { Route } from "../../../router/router";
-import { helmService } from "../../../helm/helm-service";
 import { apiPrefix } from "../../../../common/vars";
-import type { RawHelmChart } from "../../../../common/k8s-api/endpoints/helm-charts.api";
-
-interface GetChartResponse {
-  readme: string;
-  versions: RawHelmChart[];
-}
+import { route } from "../../../router/route";
+import { helmService } from "../../../helm/helm-service";
 
 const getChartRouteInjectable = getInjectable({
   id: "get-chart-route",
 
-  instantiate: (): Route<GetChartResponse> => ({
+  instantiate: () => route({
     method: "get",
     path: `${apiPrefix}/v2/charts/{repo}/{chart}`,
+  })(async ({ params, query }) => {
+    const { repo, chart } = params;
 
-    handler: async ({ params, query }) => ({
+    return {
       response: await helmService.getChart(
-        params.repo,
-        params.chart,
-        query.get("version"),
+        repo,
+        chart,
+        query.get("version") ?? undefined,
       ),
-    }),
+    };
   }),
 
   injectionToken: routeInjectionToken,

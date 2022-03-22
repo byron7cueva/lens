@@ -76,7 +76,9 @@ export class PersistentVolumeClaimDetails extends React.Component<PersistentVolu
         {!isMetricHidden && (
           <ResourceMetrics
             loader={this.loadMetrics}
-            tabs={metricTabs} object={volumeClaim} params={{ metrics }}
+            tabs={metricTabs}
+            object={volumeClaim}
+            metrics={metrics}
           >
             <VolumeClaimDiskChart/>
           </ResourceMetrics>

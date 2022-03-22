@@ -111,7 +111,9 @@ export class MenuActions extends React.Component<MenuActionsProps> {
 
         <Menu
           htmlFor={this.id}
-          isOpen={this.isOpen} open={this.toggle} close={this.toggle}
+          isOpen={this.isOpen}
+          open={this.toggle}
+          close={this.toggle}
           className={menuClassName}
           usePortal={autoClose}
           closeOnScroll={autoClose}
@@ -122,13 +124,17 @@ export class MenuActions extends React.Component<MenuActionsProps> {
           {children}
           {updateAction && (
             <MenuItem onClick={updateAction}>
-              <Icon material="edit" interactive={toolbar} tooltip="Edit"/>
+              <Icon material="edit"
+                interactive={toolbar}
+                tooltip="Edit"/>
               <span className="title">Edit</span>
             </MenuItem>
           )}
           {removeAction && (
             <MenuItem onClick={this.remove} data-testid="menu-action-remove">
-              <Icon material="delete" interactive={toolbar} tooltip="Delete"/>
+              <Icon material="delete"
+                interactive={toolbar}
+                tooltip="Delete"/>
               <span className="title">Delete</span>
             </MenuItem>
           )}

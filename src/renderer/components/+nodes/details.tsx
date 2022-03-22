@@ -23,24 +23,22 @@ import { getActiveClusterEntity } from "../../api/catalog-entity-registry";
 import { ClusterMetricsResourceType } from "../../../common/cluster-types";
 import { NodeDetailsResources } from "./details-resources";
 import { DrawerTitle } from "../drawer/drawer-title";
-import { boundMethod, Disposer } from "../../utils";
+import { boundMethod } from "../../utils";
 import logger from "../../../common/logger";
-import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import kubeWatchApiInjectable
-  from "../../kube-watch-api/kube-watch-api.injectable";
+import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 
 export interface NodeDetailsProps extends KubeObjectDetailsProps<Node> {
 }
 
 interface Dependencies {
-  subscribeStores: (stores: KubeObjectStore<KubeObject>[]) => Disposer;
+  subscribeStores: SubscribeStores;
 }
 
 @observer
 class NonInjectedNodeDetails extends React.Component<NodeDetailsProps & Dependencies> {
-  @observable metrics: Partial<IClusterMetrics>;
+  @observable metrics: Partial<IClusterMetrics> | null = null;
 
   constructor(props: NodeDetailsProps & Dependencies) {
     super(props);
@@ -85,12 +83,6 @@ class NonInjectedNodeDetails extends React.Component<NodeDetailsProps & Dependen
     const taints = node.getTaints();
     const childPods = podsStore.getPodsByNode(node.getName());
     const { metrics } = this;
-    const metricTabs = [
-      "CPU",
-      "Memory",
-      "Disk",
-      "Pods",
-    ];
     const isMetricHidden = getActiveClusterEntity()?.isMetricHidden(ClusterMetricsResourceType.Node);
 
     return (
@@ -98,7 +90,14 @@ class NonInjectedNodeDetails extends React.Component<NodeDetailsProps & Dependen
         {!isMetricHidden && podsStore.isLoaded && (
           <ResourceMetrics
             loader={this.loadMetrics}
-            tabs={metricTabs} object={node} params={{ metrics }}
+            tabs={[
+              "CPU",
+              "Memory",
+              "Disk",
+              "Pods",
+            ]}
+            object={node}
+            metrics={metrics}
           >
             <NodeCharts/>
           </ResourceMetrics>
@@ -113,20 +112,20 @@ class NonInjectedNodeDetails extends React.Component<NodeDetailsProps & Dependen
           }
         </DrawerItem>
         }
-        <DrawerItem name="OS">
-          {nodeInfo.operatingSystem} ({nodeInfo.architecture})
+        <DrawerItem name="OS" hidden={!nodeInfo}>
+          {nodeInfo?.operatingSystem} ({nodeInfo?.architecture})
         </DrawerItem>
-        <DrawerItem name="OS Image">
-          {nodeInfo.osImage}
+        <DrawerItem name="OS Image" hidden={!nodeInfo}>
+          {nodeInfo?.osImage}
         </DrawerItem>
-        <DrawerItem name="Kernel version">
-          {nodeInfo.kernelVersion}
+        <DrawerItem name="Kernel version" hidden={!nodeInfo}>
+          {nodeInfo?.kernelVersion}
         </DrawerItem>
-        <DrawerItem name="Container runtime">
-          {nodeInfo.containerRuntimeVersion}
+        <DrawerItem name="Container runtime" hidden={!nodeInfo}>
+          {nodeInfo?.containerRuntimeVersion}
         </DrawerItem>
-        <DrawerItem name="Kubelet version">
-          {nodeInfo.kubeletVersion}
+        <DrawerItem name="Kubelet version" hidden={!nodeInfo}>
+          {nodeInfo?.kubeletVersion}
         </DrawerItem>
         <DrawerItemLabels
           name="Labels"
@@ -142,7 +141,9 @@ class NonInjectedNodeDetails extends React.Component<NodeDetailsProps & Dependen
           </DrawerItem>
         )}
         {conditions &&
-        <DrawerItem name="Conditions" className="conditions" labelsOnly>
+        <DrawerItem name="Conditions"
+          className="conditions"
+          labelsOnly>
           {
             conditions.map(condition => {
               const { type } = condition;

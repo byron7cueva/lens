@@ -349,7 +349,8 @@ export class Kubectl {
     // MacOS packages are only available from default
 
     const { url } = packageMirrors.get(this.dependencies.userStore.downloadMirror)
-      ?? packageMirrors.get(defaultPackageMirror);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      ?? packageMirrors.get(defaultPackageMirror)!;
 
     return url;
   }

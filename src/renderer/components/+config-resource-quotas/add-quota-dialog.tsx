@@ -168,11 +168,13 @@ export class AddQuotaDialog extends React.Component<AddQuotaDialogProps> {
           >
             <div className="flex gaps">
               <Input
-                required autoFocus
+                required
+                autoFocus
                 placeholder="ResourceQuota name"
                 trim
                 validators={systemName}
-                value={this.quotaName} onChange={v => this.quotaName = v.toLowerCase()}
+                value={this.quotaName}
+                onChange={v => this.quotaName = v.toLowerCase()}
                 className="box grow"
               />
             </div>
@@ -206,7 +208,9 @@ export class AddQuotaDialog extends React.Component<AddQuotaDialogProps> {
                 onKeyDown={this.onInputQuota}
                 className="box grow"
               />
-              <Button round primary onClick={this.setQuota}>
+              <Button round
+                primary
+                onClick={this.setQuota}>
                 <Icon
                   material={this.quotaSelectValue && this.quotas[this.quotaSelectValue] ? "edit" : "add"}
                   tooltip="Set quota"

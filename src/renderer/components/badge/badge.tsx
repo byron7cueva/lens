@@ -79,7 +79,10 @@ export class Badge extends React.Component<BadgeProps> {
     });
 
     return (
-      <div {...elemProps} className={classNames} onMouseUp={this.onMouseUp} ref={this.bindRef}>
+      <div {...elemProps}
+        className={classNames}
+        onMouseUp={this.onMouseUp}
+        ref={this.bindRef}>
         {label}
         {children}
       </div>

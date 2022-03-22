@@ -159,9 +159,13 @@ class NonInjectedDock extends React.Component<DockProps & Dependencies> {
           />
           <div className={cssNames("toolbar flex gaps align-center box grow", { "pl-0": tabs.length == 0 })}>
             <div className="dock-menu box grow">
-              <MenuActions usePortal triggerIcon={{ material: "add", className: "new-dock-tab", tooltip: "New tab" }} closeOnScroll={false}>
+              <MenuActions usePortal
+                triggerIcon={{ material: "add", className: "new-dock-tab", tooltip: "New tab" }}
+                closeOnScroll={false}>
                 <MenuItem className="create-terminal-tab" onClick={() => this.props.createTerminalTab()}>
-                  <Icon small svg="terminal" size={15} />
+                  <Icon small
+                    svg="terminal"
+                    size={15} />
                   Terminal session
                 </MenuItem>
                 <MenuItem className="create-resource-tab" onClick={() => this.props.createResourceTab()}>

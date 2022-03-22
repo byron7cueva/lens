@@ -4,25 +4,63 @@
  */
 import { getInjectable } from "@ogre-tools/injectable";
 import { routeInjectionToken } from "../../router/router.injectable";
-import type { Route } from "../../router/router";
 import { apiPrefix } from "../../../common/vars";
 import { ResourceApplier } from "../../resource-applier";
+import { route } from "../../router/route";
+import Joi from "joi";
+import type { Patch } from "rfc6902";
+
+interface PatchResourcePayload {
+  name: string;
+  kind: string;
+  patch: Patch;
+  ns?: string;
+}
+
+const patchResourcePayloadValidator = Joi.object<PatchResourcePayload, true, PatchResourcePayload>({
+  name: Joi
+    .string()
+    .required(),
+  kind: Joi
+    .string()
+    .required(),
+  ns: Joi
+    .string()
+    .optional(),
+  patch: Joi
+    .array()
+    .allow(
+      Joi.object({
+        op: Joi
+          .string()
+          .required(),
+      }).unknown(true),
+    ),
+});
 
 const patchResourceRouteInjectable = getInjectable({
   id: "patch-resource-route",
 
-  instantiate: (): Route<string> => ({
+  instantiate: () => route({
     method: "patch",
     path: `${apiPrefix}/stack`,
+  })(async ({ cluster, payload }) => {
+    const result = patchResourcePayloadValidator.validate(payload);
 
-    handler: async ({ cluster, payload }) => ({
+    if (result.error) {
+      return {
+        error: result.error,
+      };
+    }
+
+    return {
       response: await new ResourceApplier(cluster).patch(
-        payload.name,
-        payload.kind,
-        payload.patch,
-        payload.ns,
+        result.value.name,
+        result.value.kind,
+        result.value.patch,
+        result.value.ns,
       ),
-    }),
+    };
   }),
 
   injectionToken: routeInjectionToken,

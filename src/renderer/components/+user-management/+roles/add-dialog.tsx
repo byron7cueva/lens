@@ -77,7 +77,8 @@ export class AddRoleDialog extends React.Component<AddRoleDialogProps> {
           >
             <SubTitle title="Role Name" />
             <Input
-              required autoFocus
+              required
+              autoFocus
               placeholder="Name"
               iconLeft="supervisor_account"
               value={this.roleName}

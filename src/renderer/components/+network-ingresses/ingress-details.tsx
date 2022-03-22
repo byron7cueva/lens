@@ -141,7 +141,9 @@ export class IngressDetails extends React.Component<IngressDetailsProps> {
         {!isMetricHidden && (
           <ResourceMetrics
             loader={this.loadMetrics}
-            tabs={metricTabs} object={ingress} params={{ metrics }}
+            tabs={metricTabs}
+            object={ingress}
+            metrics={metrics}
           >
             <IngressCharts/>
           </ResourceMetrics>

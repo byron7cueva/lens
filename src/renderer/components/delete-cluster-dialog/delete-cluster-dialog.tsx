@@ -243,12 +243,14 @@ export class DeleteClusterDialog extends React.Component<DeleteClusterDialogProp
         </div>
         <div className={styles.dialogButtons}>
           <Button
-            onClick={this.onClose} plain
+            onClick={this.onClose}
+            plain
             label="Cancel"
           />
           <Button
             onClick={this.onDelete}
-            autoFocus accent
+            autoFocus
+            accent
             label="Delete Context"
             disabled={this.disableDelete}
           />

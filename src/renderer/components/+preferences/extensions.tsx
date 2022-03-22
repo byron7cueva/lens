@@ -23,7 +23,9 @@ const NonInjectedExtensions: React.FC<Dependencies> = ({ appPreferenceItems }) =
     <section id="extensions">
       <h2>Extensions</h2>
       {settings.filter(e => !e.showInPreferencesTab).map((setting) =>
-        <ExtensionSettings key={setting.id} setting={setting} size="small" />,
+        <ExtensionSettings key={setting.id}
+          setting={setting}
+          size="small" />,
       )}
     </section>
   );

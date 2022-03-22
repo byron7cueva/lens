@@ -66,7 +66,9 @@ export class ClusterMetricsSetting extends React.Component<ClusterMetricsSetting
   formatOptionLabel = ({ value: resource }: SelectOption<ClusterMetricsResourceType>) => (
     <div className="flex gaps align-center">
       <span>{resource}</span>
-      {this.hiddenMetrics.has(resource) && <Icon smallest material="check" className="box right" />}
+      {this.hiddenMetrics.has(resource) && <Icon smallest
+        material="check"
+        className="box right" />}
     </div>
   );
 

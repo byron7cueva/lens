@@ -295,7 +295,9 @@ export class ItemListLayoutContent<I extends ItemObject> extends React.Component
     const { renderTableHeader, tableId } = this.props;
 
     return (
-      <MenuActions className="ItemListLayoutVisibilityMenu" toolbar={false} autoCloseOnSelect={false}>
+      <MenuActions className="ItemListLayoutVisibilityMenu"
+        toolbar={false}
+        autoCloseOnSelect={false}>
         {renderTableHeader.map((cellProps, index) => (
           !cellProps.showWithColumn && (
             <MenuItem key={index} className="input">

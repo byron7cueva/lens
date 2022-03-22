@@ -43,25 +43,29 @@ class NonInjectedPodDetailsContainer extends React.Component<PodDetailsContainer
     ]);
   }
 
-  renderStatus(state: string, status: IPodContainerStatus) {
-    const ready = status ? status.ready : "";
+  renderStatus(state: string, status: IPodContainerStatus | null | undefined) {
+    const { ready = false, state: containerState = {}} = status ?? {};
+    const { terminated } = containerState;
 
     return (
       <span className={cssNames("status", state)}>
-        {state}{ready ? `, ready` : ""}
-        {state === "terminated" ? ` - ${status.state.terminated.reason} (exit code: ${status.state.terminated.exitCode})` : ""}
+        {state}{ready ? ", ready" : ""}
+        {terminated ? ` - ${terminated.reason} (exit code: ${terminated.exitCode})` : ""}
       </span>
     );
   }
 
-  renderLastState(lastState: string, status: IPodContainerStatus) {
-    if (lastState === "terminated") {
+  renderLastState(lastState: string, status: IPodContainerStatus | null | undefined) {
+    const { lastState: lastContainerState = {}} = status ?? {};
+    const { terminated } = lastContainerState;
+
+    if (lastState === "terminated" && terminated) {
       return (
         <span>
           {lastState}<br/>
-          Reason: {status.lastState.terminated.reason} - exit code: {status.lastState.terminated.exitCode}<br/>
-          Started at: {<LocaleDate date={status.lastState.terminated.startedAt} />}<br/>
-          Finished at: {<LocaleDate date={status.lastState.terminated.finishedAt} />}<br/>
+          Reason: {terminated.reason} - exit code: {terminated.exitCode}<br/>
+          Started at: {<LocaleDate date={terminated.startedAt} />}<br/>
+          Finished at: {<LocaleDate date={terminated.finishedAt} />}<br/>
         </span>
       );
     }
@@ -75,19 +79,14 @@ class NonInjectedPodDetailsContainer extends React.Component<PodDetailsContainer
     if (!pod || !container) return null;
     const { name, image, imagePullPolicy, ports, volumeMounts, command, args } = container;
     const status = pod.getContainerStatuses().find(status => status.name === container.name);
-    const state = status ? Object.keys(status.state)[0] : "";
-    const lastState = status ? Object.keys(status.lastState)[0] : "";
+    const state = status ? Object.keys(status?.state ?? {})[0] : "";
+    const lastState = status ? Object.keys(status?.lastState ?? {})[0] : "";
     const ready = status ? status.ready : "";
     const imageId = status? status.imageID : "";
     const liveness = pod.getLivenessProbe(container);
     const readiness = pod.getReadinessProbe(container);
     const startup = pod.getStartupProbe(container);
     const isInitContainer = !!pod.getInitContainers().find(c => c.name == name);
-    const metricTabs = [
-      "CPU",
-      "Memory",
-      "Filesystem",
-    ];
     const isMetricHidden = getActiveClusterEntity()?.isMetricHidden(ClusterMetricsResourceType.Container);
 
     return (
@@ -96,7 +95,15 @@ class NonInjectedPodDetailsContainer extends React.Component<PodDetailsContainer
           <StatusBrick className={cssNames(state, { ready })}/>{name}
         </div>
         {!isMetricHidden && !isInitContainer &&
-        <ResourceMetrics tabs={metricTabs} params={{ metrics }}>
+        <ResourceMetrics
+          object={pod}
+          tabs={[
+            "CPU",
+            "Memory",
+            "Filesystem",
+          ]}
+          metrics={metrics}
+        >
           <ContainerCharts/>
         </ResourceMetrics>
         }
@@ -125,7 +132,9 @@ class NonInjectedPodDetailsContainer extends React.Component<PodDetailsContainer
               const key = `${container.name}-port-${port.containerPort}-${port.protocol}`;
 
               return (
-                <PodContainerPort pod={pod} port={port} key={key}/>
+                <PodContainerPort pod={pod}
+                  port={port}
+                  key={key}/>
               );
             })
           }

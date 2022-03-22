@@ -3,8 +3,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-// Clone json-serializable object
+import type { JsonValue } from "type-fest";
 
-export function cloneJsonObject<T = object>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj));
+export function parse(input: string): JsonValue {
+  return JSON.parse(input);
 }

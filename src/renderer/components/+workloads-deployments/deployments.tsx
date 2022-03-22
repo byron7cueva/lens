@@ -43,7 +43,9 @@ export class Deployments extends React.Component<DeploymentsProps> {
     const conditions = orderBy(deployment.getConditions(true), "type", "asc");
 
     return conditions.map(({ type, message }) => (
-      <span key={type} className={cssNames("condition", kebabCase(type))} title={message}>
+      <span key={type}
+        className={cssNames("condition", kebabCase(type))}
+        title={message}>
         {type}
       </span>
     ));
@@ -54,7 +56,8 @@ export class Deployments extends React.Component<DeploymentsProps> {
       <KubeObjectListLayout
         isConfigurable
         tableId="workload_deployments"
-        className="Deployments" store={deploymentStore}
+        className="Deployments"
+        store={deploymentStore}
         dependentStores={[eventStore]} // status icon component uses event store
         sortingCallbacks={{
           [columnId.name]: deployment => deployment.getName(),

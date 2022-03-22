@@ -103,7 +103,9 @@ export class HotbarMenu extends React.Component<HotbarMenuProps> {
               {...provided.droppableProps}
             >
               {item && (
-                <Draggable draggableId={item.entity.uid} key={item.entity.uid} index={0} >
+                <Draggable draggableId={item.entity.uid}
+                  key={item.entity.uid}
+                  index={0} >
                   {(provided, snapshot) => {
                     const style = {
                       zIndex: defaultHotbarCells - index,

@@ -79,7 +79,9 @@ const NonInjectedHotbarSelector = observer(({ hotbar, hotbarManager, openCommand
           {hotbar.name}
         </Tooltip>
       </div>
-      <Icon material="play_arrow" className={styles.Icon} onClick={() => onArrowClick(hotbarManager.switchToNext)} />
+      <Icon material="play_arrow"
+        className={styles.Icon}
+        onClick={() => onArrowClick(hotbarManager.switchToNext)} />
     </div>
   );
 });

@@ -82,7 +82,7 @@ export const metricsApi = {
   },
 };
 
-export function normalizeMetrics(metrics: IMetrics, frames = 60): IMetrics {
+export function normalizeMetrics(metrics: IMetrics | undefined | null, frames = 60): IMetrics {
   if (!metrics?.data?.result) {
     return {
       data: {
@@ -90,7 +90,7 @@ export function normalizeMetrics(metrics: IMetrics, frames = 60): IMetrics {
         result: [{
           metric: {},
           values: [],
-        } as IMetricsResult],
+        }],
       },
       status: "",
     };
@@ -137,7 +137,7 @@ export function normalizeMetrics(metrics: IMetrics, frames = 60): IMetrics {
   return metrics;
 }
 
-export function isMetricsEmpty(metrics: Record<string, IMetrics>) {
+export function isMetricsEmpty(metrics: Partial<Record<string, IMetrics>>) {
   return Object.values(metrics).every(metric => !metric?.data?.result?.length);
 }
 

@@ -47,7 +47,9 @@ function convertSpecValue(value: any): any {
 export class CustomResourceDetails extends React.Component<CustomResourceDetailsProps> {
   renderAdditionalColumns(resource: KubeObject, columns: AdditionalPrinterColumnsV1[]) {
     return columns.map(({ name, jsonPath: jp }) => (
-      <DrawerItem key={name} name={name} renderBoolean>
+      <DrawerItem key={name}
+        name={name}
+        renderBoolean>
         {convertSpecValue(jsonPath.value(resource, parseJsonPath(jp.slice(1))))}
       </DrawerItem>
     ));
@@ -65,7 +67,8 @@ export class CustomResourceDetails extends React.Component<CustomResourceDetails
       .map(({ type, reason, message, status }) => ({ kind: type || reason, message, status }))
       .map(({ kind, message, status }, index) => (
         <Badge
-          key={kind + index} label={kind}
+          key={kind + index}
+          label={kind}
           disabled={status === "False"}
           className={kind.toLowerCase()}
           tooltip={message}
@@ -73,7 +76,9 @@ export class CustomResourceDetails extends React.Component<CustomResourceDetails
       ));
 
     return (
-      <DrawerItem name="Status" className="status" labelsOnly>
+      <DrawerItem name="Status"
+        className="status"
+        labelsOnly>
         {conditions}
       </DrawerItem>
     );

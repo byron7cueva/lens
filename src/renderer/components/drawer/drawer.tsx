@@ -193,7 +193,9 @@ class NonInjectedDrawer extends React.Component<DrawerProps & Dependencies, Stat
               <div className="drawer-title-text flex gaps align-center">
                 {title}
                 {canCopyTitle && (
-                  <Icon material={copyIcon} tooltip={copyTooltip} onClick={() => this.copyTitle(title)}/>
+                  <Icon material={copyIcon}
+                    tooltip={copyTooltip}
+                    onClick={() => this.copyTitle(title)}/>
                 )}
               </div>
               {toolbar}

@@ -32,7 +32,8 @@ export class Ingresses extends React.Component<IngressesProps> {
       <KubeObjectListLayout
         isConfigurable
         tableId="network_ingresses"
-        className="Ingresses" store={ingressStore}
+        className="Ingresses"
+        store={ingressStore}
         sortingCallbacks={{
           [columnId.name]: ingress => ingress.getName(),
           [columnId.namespace]: ingress => ingress.getNs(),

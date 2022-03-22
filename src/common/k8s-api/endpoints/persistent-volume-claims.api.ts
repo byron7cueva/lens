@@ -8,7 +8,7 @@ import { IMetrics, metricsApi } from "./metrics.api";
 import type { Pod } from "./pods.api";
 import { KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import { entries } from "../../utils";
+import { object } from "../../utils";
 
 export class PersistentVolumeClaimsApi extends KubeApi<PersistentVolumeClaim> {
 }
@@ -64,7 +64,7 @@ export class PersistentVolumeClaim extends KubeObject<KubeObjectMetadata, Persis
   }
 
   getMatchLabels(): string[] {
-    return entries(this.spec.selector?.matchLabels)
+    return object.entries(this.spec.selector?.matchLabels)
       .map(([name, val]) => `${name}:${val}`);
   }
 

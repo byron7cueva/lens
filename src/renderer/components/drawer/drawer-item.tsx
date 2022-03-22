@@ -26,7 +26,9 @@ export class DrawerItem extends React.Component<DrawerItemProps> {
     const content = displayBooleans(renderBoolean, children);
 
     return (
-      <div {...elemProps} className={classNames} title={title}>
+      <div {...elemProps}
+        className={classNames}
+        title={title}>
         <span className="name">{name}</span>
         <span className="value">{content}</span>
       </div>

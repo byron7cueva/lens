@@ -79,12 +79,14 @@ class NonInjectedAddNamespaceDialog extends React.Component<AddNamespaceDialogPr
             next={this.addNamespace}
           >
             <Input
-              required autoFocus
+              required
+              autoFocus
               iconLeft="layers"
               placeholder="Namespace"
               trim
               validators={systemName}
-              value={namespace} onChange={v => this.namespace = v.toLowerCase()}
+              value={namespace}
+              onChange={v => this.namespace = v.toLowerCase()}
             />
           </WizardStep>
         </Wizard>

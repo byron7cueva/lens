@@ -12,7 +12,7 @@ import fetch, { Response, RequestInit } from "node-fetch";
 import { stringify } from "querystring";
 import { EventEmitter } from "../../common/event-emitter";
 import logger from "../../common/logger";
-import type { Defaulted } from "../utils";
+import { Defaulted, json } from "../utils";
 
 export interface JsonApiData {}
 
@@ -146,10 +146,10 @@ export class JsonApi<D = JsonApiData, P extends JsonApiParams = JsonApiParams> {
     const { status } = res;
 
     const text = await res.text();
-    let data;
+    let data: any;
 
     try {
-      data = text ? JSON.parse(text) : ""; // DELETE-requests might not have response-body
+      data = text ? json.parse(text) : ""; // DELETE-requests might not have response-body
     } catch (e) {
       data = text;
     }

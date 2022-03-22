@@ -13,7 +13,9 @@ import { CustomResourceDefinitionResources } from "./crd-resources";
 export const CustomResourcesRoute = () => (
   <TabLayout>
     <Switch>
-      <Route component={CustomResourceDefinitions} {...crdDefinitionsRoute} exact/>
+      <Route component={CustomResourceDefinitions}
+        {...crdDefinitionsRoute}
+        exact/>
       <Route component={CustomResourceDefinitionResources} {...crdResourcesRoute}/>
       <Redirect to={crdURL()}/>
     </Switch>

@@ -223,7 +223,8 @@ export class WizardStep<D> extends React.Component<WizardStepProps<D>, WizardSte
 
     return (
       <form className={className}
-        onSubmit={prevDefault(this.submit)} noValidate={noValidate}
+        onSubmit={prevDefault(this.submit)}
+        noValidate={noValidate}
         onKeyDown={(evt) => this.keyDown(evt)}
         ref={e => this.form = e}>
         {beforeContent}
@@ -235,13 +236,18 @@ export class WizardStep<D> extends React.Component<WizardStepProps<D>, WizardSte
             {moreButtons}
             <Button
               className="back-btn"
-              plain label={prevLabel} hidden={hideBackBtn}
+              plain
+              label={prevLabel}
+              hidden={hideBackBtn}
               onClick={this.prev}
             />
             <Button
-              primary type="submit"
-              label={nextLabel} hidden={hideNextBtn}
-              waiting={waiting} disabled={disabledNext}
+              primary
+              type="submit"
+              label={nextLabel}
+              hidden={hideNextBtn}
+              waiting={waiting}
+              disabled={disabledNext}
             />
           </div>
         )}

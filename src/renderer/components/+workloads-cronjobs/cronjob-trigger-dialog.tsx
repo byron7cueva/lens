@@ -105,12 +105,14 @@ export class CronJobTriggerDialog extends Component<CronJobTriggerDialogProps> {
         </div>
         <div className="flex gaps">
           <Input
-            required autoFocus
+            required
+            autoFocus
             placeholder={this.jobName}
             trim
             validators={[systemName, maxLength]}
             maxLength={63}
-            value={this.jobName} onChange={v => this.jobName = v.toLowerCase()}
+            value={this.jobName}
+            onChange={v => this.jobName = v.toLowerCase()}
             className="box grow"
           />
         </div>

@@ -137,7 +137,9 @@ export class AddSecretDialog extends React.Component<AddSecretDialogProps> {
   renderFields(field: ISecretField) {
     return (
       <>
-        <SubTitle compact className="fields-title" title={upperFirst(field.toString())}>
+        <SubTitle compact
+          className="fields-title"
+          title={upperFirst(field.toString())}>
           <Icon
             small
             tooltip="Add field"
@@ -158,7 +160,8 @@ export class AddSecretDialog extends React.Component<AddSecretDialogProps> {
                   value={item.key}
                   onChange={v => item.key = v} />
                 <Input
-                  multiLine maxRows={5}
+                  multiLine
+                  maxRows={5}
                   required={item.required}
                   className="value"
                   placeholder="Value"
@@ -192,15 +195,19 @@ export class AddSecretDialog extends React.Component<AddSecretDialogProps> {
         close={this.close}
       >
         <Wizard header={header} done={this.close}>
-          <WizardStep contentClass="flow column" nextLabel="Create" next={this.createSecret}>
+          <WizardStep contentClass="flow column"
+            nextLabel="Create"
+            next={this.createSecret}>
             <div className="secret-name">
               <SubTitle title="Secret name" />
               <Input
-                autoFocus required
+                autoFocus
+                required
                 placeholder="Name"
                 trim
                 validators={systemName}
-                value={name} onChange={v => this.name = v}
+                value={name}
+                onChange={v => this.name = v}
               />
             </div>
             <div className="flex auto gaps">

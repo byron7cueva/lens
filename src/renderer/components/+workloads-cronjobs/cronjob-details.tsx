@@ -18,18 +18,15 @@ import { getDetailsUrl } from "../kube-detail-params";
 import { CronJob, Job } from "../../../common/k8s-api/endpoints";
 import { KubeObjectMeta } from "../kube-object-meta";
 import logger from "../../../common/logger";
-import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
-import type { Disposer } from "../../../common/utils";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import kubeWatchApiInjectable
-  from "../../kube-watch-api/kube-watch-api.injectable";
+import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 
 export interface CronJobDetailsProps extends KubeObjectDetailsProps<CronJob> {
 }
 
 interface Dependencies {
-  subscribeStores: (stores: KubeObjectStore<KubeObject>[]) => Disposer;
+  subscribeStores: SubscribeStores;
 }
 
 @observer
@@ -86,11 +83,13 @@ class NonInjectedCronJobDetails extends React.Component<CronJobDetailsProps & De
               return (
                 <div className="job" key={job.getId()}>
                   <div className="title">
-                    <Link to={getDetailsUrl(job.selfLink)}>
+                    <Link to={() => job.selfLink ? getDetailsUrl(job.selfLink) : ""}>
                       {job.getName()}
                     </Link>
                   </div>
-                  <DrawerItem name="Condition" className="conditions" labelsOnly>
+                  <DrawerItem name="Condition"
+                    className="conditions"
+                    labelsOnly>
                     {condition && (
                       <Badge
                         label={condition.type}

@@ -78,8 +78,12 @@ class NonInjectedExtensions extends React.Component<Dependencies> {
             <Notice className="mb-14 mt-3">
               <p>
                 Add new features via Lens Extensions.{" "}
-                Check out <a href={`${docsUrl}/extensions/`} target="_blank" rel="noreferrer">docs</a>{" "}
-                and list of <a href="https://github.com/lensapp/lens-extensions/blob/main/README.md" target="_blank" rel="noreferrer">available extensions</a>.
+                Check out <a href={`${docsUrl}/extensions/`}
+                  target="_blank"
+                  rel="noreferrer">docs</a>{" "}
+                and list of <a href="https://github.com/lensapp/lens-extensions/blob/main/README.md"
+                  target="_blank"
+                  rel="noreferrer">available extensions</a>.
               </p>
             </Notice>
 

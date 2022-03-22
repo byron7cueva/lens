@@ -12,7 +12,7 @@ import path from "path";
 import tempy from "tempy";
 import logger from "./logger";
 import { appEventBus } from "../common/app-event-bus/event-bus";
-import { cloneJsonObject, isChildProcessError } from "../common/utils";
+import { isChildProcessError } from "../common/utils";
 import type { Patch } from "rfc6902";
 import { promiseExecFile } from "../common/utils/promise-exec";
 
@@ -150,15 +150,15 @@ export class ResourceApplier {
   }
 
   protected sanitizeObject(resource: KubernetesObject | any) {
-    resource = cloneJsonObject(resource);
-    delete resource.status;
-    delete resource.metadata?.resourceVersion;
-    const annotations = resource.metadata?.annotations;
+    const res = JSON.parse(JSON.stringify(resource));
+    delete res.status;
+    delete res.metadata?.resourceVersion;
+    const annotations = res.metadata?.annotations;
 
     if (annotations) {
       delete annotations["kubectl.kubernetes.io/last-applied-configuration"];
     }
 
-    return resource;
+    return res;
   }
 }

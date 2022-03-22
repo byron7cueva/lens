@@ -85,7 +85,9 @@ export class PodDetails extends React.Component<PodDetailsProps> {
         {!isMetricHidden && (
           <ResourceMetrics
             loader={this.loadMetrics}
-            tabs={podMetricTabs} object={pod} params={{ metrics: this.metrics }}
+            tabs={podMetricTabs}
+            object={pod}
+            metrics={this.metrics}
           >
             <PodCharts/>
           </ResourceMetrics>
@@ -104,7 +106,9 @@ export class PodDetails extends React.Component<PodDetailsProps> {
         <DrawerItem name="Pod IP">
           {podIP}
         </DrawerItem>
-        <DrawerItem name="Pod IPs" hidden={!podIPs.length} labelsOnly>
+        <DrawerItem name="Pod IPs"
+          hidden={!podIPs.length}
+          labelsOnly>
           {
             podIPs.map(label => (
               <Badge key={label} label={label}/>
@@ -118,7 +122,9 @@ export class PodDetails extends React.Component<PodDetailsProps> {
           {pod.getQosClass()}
         </DrawerItem>
         {conditions &&
-        <DrawerItem name="Conditions" className="conditions" labelsOnly>
+        <DrawerItem name="Conditions"
+          className="conditions"
+          labelsOnly>
           {
             conditions.map(condition => {
               const { type, status, lastTransitionTime } = condition;
@@ -158,7 +164,9 @@ export class PodDetails extends React.Component<PodDetailsProps> {
         }
         {
           pod.getInitContainers() && pod.getInitContainers().map(container => {
-            return <PodDetailsContainer key={container.name} pod={pod} container={container}/>;
+            return <PodDetailsContainer key={container.name}
+              pod={pod}
+              container={container}/>;
           })
         }
         <DrawerTitle title="Containers"/>

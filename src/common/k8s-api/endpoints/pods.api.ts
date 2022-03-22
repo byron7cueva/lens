@@ -37,7 +37,7 @@ export function getMetricsForPods(pods: Pod[], namespace: string, selector = "po
   });
 }
 
-export interface IPodMetrics {
+export interface IPodMetrics extends Partial<Record<string, IMetrics>> {
   cpuUsage: IMetrics;
   memoryUsage: IMetrics;
   fsUsage: IMetrics;

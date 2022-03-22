@@ -32,7 +32,8 @@ export class ServiceAccounts extends React.Component<ServiceAccountsProps> {
         <KubeObjectListLayout
           isConfigurable
           tableId="access_service_accounts"
-          className="ServiceAccounts" store={serviceAccountsStore}
+          className="ServiceAccounts"
+          store={serviceAccountsStore}
           sortingCallbacks={{
             [columnId.name]: account => account.getName(),
             [columnId.namespace]: account => account.getNs(),

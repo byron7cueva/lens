@@ -53,7 +53,7 @@ export interface KubeObjectStoreSubscribeParams {
   abortController?: AbortController;
 }
 
-export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K>> extends ItemStore<K> {
+export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K> = KubeApi<K>> extends ItemStore<K> {
   static defaultContext = observable.box<ClusterContext>(); // TODO: support multiple cluster contexts
 
   // TODO: remove this assertion

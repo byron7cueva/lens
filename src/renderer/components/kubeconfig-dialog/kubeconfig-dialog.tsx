@@ -93,7 +93,9 @@ export class KubeConfigDialog extends React.Component<KubeConfigDialogProps> {
         <Button plain onClick={this.download}>
           <Icon material="cloud_download"/> Download file
         </Button>
-        <Button plain className="box right" onClick={this.close}>
+        <Button plain
+          className="box right"
+          onClick={this.close}>
           Close
         </Button>
       </div>

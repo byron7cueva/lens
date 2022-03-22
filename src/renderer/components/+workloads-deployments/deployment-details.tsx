@@ -10,7 +10,7 @@ import kebabCase from "lodash/kebabCase";
 import { disposeOnUnmount, observer } from "mobx-react";
 import { DrawerItem } from "../drawer";
 import { Badge } from "../badge";
-import { Deployment, getMetricsForDeployments, type IPodMetrics } from "../../../common/k8s-api/endpoints";
+import { Deployment, getMetricsForDeployments, IPodMetrics } from "../../../common/k8s-api/endpoints";
 import { PodDetailsTolerations } from "../+workloads-pods/pod-details-tolerations";
 import { PodDetailsAffinities } from "../+workloads-pods/pod-details-affinities";
 import { podsStore } from "../+workloads-pods/pods.store";
@@ -25,24 +25,22 @@ import { replicaSetStore } from "../+workloads-replicasets/replicasets.store";
 import { DeploymentReplicaSets } from "./deployment-replicasets";
 import { getActiveClusterEntity } from "../../api/catalog-entity-registry";
 import { ClusterMetricsResourceType } from "../../../common/cluster-types";
-import { boundMethod, Disposer } from "../../utils";
+import { boundMethod } from "../../utils";
 import logger from "../../../common/logger";
-import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import kubeWatchApiInjectable
-  from "../../kube-watch-api/kube-watch-api.injectable";
+import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 
 export interface DeploymentDetailsProps extends KubeObjectDetailsProps<Deployment> {
 }
 
 interface Dependencies {
-  subscribeStores: (stores: KubeObjectStore<KubeObject>[]) => Disposer;
+  subscribeStores: SubscribeStores;
 }
 
 @observer
 class NonInjectedDeploymentDetails extends React.Component<DeploymentDetailsProps & Dependencies> {
-  @observable metrics: IPodMetrics = null;
+  @observable metrics: IPodMetrics | null = null;
 
   constructor(props: DeploymentDetailsProps & Dependencies) {
     super(props);
@@ -94,16 +92,18 @@ class NonInjectedDeploymentDetails extends React.Component<DeploymentDetailsProp
         {!isMetricHidden && podsStore.isLoaded && (
           <ResourceMetrics
             loader={this.loadMetrics}
-            tabs={podMetricTabs} object={deployment} params={{ metrics: this.metrics }}
+            tabs={podMetricTabs}
+            object={deployment}
+            metrics={this.metrics}
           >
             <PodCharts/>
           </ResourceMetrics>
         )}
         <KubeObjectMeta object={deployment}/>
         <DrawerItem name="Replicas">
-          {`${spec.replicas} desired, ${status.updatedReplicas || 0} updated`},{" "}
-          {`${status.replicas || 0} total, ${status.availableReplicas || 0} available`},{" "}
-          {`${status.unavailableReplicas || 0} unavailable`}
+          {`${spec.replicas} desired, ${status?.updatedReplicas ?? 0} updated, `}
+          {`${status?.replicas ?? 0} total, ${status?.availableReplicas ?? 0} available, `}
+          {`${status?.unavailableReplicas ?? 0} unavailable`}
         </DrawerItem>
         {selectors.length > 0 &&
         <DrawerItem name="Selector" labelsOnly>
@@ -124,7 +124,9 @@ class NonInjectedDeploymentDetails extends React.Component<DeploymentDetailsProp
         <DrawerItem name="Strategy Type">
           {spec.strategy.type}
         </DrawerItem>
-        <DrawerItem name="Conditions" className="conditions" labelsOnly>
+        <DrawerItem name="Conditions"
+          className="conditions"
+          labelsOnly>
           {
             deployment.getConditions().map(condition => {
               const { type, message, lastTransitionTime, status } = condition;

@@ -22,24 +22,22 @@ import { PodDetailsList } from "../+workloads-pods/pod-details-list";
 import { KubeObjectMeta } from "../kube-object-meta";
 import { getActiveClusterEntity } from "../../api/catalog-entity-registry";
 import { ClusterMetricsResourceType } from "../../../common/cluster-types";
-import { boundMethod, Disposer } from "../../utils";
+import { boundMethod } from "../../utils";
 import logger from "../../../common/logger";
-import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import kubeWatchApiInjectable
-  from "../../kube-watch-api/kube-watch-api.injectable";
+import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 
 export interface ReplicaSetDetailsProps extends KubeObjectDetailsProps<ReplicaSet> {
 }
 
 interface Dependencies {
-  subscribeStores: (stores: KubeObjectStore<KubeObject>[]) => Disposer;
+  subscribeStores: SubscribeStores;
 }
 
 @observer
 class NonInjectedReplicaSetDetails extends React.Component<ReplicaSetDetailsProps & Dependencies> {
-  @observable metrics: IPodMetrics = null;
+  @observable metrics: IPodMetrics | null = null;
 
   constructor(props: ReplicaSetDetailsProps & Dependencies) {
     super(props);
@@ -80,7 +78,7 @@ class NonInjectedReplicaSetDetails extends React.Component<ReplicaSetDetailsProp
 
     const { metrics } = this;
     const { status } = replicaSet;
-    const { availableReplicas, replicas } = status;
+    const { availableReplicas, replicas } = status ?? {};
     const selectors = replicaSet.getSelectors();
     const nodeSelector = replicaSet.getNodeSelectors();
     const images = replicaSet.getImages();
@@ -92,7 +90,9 @@ class NonInjectedReplicaSetDetails extends React.Component<ReplicaSetDetailsProp
         {!isMetricHidden && podsStore.isLoaded && (
           <ResourceMetrics
             loader={this.loadMetrics}
-            tabs={podMetricTabs} object={replicaSet} params={{ metrics }}
+            tabs={podMetricTabs}
+            object={replicaSet}
+            metrics={metrics}
           >
             <PodCharts/>
           </ResourceMetrics>

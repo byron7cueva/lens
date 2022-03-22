@@ -20,7 +20,9 @@ export function DrawerItemLabels(props: DrawerItemLabelsProps) {
 
   return (
     <DrawerItem {...itemProps} labelsOnly>
-      {labels.map(label => <Badge key={label} label={label} title={label}/>)}
+      {labels.map(label => <Badge key={label}
+        label={label}
+        title={label}/>)}
     </DrawerItem>
   );
 }

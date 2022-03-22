@@ -64,7 +64,9 @@ export function Avatar(props: AvatarProps) {
 
   const renderContents = () => {
     if (src) {
-      return <img src={src} {...imgProps} alt={title}/>;
+      return <img src={src}
+        {...imgProps}
+        alt={title}/>;
     }
 
     return children || getLabelFromTitle(title);

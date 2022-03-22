@@ -61,7 +61,9 @@ const formatOptionLabelFor =
           <div className="flex gaps align-center">
             <Icon small material="layers" />
             <span>{namespace}</span>
-            {isSelected && <Icon small material="check" className="box right" />}
+            {isSelected && <Icon small
+              material="check"
+              className="box right" />}
           </div>
         );
       }

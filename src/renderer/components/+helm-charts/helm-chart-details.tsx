@@ -113,9 +113,13 @@ class NonInjectedHelmChartDetails extends Component<HelmChartDetailsProps & Depe
         <div className="intro-contents box grow">
           <div className="description flex align-center justify-space-between">
             {selectedChart.getDescription()}
-            <Button primary label="Install" onClick={this.install} />
+            <Button primary
+              label="Install"
+              onClick={this.install} />
           </div>
-          <DrawerItem name="Version" className="version" onClick={stopPropagation}>
+          <DrawerItem name="Version"
+            className="version"
+            onClick={stopPropagation}>
             <Select
               themeName="outlined"
               menuPortalTarget={null}
@@ -137,11 +141,16 @@ class NonInjectedHelmChartDetails extends Component<HelmChartDetailsProps & Depe
             />
           </DrawerItem>
           <DrawerItem name="Home">
-            <a href={selectedChart.getHome()} target="_blank" rel="noreferrer">{selectedChart.getHome()}</a>
+            <a href={selectedChart.getHome()}
+              target="_blank"
+              rel="noreferrer">{selectedChart.getHome()}</a>
           </DrawerItem>
           <DrawerItem name="Maintainers" className="maintainers">
             {selectedChart.getMaintainers().map(({ name, email, url }) =>
-              <a key={name} href={url || `mailto:${email}`} target="_blank" rel="noreferrer">{name}</a>,
+              <a key={name}
+                href={url || `mailto:${email}`}
+                target="_blank"
+                rel="noreferrer">{name}</a>,
             )}
           </DrawerItem>
           {selectedChart.getKeywords().length > 0 && (

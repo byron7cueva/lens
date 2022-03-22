@@ -76,7 +76,9 @@ export class PortForwardDetails extends React.Component<PortForwardDetailsProps>
 
   render() {
     const { hideDetails, portForward } = this.props;
-    const toolbar = <PortForwardMenu portForward={portForward} toolbar hideDetails={hideDetails}/>;
+    const toolbar = <PortForwardMenu portForward={portForward}
+      toolbar
+      hideDetails={hideDetails}/>;
 
     return (
       <Drawer

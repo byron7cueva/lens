@@ -116,7 +116,9 @@ export class KubeObjectDetails extends React.Component {
        * any defined details we should try and display at least some details
        */
       if (crd) {
-        details.push(<CustomResourceDetails key={object.getId()} object={object} crd={crd} />);
+        details.push(<CustomResourceDetails key={object.getId()}
+          object={object}
+          crd={crd} />);
       }
     }
 

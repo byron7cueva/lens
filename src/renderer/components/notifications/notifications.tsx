@@ -110,7 +110,8 @@ export class Notifications extends React.Component {
                 <div className="message box grow">{msgText}</div>
                 <div className="box">
                   <Icon
-                    material="close" className="close"
+                    material="close"
+                    className="close"
                     onClick={prevDefault(() => {
                       remove(id);
                       onClose?.();

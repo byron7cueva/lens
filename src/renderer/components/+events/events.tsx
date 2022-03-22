@@ -181,7 +181,9 @@ export class Events extends React.Component<EventsProps> {
               ),
             },
             event.getNs(),
-            <Link key="link" to={getDetailsUrl(apiManager.lookupApiLink(involvedObject, event))} onClick={stopPropagation}>
+            <Link key="link"
+              to={getDetailsUrl(apiManager.lookupApiLink(involvedObject, event))}
+              onClick={stopPropagation}>
               {involvedObject.kind}: {involvedObject.name}
             </Link>,
             event.getSource(),

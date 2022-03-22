@@ -51,12 +51,16 @@ class NonInjectedHelmReleaseMenu extends React.Component<HelmReleaseMenuProps & 
       <>
         {hasRollback && (
           <MenuItem onClick={this.rollback}>
-            <Icon material="history" interactive={toolbar} tooltip="Rollback"/>
+            <Icon material="history"
+              interactive={toolbar}
+              tooltip="Rollback"/>
             <span className="title">Rollback</span>
           </MenuItem>
         )}
         <MenuItem onClick={this.upgrade}>
-          <Icon material="refresh" interactive={toolbar} tooltip="Upgrade"/>
+          <Icon material="refresh"
+            interactive={toolbar}
+            tooltip="Upgrade"/>
           <span className="title">Upgrade</span>
         </MenuItem>
       </>

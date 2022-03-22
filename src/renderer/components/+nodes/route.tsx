@@ -158,7 +158,9 @@ export class NodesRoute extends React.Component<NodesRouteProps> {
       const tooltipId = `node-${node.getName()}-condition-${type}`;
 
       return (
-        <div key={type} id={tooltipId} className={cssNames("condition", kebabCase(type))}>
+        <div key={type}
+          id={tooltipId}
+          className={cssNames("condition", kebabCase(type))}>
           {type}
           <Tooltip targetId={tooltipId} formatters={{ tableView: true }}>
             {Object.entries(condition).map(([key, value]) =>
@@ -219,14 +221,19 @@ export class NodesRoute extends React.Component<NodesRouteProps> {
             const taints = node.getTaints();
 
             return [
-              <Badge flat key="name" label={node.getName()} tooltip={node.getName()} />,
+              <Badge flat
+                key="name"
+                label={node.getName()}
+                tooltip={node.getName()} />,
               <KubeObjectStatusIcon key="icon" object={node} />,
               this.renderCpuUsage(node),
               this.renderMemoryUsage(node),
               this.renderDiskUsage(node),
               <>
                 <span id={tooltipId}>{taints.length}</span>
-                <Tooltip targetId={tooltipId} tooltipOnParentHover={true} style={{ whiteSpace: "pre-line" }}>
+                <Tooltip targetId={tooltipId}
+                  tooltipOnParentHover={true}
+                  style={{ whiteSpace: "pre-line" }}>
                   {taints.map(formatNodeTaint).join("\n")}
                 </Tooltip>
               </>,

@@ -184,7 +184,7 @@ export interface RequestLikeError extends Error {
   failed?: boolean;
   timedOut?: boolean;
   error?: string;
-  response?: IncomingMessage;
+  response?: IncomingMessage & { body?: any };
 }
 
 /**

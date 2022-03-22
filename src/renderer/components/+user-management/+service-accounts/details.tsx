@@ -87,7 +87,8 @@ export class ServiceAccountsDetails extends React.Component<ServiceAccountsDetai
           <div key={secret.getName()}>
             {secret.getName()}
             <Icon
-              small material="warning"
+              small
+              material="warning"
               tooltip="Secret is not found"
             />
           </div>

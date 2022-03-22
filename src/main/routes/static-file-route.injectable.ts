@@ -3,7 +3,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 import { getInjectable } from "@ogre-tools/injectable";
-import type { LensApiRequest, Route } from "../router/router";
 import { contentTypes, SupportedFileExtension } from "../router/router-content-types";
 import logger from "../logger";
 import { routeInjectionToken } from "../router/router.injectable";
@@ -12,6 +11,7 @@ import path from "path";
 import readFileInjectable from "../../common/fs/read-file.injectable";
 import isDevelopmentInjectable from "../../common/vars/is-development.injectable";
 import httpProxy from "http-proxy";
+import { LensApiRequest, route } from "../router/route";
 
 interface ProductionDependencies {
   readFile: (path: string) => Promise<Buffer>;
@@ -19,7 +19,7 @@ interface ProductionDependencies {
 
 const handleStaticFileInProduction =
   ({ readFile }: ProductionDependencies) =>
-    async ({ params }: LensApiRequest) => {
+    async ({ params }: LensApiRequest<"/{path*}">) => {
       const staticPath = path.resolve(__static);
       let filePath = params.path;
 
@@ -41,7 +41,7 @@ const handleStaticFileInProduction =
           return { response: await readFile(asset), contentType };
         } catch (err) {
           if (retryCount > 5) {
-            logger.error("handleStaticFile:", err.toString());
+            logger.error("handleStaticFile:", String(err));
 
             return { statusCode: 404 };
           }
@@ -59,10 +59,8 @@ interface DevelopmentDependencies {
 
 const handleStaticFileInDevelopment =
   ({ proxy }: DevelopmentDependencies) =>
-    (apiReq: LensApiRequest) => {
-      const { req, res } = apiReq.raw;
-
-      if (req.url === "/" || !req.url.startsWith("/build/")) {
+    ({ raw: { req, res }}: LensApiRequest<"/{path*}">) => {
+      if (req.url === "/" || !req.url?.startsWith("/build/")) {
         req.url = `${publicPath}/${appName}.html`;
       }
 
@@ -76,16 +74,17 @@ const handleStaticFileInDevelopment =
 const staticFileRouteInjectable = getInjectable({
   id: "static-file-route",
 
-  instantiate: (di): Route<Buffer> => {
+  instantiate: (di) => {
     const isDevelopment = di.inject(isDevelopmentInjectable);
 
-    return {
+    return route({
       method: "get",
       path: `/{path*}`,
-      handler: isDevelopment
+    })(
+      isDevelopment
         ? handleStaticFileInDevelopment({ proxy: httpProxy.createProxy() })
         : handleStaticFileInProduction({ readFile: di.inject(readFileInjectable) }),
-    };
+    );
   },
 
   injectionToken: routeInjectionToken,

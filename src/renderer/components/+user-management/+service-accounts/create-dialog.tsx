@@ -77,7 +77,8 @@ export class CreateServiceAccountDialog extends React.Component<CreateServiceAcc
               placeholder="Enter a name"
               trim
               validators={systemName}
-              value={name} onChange={v => this.name = v.toLowerCase()}
+              value={name}
+              onChange={v => this.name = v.toLowerCase()}
             />
             <SubTitle title="Namespace" />
             <NamespaceSelect

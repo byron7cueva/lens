@@ -66,7 +66,8 @@ export class PodDetailsList extends React.Component<PodDetailsListProps> {
 
     return (
       <LineProgress
-        max={maxCpu} value={usage}
+        max={maxCpu}
+        value={usage}
         tooltip={parseFloat(value) !== 0 ? tooltip : null}
       />
     );
@@ -82,7 +83,8 @@ export class PodDetailsList extends React.Component<PodDetailsListProps> {
 
     return (
       <LineProgress
-        max={maxMemory} value={usage}
+        max={maxMemory}
+        value={usage}
         tooltip={usage != 0 ? tooltip : null}
       />
     );

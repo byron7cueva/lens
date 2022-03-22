@@ -349,7 +349,9 @@ export function SubMenu(props: Partial<MenuProps>) {
   return (
     <Menu
       className={cssNames("SubMenu", className)}
-      isOpen open={noop} close={noop}
+      isOpen
+      open={noop}
+      close={noop}
       position={{}} // reset position, must be handled in css
       closeOnClickOutside={false}
       closeOnClickItem={false}

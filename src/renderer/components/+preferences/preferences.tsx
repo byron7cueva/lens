@@ -53,18 +53,41 @@ const NonInjectedPreferences: React.FC<Dependencies> = ({ appPreferenceItems }) 
     const isActive = (route: RouteProps) => !!matchPath(currentLocation, { path: route.path, exact: route.exact });
 
     return (
-      <Tabs className="flex column" scrollable={false} onChange={(url) => navigateWithoutHistoryChange({ pathname: url })}>
+      <Tabs className="flex column"
+        scrollable={false}
+        onChange={(url) => navigateWithoutHistoryChange({ pathname: url })}>
         <div className="header">Preferences</div>
-        <Tab value={appURL()} label="Application" data-testid="application-tab" active={isActive(appRoute)}/>
-        <Tab value={proxyURL()} label="Proxy" data-testid="proxy-tab" active={isActive(proxyRoute)}/>
-        <Tab value={kubernetesURL()} label="Kubernetes" data-testid="kubernetes-tab" active={isActive(kubernetesRoute)}/>
-        <Tab value={editorURL()} label="Editor" data-testid="editor-tab" active={isActive(editorRoute)}/>
-        <Tab value={terminalURL()} label="Terminal" data-testid="terminal-tab" active={isActive(terminalRoute)}/>
+        <Tab value={appURL()}
+          label="Application"
+          data-testid="application-tab"
+          active={isActive(appRoute)}/>
+        <Tab value={proxyURL()}
+          label="Proxy"
+          data-testid="proxy-tab"
+          active={isActive(proxyRoute)}/>
+        <Tab value={kubernetesURL()}
+          label="Kubernetes"
+          data-testid="kubernetes-tab"
+          active={isActive(kubernetesRoute)}/>
+        <Tab value={editorURL()}
+          label="Editor"
+          data-testid="editor-tab"
+          active={isActive(editorRoute)}/>
+        <Tab value={terminalURL()}
+          label="Terminal"
+          data-testid="terminal-tab"
+          active={isActive(terminalRoute)}/>
         {(telemetryExtensions.length > 0 || !!sentryDsn) &&
-          <Tab value={telemetryURL()} label="Telemetry" data-testid="telemetry-tab" active={isActive(telemetryRoute)}/>
+          <Tab value={telemetryURL()}
+            label="Telemetry"
+            data-testid="telemetry-tab"
+            active={isActive(telemetryRoute)}/>
         }
         {extensions.filter(e => !e.showInPreferencesTab).length > 0 &&
-          <Tab value={extensionURL()} label="Extensions" data-testid="extensions-tab" active={isActive(extensionRoute)}/>
+          <Tab value={extensionURL()}
+            label="Extensions"
+            data-testid="extensions-tab"
+            active={isActive(extensionRoute)}/>
         }
       </Tabs>
     );
@@ -84,7 +107,9 @@ const NonInjectedPreferences: React.FC<Dependencies> = ({ appPreferenceItems }) 
         <Route path={terminalURL()} component={Terminal}/>
         <Route path={telemetryURL()} component={Telemetry}/>
         <Route path={extensionURL()} component={Extensions}/>
-        <Redirect exact from={`${preferencesURL()}/`} to={appURL()}/>
+        <Redirect exact
+          from={`${preferencesURL()}/`}
+          to={appURL()}/>
       </Switch>
     </SettingLayout>
   );

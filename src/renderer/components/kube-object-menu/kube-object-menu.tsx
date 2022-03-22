@@ -86,7 +86,9 @@ class NonInjectedKubeObjectMenu<TKubeObject extends KubeObject> extends React.Co
     const { object, toolbar } = this.props;
 
     return this.props.kubeObjectMenuItems.map((MenuItem, index) => (
-      <MenuItem object={object} toolbar={toolbar} key={`menu-item-${index}`} />
+      <MenuItem object={object}
+        toolbar={toolbar}
+        key={`menu-item-${index}`} />
     ));
   }
 

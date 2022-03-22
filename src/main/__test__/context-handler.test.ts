@@ -4,7 +4,7 @@
  */
 
 import { UserStore } from "../../common/user-store";
-import type { ContextHandler } from "../context-handler/context-handler";
+import type { ClusterContextHandler } from "../context-handler/context-handler";
 import { PrometheusProvider, PrometheusProviderRegistry, PrometheusService } from "../prometheus";
 import mockFs from "mock-fs";
 import { getDiForUnitTesting } from "../getDiForUnitTesting";
@@ -73,7 +73,7 @@ const clusterStub = {
 } as Cluster;
 
 describe("ContextHandler", () => {
-  let createContextHandler: (cluster: Cluster) => ContextHandler;
+  let createContextHandler: (cluster: Cluster) => ClusterContextHandler;
 
   beforeEach(async () => {
     const di = getDiForUnitTesting({ doGeneralOverrides: true });

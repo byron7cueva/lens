@@ -7,13 +7,14 @@
 
 import moment from "moment";
 import type { KubeJsonApiData, KubeJsonApiDataList, KubeJsonApiListMetadata } from "./kube-json-api";
-import { autoBind, formatDuration, hasOptionalTypedProperty, hasTypedProperty, isObject, isString, isNumber, bindPredicate, isTypedArray, isRecord } from "../utils";
+import { autoBind, formatDuration, hasOptionalTypedProperty, hasTypedProperty, isObject, isString, isNumber, bindPredicate, isTypedArray, isRecord, json } from "../utils";
 import type { ItemObject } from "../item.store";
 import { apiKube } from "./index";
 import type { JsonApiParams } from "./json-api";
 import * as resourceApplierApi from "./endpoints/resource-applier.api";
 import type { Patch } from "rfc6902";
 import assert from "assert";
+import type { JsonObject } from "type-fest";
 
 export type KubeJsonApiDataFor<K extends KubeObject> = K extends KubeObject<infer Metadata, infer Status, infer Spec>
   ? KubeJsonApiData<Metadata, Status, Spec>
@@ -346,6 +347,10 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
    * creation timestamp of this object.
    */
   getCreationTimestamp() {
+    if (!this.metadata.creationTimestamp) {
+      return Date.now();
+    }
+
     return new Date(this.metadata.creationTimestamp).getTime();
   }
 
@@ -417,8 +422,8 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
     ];
   }
 
-  toPlainObject(): object {
-    return JSON.parse(JSON.stringify(this));
+  toPlainObject() {
+    return json.parse(JSON.stringify(this)) as JsonObject;
   }
 
   /**

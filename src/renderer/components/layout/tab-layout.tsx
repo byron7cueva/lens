@@ -41,7 +41,10 @@ export const TabLayout = observer(({ className, contentClass, tabs = [], childre
           {tabs.map(({ title, routePath, url = routePath, exact }) => {
             const isActive = !!matchPath(currentLocation, { path: routePath, exact });
 
-            return <Tab key={url} label={title} value={url} active={isActive}/>;
+            return <Tab key={url}
+              label={title}
+              value={url}
+              active={isActive}/>;
           })}
         </Tabs>
       )}
@@ -50,7 +53,10 @@ export const TabLayout = observer(({ className, contentClass, tabs = [], childre
           {hasTabs && (
             <Switch>
               {tabs.map(({ routePath, exact, component }) => {
-                return <Route key={routePath} exact={exact} path={routePath} component={component}/>;
+                return <Route key={routePath}
+                  exact={exact}
+                  path={routePath}
+                  component={component}/>;
               })}
               <Redirect to={startTabUrl}/>
             </Switch>

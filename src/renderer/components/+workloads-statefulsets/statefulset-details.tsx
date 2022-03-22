@@ -23,24 +23,22 @@ import { PodDetailsList } from "../+workloads-pods/pod-details-list";
 import { KubeObjectMeta } from "../kube-object-meta";
 import { getActiveClusterEntity } from "../../api/catalog-entity-registry";
 import { ClusterMetricsResourceType } from "../../../common/cluster-types";
-import { boundMethod, Disposer } from "../../utils";
+import { boundMethod } from "../../utils";
 import logger from "../../../common/logger";
-import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import kubeWatchApiInjectable
-  from "../../kube-watch-api/kube-watch-api.injectable";
+import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 
 export interface StatefulSetDetailsProps extends KubeObjectDetailsProps<StatefulSet> {
 }
 
 interface Dependencies {
-  subscribeStores: (stores: KubeObjectStore<KubeObject>[]) => Disposer;
+  subscribeStores: SubscribeStores;
 }
 
 @observer
 class NonInjectedStatefulSetDetails extends React.Component<StatefulSetDetailsProps & Dependencies> {
-  @observable metrics: IPodMetrics = null;
+  @observable metrics: IPodMetrics | null = null;
 
   constructor(props: StatefulSetDetailsProps & Dependencies) {
     super(props);
@@ -90,7 +88,9 @@ class NonInjectedStatefulSetDetails extends React.Component<StatefulSetDetailsPr
         {!isMetricHidden && podsStore.isLoaded && (
           <ResourceMetrics
             loader={this.loadMetrics}
-            tabs={podMetricTabs} object={statefulSet} params={{ metrics: this.metrics }}
+            tabs={podMetricTabs}
+            object={statefulSet}
+            metrics={this.metrics}
           >
             <PodCharts/>
           </ResourceMetrics>

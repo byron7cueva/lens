@@ -138,7 +138,8 @@ export class ConfirmDialog extends React.Component<ConfirmDialogProps> {
             {...cancelButtonProps}
           />
           <Button
-            autoFocus primary
+            autoFocus
+            primary
             className="ok"
             label={labelOk}
             onClick={prevDefault(this.ok)}

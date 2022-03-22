@@ -29,23 +29,20 @@ import { boundMethod } from "autobind-decorator";
 import { getDetailsUrl } from "../kube-detail-params";
 import { apiManager } from "../../../common/k8s-api/api-manager";
 import logger from "../../../common/logger";
-import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
-import type { Disposer } from "../../../common/utils";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import kubeWatchApiInjectable
-  from "../../kube-watch-api/kube-watch-api.injectable";
+import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 
 export interface JobDetailsProps extends KubeObjectDetailsProps<Job> {
 }
 
 interface Dependencies {
-  subscribeStores: (stores: KubeObjectStore<KubeObject>[]) => Disposer;
+  subscribeStores: SubscribeStores;
 }
 
 @observer
 class NonInjectedJobDetails extends React.Component<JobDetailsProps & Dependencies> {
-  @observable metrics: IPodMetrics = null;
+  @observable metrics: IPodMetrics | null = null;
 
   constructor(props: JobDetailsProps & Dependencies) {
     super(props);
@@ -96,7 +93,9 @@ class NonInjectedJobDetails extends React.Component<JobDetailsProps & Dependenci
         {!isMetricHidden && (
           <ResourceMetrics
             loader={this.loadMetrics}
-            tabs={podMetricTabs} object={job} params={{ metrics: this.metrics }}
+            tabs={podMetricTabs}
+            object={job}
+            metrics={this.metrics}
           >
             <PodCharts />
           </ResourceMetrics>
@@ -139,7 +138,9 @@ class NonInjectedJobDetails extends React.Component<JobDetailsProps & Dependenci
           }
         </DrawerItem>
         }
-        <DrawerItem name="Conditions" className="conditions" labelsOnly>
+        <DrawerItem name="Conditions"
+          className="conditions"
+          labelsOnly>
           {condition && (
             <Badge
               className={kebabCase(condition.type)}

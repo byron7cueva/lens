@@ -35,7 +35,8 @@ export class ServiceAccountsSecret extends React.Component<ServiceAccountsSecret
           <>
             <span className="asterisks">{"•".repeat(16)}</span>
             <Icon
-              small material="lock_open"
+              small
+              material="lock_open"
               tooltip="Show value"
               onClick={prevDefault(() => this.setState({ showToken: true }))}
             />

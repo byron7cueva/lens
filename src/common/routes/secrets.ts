@@ -3,10 +3,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import type { RouteProps } from "react-router";
-import { buildURL } from "../utils/buildUrl";
+import { buildURL, UrlRouteProps } from "../utils/buildUrl";
 
-export const secretsRoute: RouteProps = {
+export const secretsRoute: UrlRouteProps = {
   path: "/secrets",
 };
 

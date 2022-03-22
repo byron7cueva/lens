@@ -86,7 +86,10 @@ export class Radio extends React.Component<RadioProps> {
         onKeyDown={this.onKeyDown}
         ref={e => this.elem = e}
       >
-        <input {...inputProps} type="radio" checked={checked} onChange={this.onChange}/>
+        <input {...inputProps}
+          type="radio"
+          checked={checked}
+          onChange={this.onChange}/>
         <i className="tick flex center"/>
         {label ? <div className="label">{label}</div> : null}
         {children}

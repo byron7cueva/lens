@@ -25,7 +25,9 @@ const NonInjectedTelemetry: React.FC<Dependencies> = ({ appPreferenceItems }) =>
   return (
     <section id="telemetry">
       <h2 data-testid="telemetry-header">Telemetry</h2>
-      {telemetryExtensions.map((extension) => <ExtensionSettings key={extension.id} setting={extension} size="small" />)}
+      {telemetryExtensions.map((extension) => <ExtensionSettings key={extension.id}
+        setting={extension}
+        size="small" />)}
       {sentryDsn ? (
         <React.Fragment key='sentry'>
           <section id='sentry' className="small">

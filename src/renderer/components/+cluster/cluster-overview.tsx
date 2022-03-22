@@ -10,7 +10,7 @@ import { reaction } from "mobx";
 import { disposeOnUnmount, observer } from "mobx-react";
 import { nodesStore } from "../+nodes/nodes.store";
 import { podsStore } from "../+workloads-pods/pods.store";
-import { Disposer, getHostedClusterId, interval } from "../../utils";
+import { getHostedClusterId, interval } from "../../utils";
 import { TabLayout } from "../layout/tab-layout";
 import { Spinner } from "../spinner";
 import { ClusterIssues } from "./cluster-issues";
@@ -23,12 +23,11 @@ import { ClusterStore } from "../../../common/cluster-store/cluster-store";
 import { eventStore } from "../+events/event.store";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
-import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
 import clusterOverviewStoreInjectable from "./cluster-overview-store/cluster-overview-store.injectable";
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 
 interface Dependencies {
-  subscribeStores: (stores: KubeObjectStore<KubeObject>[]) => Disposer;
+  subscribeStores: SubscribeStores;
   clusterOverviewStore: ClusterOverviewStore;
 }
 
@@ -39,7 +38,7 @@ class NonInjectedClusterOverview extends React.Component<Dependencies> {
   loadMetrics() {
     const cluster = ClusterStore.getInstance().getById(getHostedClusterId());
 
-    if (cluster.available) {
+    if (cluster?.available) {
       this.props.clusterOverviewStore.loadMetrics();
     }
   }
@@ -65,7 +64,7 @@ class NonInjectedClusterOverview extends React.Component<Dependencies> {
     this.metricPoller.stop();
   }
 
-  renderMetrics(isMetricsHidden: boolean) {
+  renderMetrics(isMetricsHidden?: boolean) {
     if (isMetricsHidden) {
       return null;
     }
@@ -78,7 +77,7 @@ class NonInjectedClusterOverview extends React.Component<Dependencies> {
     );
   }
 
-  renderClusterOverview(isLoaded: boolean, isMetricsHidden: boolean) {
+  renderClusterOverview(isLoaded: boolean, isMetricsHidden?: boolean) {
     if (!isLoaded) {
       return <Spinner center/>;
     }

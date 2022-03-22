@@ -70,7 +70,9 @@ export class CRDDetails extends React.Component<CRDDetailsProps> {
             readOnly
           />
         </DrawerItem>
-        <DrawerItem name="Conditions" className="conditions" labelsOnly>
+        <DrawerItem name="Conditions"
+          className="conditions"
+          labelsOnly>
           {
             crd.getConditions().map(condition => {
               const { type, message, lastTransitionTime, status } = condition;

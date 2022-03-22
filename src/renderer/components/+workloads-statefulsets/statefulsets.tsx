@@ -41,7 +41,8 @@ export class StatefulSets extends React.Component<StatefulSetsProps> {
       <KubeObjectListLayout
         isConfigurable
         tableId="workload_statefulsets"
-        className="StatefulSets" store={statefulSetStore}
+        className="StatefulSets"
+        store={statefulSetStore}
         dependentStores={[podsStore, eventStore]} // status icon component uses event store, details component uses podStore
         sortingCallbacks={{
           [columnId.name]: statefulSet => statefulSet.getName(),

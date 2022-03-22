@@ -108,7 +108,9 @@ export class HelmCharts extends React.Component {
     return (
       <div className="flex gaps">
         <span>{repo.name}</span>
-        {isAdded && <Icon small material="check" className="box right"/>}
+        {isAdded && <Icon small
+          material="check"
+          className="box right"/>}
       </div>
     );
   };
@@ -130,7 +132,9 @@ export class HelmCharts extends React.Component {
 
     return repos.map(([name, repo]) => {
       return (
-        <RemovableItem key={name} onRemove={() => this.removeRepo(repo)} className="mt-3">
+        <RemovableItem key={name}
+          onRemove={() => this.removeRepo(repo)}
+          className="mt-3">
           <div>
             <div data-testid="repository-name" className={styles.repoName}>{name}</div>
             <div className={styles.repoUrl}>{repo.url}</div>

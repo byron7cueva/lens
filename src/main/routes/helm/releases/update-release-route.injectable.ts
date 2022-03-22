@@ -3,35 +3,47 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 import { apiPrefix } from "../../../../common/vars";
-import type { Route } from "../../../router/router";
-import { helmService } from "../../../helm/helm-service";
+import { helmService, UpdateChartArgs } from "../../../helm/helm-service";
 import { routeInjectionToken } from "../../../router/router.injectable";
 import { getInjectable } from "@ogre-tools/injectable";
+import { route } from "../../../router/route";
+import Joi from "joi";
 
-interface UpdateReleaseResponse {
-  log: string;
-  release: { name: string; namespace: string };
-}
+const updateChartArgsValidator = Joi.object<UpdateChartArgs, true, UpdateChartArgs>({
+  chart: Joi
+    .string()
+    .required(),
+  version: Joi
+    .string()
+    .required(),
+  values: Joi
+    .object()
+    .unknown(true),
+});
 
 const updateReleaseRouteInjectable = getInjectable({
   id: "update-release-route",
 
-  instantiate: (): Route<UpdateReleaseResponse> => ({
+  instantiate: () => route({
     method: "put",
     path: `${apiPrefix}/v2/releases/{namespace}/{release}`,
+  })(async ({ cluster, params, payload }) => {
+    const result = updateChartArgsValidator.validate(payload);
 
-    handler: async ({
-      cluster,
-      params,
-      payload,
-    }) => ({
+    if (result.error) {
+      return {
+        error: result.error,
+      };
+    }
+
+    return {
       response: await helmService.updateRelease(
         cluster,
         params.release,
         params.namespace,
-        payload,
+        result.value,
       ),
-    }),
+    };
   }),
 
   injectionToken: routeInjectionToken,

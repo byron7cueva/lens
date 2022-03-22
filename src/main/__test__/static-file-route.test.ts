@@ -40,7 +40,7 @@ describe("static-file-route", () => {
         path: "../index.ts",
       },
       raw: {},
-    } as LensApiRequest<any>;
+    } as LensApiRequest;
 
     const result = await handleStaticFileRoute.handler(request);
 
@@ -57,7 +57,7 @@ describe("static-file-route", () => {
         path: "router.test.ts",
       },
       raw: { req },
-    } as LensApiRequest<any>;
+    } as LensApiRequest;
 
     const result = await handleStaticFileRoute.handler(request);
 

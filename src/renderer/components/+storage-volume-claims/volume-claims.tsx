@@ -77,12 +77,16 @@ export class PersistentVolumeClaims extends React.Component<PersistentVolumeClai
             pvc.getName(),
             <KubeObjectStatusIcon key="icon" object={pvc} />,
             pvc.getNs(),
-            <Link key="link" to={storageClassDetailsUrl} onClick={stopPropagation}>
+            <Link key="link"
+              to={storageClassDetailsUrl}
+              onClick={stopPropagation}>
               {storageClassName}
             </Link>,
             pvc.getStorage(),
             pods.map(pod => (
-              <Link key={pod.getId()} to={getDetailsUrl(pod.selfLink)} onClick={stopPropagation}>
+              <Link key={pod.getId()}
+                to={getDetailsUrl(pod.selfLink)}
+                onClick={stopPropagation}>
                 {pod.getName()}
               </Link>
             )),

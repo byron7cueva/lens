@@ -5,23 +5,20 @@
 
 import React, { useContext } from "react";
 import { observer } from "mobx-react";
-import type { IPvcMetrics, PersistentVolumeClaim } from "../../../common/k8s-api/endpoints";
 import { BarChart, ChartDataSets, memoryOptions } from "../chart";
 import { isMetricsEmpty, normalizeMetrics } from "../../../common/k8s-api/endpoints/metrics.api";
 import { NoMetrics } from "../resource-metrics/no-metrics";
-import { IResourceMetricsValue, ResourceMetricsContext } from "../resource-metrics";
+import { ResourceMetricsContext } from "../resource-metrics";
 import { ThemeStore } from "../../theme.store";
 
-type IContext = IResourceMetricsValue<PersistentVolumeClaim, { metrics: IPvcMetrics }>;
-
 export const VolumeClaimDiskChart = observer(() => {
-  const { params: { metrics }, object } = useContext<IContext>(ResourceMetricsContext);
-  const { chartCapacityColor } = ThemeStore.getInstance().activeTheme.colors;
-  const id = object.getId();
+  const { metrics, tab, object } = useContext(ResourceMetricsContext) ?? {};
 
-  if (!metrics) return null;
+  if (!metrics || !object || !tab) return null;
   if (isMetricsEmpty(metrics)) return <NoMetrics/>;
 
+  const id = object.getId();
+  const { chartCapacityColor } = ThemeStore.getInstance().activeTheme.colors;
   const { diskUsage, diskCapacity } = metrics;
   const usage = normalizeMetrics(diskUsage).data.result[0].values;
   const capacity = normalizeMetrics(diskCapacity).data.result[0].values;

@@ -93,6 +93,7 @@ describe("create clusters", () => {
       resolveAuthProxyCa: jest.fn(),
       resolveAuthProxyUrl: jest.fn(),
       setupPrometheus: jest.fn(),
+      ensureServer: jest.fn(),
     } as ClusterContextHandler));
 
     createCluster = di.inject(createClusterInjectionToken);

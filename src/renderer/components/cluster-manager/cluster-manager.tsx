@@ -65,7 +65,9 @@ class NonInjectedClusterManager extends React.Component<Dependencies> {
             {GlobalPageRegistry.getInstance()
               .getItems()
               .map(({ url, components: { Page }}) => (
-                <Route key={url} path={url} component={Page} />
+                <Route key={url}
+                  path={url}
+                  component={Page} />
               ))}
             <Redirect exact to={routes.welcomeURL()} />
           </Switch>

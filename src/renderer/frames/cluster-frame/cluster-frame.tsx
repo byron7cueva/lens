@@ -190,7 +190,9 @@ class NonInjectedClusterFrame extends React.Component<Dependencies> {
               <Route component={HelmRoute} {...routes.helmRoute}/>
               {this.renderExtensionTabLayoutRoutes()}
               {this.renderExtensionRoutes()}
-              <Redirect exact from="/" to={this.startUrl}/>
+              <Redirect exact
+                from="/"
+                to={this.startUrl}/>
 
               <Route render={({ location }) => {
                 Notifications.error(`Unknown location ${location.pathname}, redirecting to main page.`);

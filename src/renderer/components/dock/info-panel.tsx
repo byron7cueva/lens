@@ -126,7 +126,9 @@ class NonInjectedInfoPanel extends Component<InfoPanelProps & Dependencies> {
         )}
         {showButtons && (
           <>
-            <Button plain label="Cancel" onClick={close} />
+            <Button plain
+              label="Cancel"
+              onClick={close} />
             <Button
               active
               outlined={showSubmitClose}
@@ -137,7 +139,8 @@ class NonInjectedInfoPanel extends Component<InfoPanelProps & Dependencies> {
             />
             {showSubmitClose && (
               <Button
-                primary active
+                primary
+                active
                 label={`${submitLabel} & Close`}
                 onClick={submitAndClose}
                 disabled={isDisabled}

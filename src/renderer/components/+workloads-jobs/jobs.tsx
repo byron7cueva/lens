@@ -34,7 +34,8 @@ export class Jobs extends React.Component<JobsProps> {
       <KubeObjectListLayout
         isConfigurable
         tableId="workload_jobs"
-        className="Jobs" store={jobStore}
+        className="Jobs"
+        store={jobStore}
         dependentStores={[eventStore]} // status icon component uses event store
         sortingCallbacks={{
           [columnId.name]: job => job.getName(),
