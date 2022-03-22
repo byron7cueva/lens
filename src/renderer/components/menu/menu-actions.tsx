@@ -21,8 +21,8 @@ export interface MenuActionsProps extends Partial<MenuProps> {
   autoCloseOnSelect?: boolean;
   triggerIcon?: string | IconProps | React.ReactNode;
   removeConfirmationMessage?: React.ReactNode | (() => React.ReactNode);
-  updateAction?(): void;
-  removeAction?(): void;
+  updateAction?: () => void | Promise<void>;
+  removeAction?: () => void | Promise<void>;
   onOpen?(): void;
 }
 

@@ -8,7 +8,7 @@ import "./kube-object-list-layout.scss";
 import React from "react";
 import { computed, makeObservable, observable, reaction } from "mobx";
 import { disposeOnUnmount, observer } from "mobx-react";
-import { cssNames, Disposer } from "../../utils";
+import { cssNames, Disposer, isDefined } from "../../utils";
 import type { KubeObject } from "../../../common/k8s-api/kube-object";
 import { ItemListLayout, ItemListLayoutProps } from "../item-object-list/list-layout";
 import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
@@ -22,11 +22,9 @@ import { withInjectables } from "@ogre-tools/injectable-react";
 import type { ClusterFrameContext } from "../../cluster-frame-context/cluster-frame-context";
 import clusterFrameContextInjectable from "../../cluster-frame-context/cluster-frame-context.injectable";
 import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
-import type { KubeWatchSubscribeStoreOptions } from "../../kube-watch-api/kube-watch-api";
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 
-type ItemListLayoutPropsWithoutGetItems<K extends KubeObject> = Omit<ItemListLayoutProps<K>, "getItems">;
-
-export interface KubeObjectListLayoutProps<K extends KubeObject> extends ItemListLayoutPropsWithoutGetItems<K> {
+export interface KubeObjectListLayoutProps<K extends KubeObject> extends Omit<ItemListLayoutProps<K>, "getItems" | "dependentStores"> {
   items?: K[];
   getItems?: () => K[];
   store: KubeObjectStore<K>;
@@ -35,13 +33,13 @@ export interface KubeObjectListLayoutProps<K extends KubeObject> extends ItemLis
 }
 
 const defaultProps: Partial<KubeObjectListLayoutProps<KubeObject>> = {
-  onDetails: (item: KubeObject) => toggleDetails(item.selfLink),
+  onDetails: (item) => toggleDetails(item.selfLink),
   subscribeStores: true,
 };
 
 interface Dependencies {
   clusterFrameContext: ClusterFrameContext;
-  subscribeToStores: (stores: KubeObjectStore<KubeObject>[], options: KubeWatchSubscribeStoreOptions) => Disposer;
+  subscribeToStores: SubscribeStores;
 }
 
 @observer
@@ -102,7 +100,7 @@ class NonInjectedKubeObjectListLayout<K extends KubeObject> extends React.Compon
   }
 
   render() {
-    const { className, customizeHeader, store, items, ...layoutProps } = this.props;
+    const { className, customizeHeader, store, items, dependentStores, ...layoutProps } = this.props;
     const placeholderString = ResourceNames[ResourceKindMap[store.api.kind]] || store.api.kind;
 
     return (
@@ -132,7 +130,7 @@ class NonInjectedKubeObjectListLayout<K extends KubeObject> extends React.Compon
             ),
             ...headerPlaceHolders,
           }),
-          ...[customizeHeader].flat(),
+          ...[customizeHeader].filter(isDefined).flat(),
         ]}
         renderItemMenu={item => <KubeObjectMenu object={item} />}
         {...layoutProps}
@@ -150,5 +148,5 @@ const InjectedKubeObjectListLayout = withInjectables<Dependencies, KubeObjectLis
 });
 
 export function KubeObjectListLayout<K extends KubeObject>(props: KubeObjectListLayoutProps<K>) {
-  return <InjectedKubeObjectListLayout {...props} />;
+  return <InjectedKubeObjectListLayout {...(props as never)} />;
 }

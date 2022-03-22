@@ -54,7 +54,7 @@ export class KubeObjectMeta extends React.Component<KubeObjectMetaProps> {
         <DrawerItem name="Created" hidden={this.isHidden("creationTimestamp")}>
           <KubeObjectAge object={object} compact={false} />
           {" ago "}
-          ({<LocaleDate date={creationTimestamp} />})
+          {creationTimestamp && <>({<LocaleDate date={creationTimestamp} />})</>}
         </DrawerItem>
         <DrawerItem name="Name" hidden={this.isHidden("name")}>
           {getName()}

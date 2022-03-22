@@ -34,10 +34,10 @@ export interface ItemListLayoutContentProps<I extends ItemObject> {
   copyClassNameFromHeadCells?: boolean;
   sortingCallbacks?: TableSortCallbacks<I>;
   tableProps?: Partial<TableProps<I>>; // low-level table configuration
-  renderTableHeader: TableCellProps[] | null;
+  renderTableHeader?: TableCellProps[];
   renderTableContents: (item: I) => (ReactNode | TableCellProps)[];
   renderItemMenu?: (item: I, store: ItemStore<I>) => ReactNode;
-  customizeTableRowProps?: (item: I) => Partial<TableRowProps>;
+  customizeTableRowProps?: (item: I) => Partial<TableRowProps<I>>;
   addRemoveButtons?: Partial<AddRemoveButtonsProps>;
   virtual?: boolean;
 
@@ -77,7 +77,7 @@ export class ItemListLayoutContent<I extends ItemObject> extends React.Component
     const {
       isSelectable, renderTableHeader, renderTableContents, renderItemMenu,
       store, hasDetailsView, onDetails,
-      copyClassNameFromHeadCells, customizeTableRowProps, detailsItem,
+      copyClassNameFromHeadCells, customizeTableRowProps = () => ({}), detailsItem,
     } = this.props;
     const { isSelected } = store;
 
@@ -87,7 +87,7 @@ export class ItemListLayoutContent<I extends ItemObject> extends React.Component
         searchItem={item}
         sortItem={item}
         selected={detailsItem && detailsItem.getId() === item.getId()}
-        onClick={hasDetailsView ? prevDefault(() => onDetails(item)) : undefined}
+        onClick={hasDetailsView ? prevDefault(() => onDetails?.(item)) : undefined}
         {...customizeTableRowProps(item)}
       >
         {isSelectable && (
@@ -161,7 +161,7 @@ export class ItemListLayoutContent<I extends ItemObject> extends React.Component
       ? <p>Remove item <b>{selectedNames}</b>?</p>
       : <p>Remove <b>{selectedCount}</b> items <b>{selectedNames}</b>{tail}?</p>;
     const onConfirm = store.removeItems
-      ? () => store.removeItems(selectedItems)
+      ? () => store.removeItems?.(selectedItems)
       : store.removeSelectedItems;
 
     ConfirmDialog.open({
@@ -212,7 +212,7 @@ export class ItemListLayoutContent<I extends ItemObject> extends React.Component
       return null;
     }
 
-    const enabledItems = this.props.getItems().filter(item => !customizeTableRowProps(item).disabled);
+    const enabledItems = this.props.getItems().filter(item => !customizeTableRowProps?.(item).disabled);
 
     return (
       <TableHead showTopLine nowrap>
@@ -274,7 +274,7 @@ export class ItemListLayoutContent<I extends ItemObject> extends React.Component
               onRemove={
                 (store.removeItems || store.removeSelectedItems) && selectedItems.length > 0
                   ? () => this.removeItemsDialog(selectedItems)
-                  : null
+                  : undefined
               }
               removeTooltip={`Remove selected items (${selectedItems.length})`}
               {...addRemoveButtons}
@@ -288,7 +288,7 @@ export class ItemListLayoutContent<I extends ItemObject> extends React.Component
   showColumn({ id: columnId, showWithColumn }: TableCellProps): boolean {
     const { tableId, isConfigurable } = this.props;
 
-    return !isConfigurable || !UserStore.getInstance().isTableColumnHidden(tableId, columnId, showWithColumn);
+    return !isConfigurable || !tableId || !UserStore.getInstance().isTableColumnHidden(tableId, columnId, showWithColumn);
   }
 
   renderColumnVisibilityMenu() {
@@ -298,13 +298,17 @@ export class ItemListLayoutContent<I extends ItemObject> extends React.Component
       <MenuActions className="ItemListLayoutVisibilityMenu"
         toolbar={false}
         autoCloseOnSelect={false}>
-        {renderTableHeader.map((cellProps, index) => (
+        {renderTableHeader?.map((cellProps, index) => (
           !cellProps.showWithColumn && (
             <MenuItem key={index} className="input">
               <Checkbox
                 label={cellProps.title ?? `<${cellProps.className}>`}
                 value={this.showColumn(cellProps)}
-                onChange={() => UserStore.getInstance().toggleTableColumnVisibility(tableId, cellProps.id)}
+                onChange={(
+                  tableId
+                    ? (() => cellProps.id && UserStore.getInstance().toggleTableColumnVisibility(tableId, cellProps.id))
+                    : undefined
+                )}
               />
             </MenuItem>
           )

@@ -9,7 +9,7 @@ import { staticKubeObjectMenuItems as staticMenuItems } from "./static-kube-obje
 
 interface Dependencies {
   extensions: LensRendererExtension[];
-  kubeObject: KubeObject;
+  kubeObject: KubeObject | undefined | null ;
 }
 
 export const getKubeObjectMenuItems = ({

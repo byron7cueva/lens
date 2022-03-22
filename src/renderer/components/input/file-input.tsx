@@ -20,7 +20,7 @@ export interface FileInputProps extends InputHTMLAttributes<any> {
 }
 
 export class FileInput extends React.Component<FileInputProps> {
-  protected input: HTMLInputElement;
+  protected input: HTMLInputElement | null = null;
 
   protected style: React.CSSProperties = {
     position: "absolute",
@@ -28,11 +28,11 @@ export class FileInput extends React.Component<FileInputProps> {
   };
 
   selectFiles = () => {
-    this.input.click(); // opens system dialog for selecting files
+    this.input?.click(); // opens system dialog for selecting files
   };
 
   protected onChange = async (evt: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = Array.from(evt.target.files);
+    const fileList = Array.from(evt.target.files ?? []);
 
     if (!fileList.length) {
       return;
@@ -48,7 +48,7 @@ export class FileInput extends React.Component<FileInputProps> {
             resolve({
               file,
               data: reader.result,
-              error: reader.error ? String(reader.error) : null,
+              error: reader.error ? String(reader.error) : undefined,
             });
           };
           reader.readAsText(file);

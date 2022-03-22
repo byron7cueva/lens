@@ -24,6 +24,7 @@ import { ItemListLayoutHeader } from "./header";
 import groupBy from "lodash/groupBy";
 import { ItemListLayoutFilters } from "./filters";
 import { observer } from "mobx-react";
+import type { Primitive } from "type-fest";
 
 export type SearchFilter<I extends ItemObject> = (item: I) => string | number | (string | number)[];
 export type SearchFilters<I extends ItemObject> = Record<string, SearchFilter<I>>;
@@ -35,6 +36,10 @@ export interface HeaderPlaceholders {
   searchProps?: SearchInputUrlProps;
   filters?: ReactNode;
   info?: ReactNode;
+}
+
+function normalizeText(value: Primitive) {
+  return String(value).toLowerCase();
 }
 
 export type HeaderCustomizer = (placeholders: HeaderPlaceholders) => HeaderPlaceholders;
@@ -63,10 +68,10 @@ export interface ItemListLayoutProps<I extends ItemObject> {
   copyClassNameFromHeadCells?: boolean;
   sortingCallbacks?: TableSortCallbacks<I>;
   tableProps?: Partial<TableProps<I>>; // low-level table configuration
-  renderTableHeader: TableCellProps[] | null;
+  renderTableHeader?: TableCellProps[];
   renderTableContents: (item: I) => (ReactNode | TableCellProps)[];
   renderItemMenu?: (item: I, store: ItemStore<I>) => ReactNode;
-  customizeTableRowProps?: (item: I) => Partial<TableRowProps>;
+  customizeTableRowProps?: (item: I) => Partial<TableRowProps<I>>;
   addRemoveButtons?: Partial<AddRemoveButtonsProps>;
   virtual?: boolean;
 
@@ -133,7 +138,7 @@ class NonInjectedItemListLayout<I extends ItemObject> extends React.Component<It
   }
 
   private loadStores() {
-    const { store, dependentStores } = this.props;
+    const { store, dependentStores = [] } = this.props;
     const stores = Array.from(new Set([store, ...dependentStores]));
 
     stores.forEach(store => store.loadAll(this.props.namespaceStore.contextNamespaces));
@@ -149,7 +154,7 @@ class NonInjectedItemListLayout<I extends ItemObject> extends React.Component<It
 
   @computed get filters() {
     let { activeFilters } = pageFilters;
-    const { searchFilters } = this.props;
+    const { searchFilters = [] } = this.props;
 
     if (searchFilters.length === 0) {
       activeFilters = activeFilters.filter(({ type }) => type !== FilterType.SEARCH);
@@ -180,20 +185,20 @@ class NonInjectedItemListLayout<I extends ItemObject> extends React.Component<It
 
   private filterCallbacks: ItemsFilters<I> = {
     [FilterType.SEARCH]: items => {
-      const { searchFilters } = this.props;
+      const { searchFilters = [] } = this.props;
       const search = pageFilters.getValues(FilterType.SEARCH)[0] || "";
 
       if (search && searchFilters.length) {
-        const normalizeText = (text: string) => String(text).toLowerCase();
         const searchTexts = [search].map(normalizeText);
 
-        return items.filter(item => {
-          return searchFilters.some(getTexts => {
-            const sourceTexts: string[] = [getTexts(item)].flat().map(normalizeText);
-
-            return sourceTexts.some(source => searchTexts.some(search => source.includes(search)));
-          });
-        });
+        return items.filter(item => (
+          searchFilters.some(getTexts => (
+            [getTexts(item)]
+              .flat()
+              .map(normalizeText)
+              .some(source => searchTexts.some(search => source.includes(search)))
+          ))
+        ));
       }
 
       return items;
@@ -214,7 +219,7 @@ class NonInjectedItemListLayout<I extends ItemObject> extends React.Component<It
 
     const items = this.props.getItems();
 
-    return applyFilters(filterItems.concat(this.props.filterItems), items);
+    return applyFilters(filterItems.concat(this.props.filterItems ?? []), items);
   }
 
   render() {
@@ -238,7 +243,7 @@ class NonInjectedItemListLayout<I extends ItemObject> extends React.Component<It
           getIsReady={() => this.isReady}
           getFilters={() => this.filters}
           getFiltersAreShown={() => this.showFilters}
-          hideFilters={this.props.hideFilters}
+          hideFilters={this.props.hideFilters ?? false}
         />
 
         <ItemListLayoutContent
@@ -281,7 +286,7 @@ const InjectedItemListLayout = withInjectables<Dependencies, ItemListLayoutProps
 });
 
 export function ItemListLayout<I extends ItemObject>(props: ItemListLayoutProps<I>) {
-  return <InjectedItemListLayout {...props} />;
+  return <InjectedItemListLayout {...(props as never)} />;
 }
 
 function applyFilters<I extends ItemObject>(filters: ItemsFilter<I>[], items: I[]): I[] {

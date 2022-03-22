@@ -97,7 +97,7 @@ describe("kube-object-menu", () => {
       apiManagerInjectable,
       () =>
         ({
-          getStore: (api) => void api,
+          getStore: (api: any) => void api,
         } as ApiManager),
     );
 

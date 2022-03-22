@@ -26,6 +26,7 @@ import { EventsSidebarItem } from "../+events/sidebar-item";
 import { HelmSidebarItem } from "../+helm/sidebar-item";
 import { UserManagementSidebarItem } from "../+user-management/sidebar-item";
 import { CustomResourcesSidebarItem } from "../+custom-resources/sidebar-item";
+import type { SetRequired } from "type-fest";
 
 export interface SidebarProps {
   className?: string;
@@ -35,12 +36,12 @@ export interface SidebarProps {
 export class Sidebar extends React.Component<SidebarProps> {
   static displayName = "Sidebar";
 
-  getTabLayoutRoutes(menu: ClusterPageMenuRegistration): TabLayoutRoute[] {
+  getTabLayoutRoutes(menu: ClusterPageMenuRegistration): SetRequired<TabLayoutRoute, "url">[] {
     if (!menu.id) {
       return [];
     }
 
-    const routes: TabLayoutRoute[] = [];
+    const routes: SetRequired<TabLayoutRoute, "url">[] = [];
     const subMenus = ClusterPageMenuRegistry.getInstance().getSubItems(menu);
     const clusterPageRegistry = ClusterPageRegistry.getInstance();
 
@@ -66,7 +67,7 @@ export class Sidebar extends React.Component<SidebarProps> {
 
       routes.push({
         routePath: url,
-        url: getExtensionPageUrl({ extensionId, pageId, params: subMenu.target.params }),
+        url: getExtensionPageUrl({ extensionId, pageId, params: subMenu.target?.params }),
         title: subMenu.title,
         component: components.Page,
       });
@@ -86,7 +87,7 @@ export class Sidebar extends React.Component<SidebarProps> {
       if (registeredPage) {
         const { extensionId, id: pageId } = registeredPage;
 
-        pageUrl = getExtensionPageUrl({ extensionId, pageId, params: menuItem.target.params });
+        pageUrl = getExtensionPageUrl({ extensionId, pageId, params: menuItem.target?.params });
         isActive = isActiveRoute(registeredPage.url);
       } else if (tabRoutes.length > 0) {
         pageUrl = tabRoutes[0].url;

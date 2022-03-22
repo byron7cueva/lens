@@ -137,7 +137,7 @@ export class UserStore extends BaseStore<UserStoreModel> /* implements UserStore
    * @param columnIds The list of IDs the check if one is hidden
    * @returns true if at least one column under the table is set to hidden
    */
-  isTableColumnHidden(tableId: string, ...columnIds: string[]): boolean {
+  isTableColumnHidden(tableId: string, ...columnIds: (string | undefined)[]): boolean {
     if (columnIds.length === 0) {
       return false;
     }
@@ -148,7 +148,7 @@ export class UserStore extends BaseStore<UserStoreModel> /* implements UserStore
       return false;
     }
 
-    return columnIds.some(columnId => config.has(columnId));
+    return columnIds.some(columnId => columnId && config.has(columnId));
   }
 
   /**

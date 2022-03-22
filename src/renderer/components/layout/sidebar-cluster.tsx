@@ -59,7 +59,7 @@ function renderLoadingSidebarCluster() {
   );
 }
 
-export function SidebarCluster({ clusterEntity }: { clusterEntity: CatalogEntity }) {
+export function SidebarCluster({ clusterEntity }: { clusterEntity: CatalogEntity | undefined }) {
   const [opened, setOpened] = useState(false);
 
   if (!clusterEntity) {

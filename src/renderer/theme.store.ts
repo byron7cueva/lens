@@ -10,7 +10,7 @@ import logger from "../main/logger";
 import lensDarkTheme from "./themes/lens-dark";
 import lensLightTheme from "./themes/lens-light";
 import type { SelectOption } from "./components/select";
-import type { MonacoEditorProps } from "./components/monaco-editor";
+import type { MonacoTheme } from "./components/monaco-editor";
 import { defaultTheme } from "../common/vars";
 import { camelCase } from "lodash";
 import { ipcRenderer } from "electron";
@@ -24,7 +24,7 @@ export interface Theme {
   colors: Record<string, string>;
   description: string;
   author: string;
-  monacoTheme: MonacoEditorProps["theme"];
+  monacoTheme: MonacoTheme;
 }
 
 export class ThemeStore extends Singleton {

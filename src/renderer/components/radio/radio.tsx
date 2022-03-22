@@ -52,7 +52,7 @@ export type RadioProps = React.HTMLProps<any> & {
 };
 
 export class Radio extends React.Component<RadioProps> {
-  private elem: HTMLElement;
+  private elem: HTMLLabelElement | null = null;
 
   onChange = () => {
     const { value, onChange, checked } = this.props;
@@ -67,7 +67,7 @@ export class Radio extends React.Component<RadioProps> {
     const ENTER_KEY = e.keyCode === 13;
 
     if (SPACE_KEY || ENTER_KEY) {
-      this.elem.click();
+      this.elem?.click();
       e.preventDefault();
     }
   };
@@ -82,7 +82,7 @@ export class Radio extends React.Component<RadioProps> {
     return (
       <label
         className={componentClass}
-        tabIndex={!checked ? 0 : null}
+        tabIndex={!checked ? 0 : undefined}
         onKeyDown={this.onKeyDown}
         ref={e => this.elem = e}
       >

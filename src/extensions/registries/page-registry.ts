@@ -144,8 +144,12 @@ class PageRegistry extends BaseRegistry<PageRegistration, RegisteredPage> {
     return normalizedParams;
   }
 
-  getByPageTarget(target: PageTarget): RegisteredPage | null {
-    return this.getItems().find(page => page.extensionId === target.extensionId && page.id === target.pageId) || null;
+  getByPageTarget(target: PageTarget | undefined): RegisteredPage | undefined {
+    if (!target) {
+      return undefined;
+    }
+
+    return this.getItems().find(page => page.extensionId === target.extensionId && page.id === target.pageId);
   }
 }
 

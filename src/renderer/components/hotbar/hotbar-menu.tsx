@@ -36,14 +36,14 @@ export class HotbarMenu extends React.Component<HotbarMenuProps> {
     return HotbarStore.getInstance().getActive();
   }
 
-  getEntity(item: HotbarItem) {
+  getEntity(item: HotbarItem | null) {
     const hotbar = HotbarStore.getInstance().getActive();
 
-    if (!hotbar) {
+    if (!hotbar || !item) {
       return null;
     }
 
-    return catalogEntityRegistry.getById(item?.entity.uid) ?? null;
+    return catalogEntityRegistry.getById(item.entity.uid) ?? null;
   }
 
   @action
@@ -79,7 +79,11 @@ export class HotbarMenu extends React.Component<HotbarMenuProps> {
     hotbar.addToHotbar(entity, index);
   }
 
-  getMoveAwayDirection(entityId: string, cellIndex: number) {
+  getMoveAwayDirection(entityId: string | undefined, cellIndex: number) {
+    if (!entityId) {
+      return "animateDown";
+    }
+
     const draggableItemIndex = this.hotbar.items.findIndex(item => item?.entity.uid == entityId);
 
     return draggableItemIndex > cellIndex ? "animateDown" : "animateUp";
@@ -136,7 +140,7 @@ export class HotbarMenu extends React.Component<HotbarMenuProps> {
                           <HotbarIcon
                             uid={`hotbar-icon-${item.entity.uid}`}
                             title={item.entity.name}
-                            source={item.entity.source}
+                            source={item.entity.source ?? "local"}
                             tooltip={`${item.entity.name} (${item.entity.source})`}
                             menuItems={[
                               {

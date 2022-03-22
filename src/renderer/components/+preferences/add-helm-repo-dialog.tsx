@@ -38,7 +38,6 @@ const dialogState = observable.object({
 function getEmptyRepo(): HelmRepo {
   return { name: "", url: "", username: "", password: "", insecureSkipTlsVerify: false, caFile: "", keyFile: "", certFile: "" };
 }
-
 @observer
 export class AddHelmRepoDialog extends React.Component<AddHelmRepoDialogProps> {
   private static keyExtensions = ["key", "keystore", "jks", "p12", "pfx", "pem"];
@@ -71,7 +70,7 @@ export class AddHelmRepoDialog extends React.Component<AddHelmRepoDialogProps> {
     this.helmRepo[type] = value;
   }
 
-  getFilePath(type: FileType) : string {
+  getFilePath(type: FileType) {
     return this.helmRepo[type];
   }
 
