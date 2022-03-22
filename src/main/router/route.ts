@@ -13,18 +13,20 @@ export type InferParam<
   T extends string,
   PathParams extends Record<string, string>,
 > =
-  T extends `{${infer P}*}`
-    ? PathParams & Record<P, string>
-    : T extends `{${infer P}?}`
-      ? PathParams & Partial<Record<P, string>>
-      : T extends `{${infer P}}`
-        ? PathParams & Record<P, string>
-        : PathParams;
+  T extends `{${infer P}?}`
+    ? PathParams & Partial<Record<P, string>>
+    : T extends `{${infer P}}`
+      ? PathParams & Record<P, string>
+      : PathParams;
 
 export type InferParamFromPath<P extends string> =
-  P extends `${infer A}/${infer B}`
-    ? InferParam<A, InferParamFromPath<B>>
-    : InferParam<P, {}>;
+  P extends `${string}/{${infer B}*}${infer Tail}`
+    ? Tail extends ""
+      ? Record<B, string>
+      : never
+    : P extends `${infer A}/${infer B}`
+      ? InferParam<A, InferParamFromPath<B>>
+      : InferParam<P, {}>;
 
 export interface LensApiRequest<Path extends string> {
   path: Path;

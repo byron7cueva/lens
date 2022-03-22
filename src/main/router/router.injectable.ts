@@ -3,10 +3,11 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 import { getInjectable, getInjectionToken } from "@ogre-tools/injectable";
-import { Route, Router } from "./router";
+import { Router } from "./router";
 import parseRequestInjectable from "./parse-request.injectable";
+import type { Route } from "./route";
 
-export const routeInjectionToken = getInjectionToken<Route<any>>({
+export const routeInjectionToken = getInjectionToken<Route<any, string>>({
   id: "route-injection-token",
 });
 

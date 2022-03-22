@@ -8,6 +8,7 @@ import { catalogCategoryRegistry } from "../../../common/catalog/catalog-categor
 import { CatalogCategory, CatalogEntityData, CatalogEntityKindData } from "../catalog-entity";
 import { KubernetesCluster, WebLink } from "../../../common/catalog-entities";
 import { observable } from "mobx";
+import { categoryVersion } from "../../../common/catalog";
 
 class TestCatalogEntityRegistry extends CatalogEntityRegistry {
   replaceItems(items: Array<CatalogEntityData & CatalogEntityKindData>) {
@@ -25,10 +26,7 @@ class FooBarCategory extends CatalogCategory {
   public spec = {
     group: "entity.k8slens.dev",
     versions: [
-      {
-        name: "v1alpha1",
-        entityClass: WebLink,
-      },
+      categoryVersion("v1alpha1", WebLink),
     ],
     names: {
       kind: "FooBar",

@@ -11,6 +11,7 @@ import { HotbarStore } from "../hotbar-store";
 import { getDiForUnitTesting } from "../../main/getDiForUnitTesting";
 import directoryForUserDataInjectable from "../app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import writeFileInjectable from "../fs/write-file.injectable";
+import { isDefined } from "../utils";
 
 jest.mock("../../main/catalog/catalog-entity-registry", () => ({
   catalogEntityRegistry: {
@@ -167,7 +168,7 @@ describe("HotbarStore", () => {
       const hotbarStore = HotbarStore.getInstance();
 
       hotbarStore.addToHotbar(testCluster);
-      const items = hotbarStore.getActive().items.filter(Boolean);
+      const items = hotbarStore.getActive().items.filter(isDefined);
 
       expect(items.length).toEqual(2);
     });
@@ -178,7 +179,7 @@ describe("HotbarStore", () => {
       hotbarStore.addToHotbar(testCluster);
       hotbarStore.removeFromHotbar("test");
       hotbarStore.removeFromHotbar("catalog-entity");
-      const items = hotbarStore.getActive().items.filter(Boolean);
+      const items = hotbarStore.getActive().items.filter(isDefined);
 
       expect(items).toStrictEqual([]);
     });
@@ -188,7 +189,7 @@ describe("HotbarStore", () => {
 
       hotbarStore.addToHotbar(testCluster);
       hotbarStore.removeFromHotbar("invalid uid");
-      const items = hotbarStore.getActive().items.filter(Boolean);
+      const items = hotbarStore.getActive().items.filter(isDefined);
 
       expect(items.length).toEqual(2);
     });

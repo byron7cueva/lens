@@ -19,7 +19,7 @@ import { appEventBus } from "../../../common/app-event-bus/event-bus";
 import { loadConfigFromString, splitConfig } from "../../../common/kube-helpers";
 import { docsUrl } from "../../../common/vars";
 import { navigate } from "../../navigation";
-import { iter } from "../../utils";
+import { isDefined, iter } from "../../utils";
 import { Button } from "../button";
 import { Notifications } from "../notifications";
 import { SettingLayout } from "../layout/setting-layout";
@@ -67,7 +67,7 @@ class NonInjectedAddCluster extends React.Component<Dependencies> {
     return [
       ...this.errors,
       ...iter.map(this.kubeContexts.values(), ({ error }) => error),
-    ].filter(Boolean);
+    ].filter(isDefined);
   }
 
   readonly refreshContexts = debounce(action(() => {

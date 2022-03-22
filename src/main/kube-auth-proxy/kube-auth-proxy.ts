@@ -11,8 +11,9 @@ import logger from "../logger";
 import { getPortFrom } from "../utils/get-port";
 import { makeObservable, observable, when } from "mobx";
 import assert from "assert";
+import { TypedRegEx } from "typed-regex";
 
-const startingServeRegex = /starting to serve on (?<address>.+)/i;
+const startingServeRegex = TypedRegEx("starting to serve on (?<address>.+)", "i");
 
 export interface KubeAuthProxyDependencies {
   proxyBinPath: string;

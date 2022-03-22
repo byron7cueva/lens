@@ -5,7 +5,7 @@
 
 import { match, matchPath } from "react-router";
 import { countBy } from "lodash";
-import { iter } from "../utils";
+import { isDefined, iter } from "../utils";
 import { pathToRegexp } from "path-to-regexp";
 import logger from "../../main/logger";
 import type Url from "url-parse";
@@ -170,7 +170,7 @@ export abstract class LensProtocolRouter {
     }
 
     const { [EXTENSION_PUBLISHER_MATCH]: publisher, [EXTENSION_NAME_MATCH]: partialName } = match.params;
-    const name = [publisher, partialName].filter(Boolean).join("/");
+    const name = [publisher, partialName].filter(isDefined).join("/");
 
     const extensionLoader = this.dependencies.extensionLoader;
 

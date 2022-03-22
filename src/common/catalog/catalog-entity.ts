@@ -120,6 +120,18 @@ export interface CatalogCategoryMetadata {
   readonly icon: string;
 }
 
+export function categoryVersion<
+  T extends CatalogEntity<Metadata, Status, Spec>,
+  Metadata extends CatalogEntityMetadata,
+  Status extends CatalogEntityStatus,
+  Spec extends CatalogEntitySpec,
+>(name: string, entityClass: new (data: CatalogEntityData<Metadata, Status, Spec>) => T): CatalogCategoryVersion {
+  return {
+    name,
+    entityClass: entityClass as CatalogEntityConstructor<T>,
+  };
+}
+
 export abstract class CatalogCategory extends (EventEmitter as new () => TypedEmitter<CatalogCategoryEvents>) {
   /**
    * The version of category that you are wanting to declare.

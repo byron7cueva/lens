@@ -50,33 +50,35 @@ const runningPod = new Pod({
     uid: "foobar",
     ownerReferences: [{
       uid: "runningStatefulSet",
+      apiVersion: "v1",
+      kind: "StatefulSet",
+      name: "running",
     }],
     namespace: "default",
   },
+  status: {
+    phase: "Running",
+    conditions: [
+      {
+        type: "Initialized",
+        status: "True",
+        lastProbeTime: 1,
+        lastTransitionTime: "1",
+      },
+      {
+        type: "Ready",
+        status: "True",
+        lastProbeTime: 1,
+        lastTransitionTime: "1",
+      },
+    ],
+    hostIP: "10.0.0.1",
+    podIP: "10.0.0.1",
+    startTime: "now",
+    containerStatuses: [],
+    initContainerStatuses: [],
+  },
 });
-
-runningPod.status = {
-  phase: "Running",
-  conditions: [
-    {
-      type: "Initialized",
-      status: "True",
-      lastProbeTime: 1,
-      lastTransitionTime: "1",
-    },
-    {
-      type: "Ready",
-      status: "True",
-      lastProbeTime: 1,
-      lastTransitionTime: "1",
-    },
-  ],
-  hostIP: "10.0.0.1",
-  podIP: "10.0.0.1",
-  startTime: "now",
-  containerStatuses: [],
-  initContainerStatuses: [],
-};
 
 const pendingPod = new Pod({
   apiVersion: "foo",
@@ -87,6 +89,9 @@ const pendingPod = new Pod({
     uid: "foobar-pending",
     ownerReferences: [{
       uid: "pendingStatefulSet",
+      apiVersion: "v1",
+      kind: "StatefulSet",
+      name: "pending",
     }],
     namespace: "default",
   },
@@ -101,6 +106,9 @@ const failedPod = new Pod({
     uid: "foobar-failed",
     ownerReferences: [{
       uid: "failedStatefulSet",
+      apiVersion: "v1",
+      kind: "StatefulSet",
+      name: "failed",
     }],
     namespace: "default",
   },

@@ -8,7 +8,7 @@ import styles from "./avatar.module.scss";
 import React, { HTMLAttributes, ImgHTMLAttributes } from "react";
 import randomColor from "randomcolor";
 import GraphemeSplitter from "grapheme-splitter";
-import { cssNames, iter } from "../../utils";
+import { cssNames, isDefined, iter } from "../../utils";
 
 export interface AvatarProps extends HTMLAttributes<HTMLElement> {
   title: string;
@@ -52,7 +52,7 @@ function getLabelFromTitle(title: string) {
     ...iter.take(first, 1),
     ...iter.take(second, 1),
     ...iter.take(third, 1),
-  ].filter(Boolean).join("");
+  ].filter(isDefined).join("");
 }
 
 export function Avatar(props: AvatarProps) {

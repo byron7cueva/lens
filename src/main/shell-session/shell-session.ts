@@ -108,7 +108,7 @@ export enum WebSocketCloseEvent {
 export abstract class ShellSession {
   abstract ShellType: string;
 
-  private static shellEnvs = new Map<string, Record<string, string>>();
+  private static shellEnvs = new Map<string, Record<string, string | undefined>>();
   private static processes = new Map<string, pty.IPty>();
 
   /**
@@ -134,14 +134,14 @@ export abstract class ShellSession {
 
   protected abstract get cwd(): string | undefined;
 
-  protected ensureShellProcess(shell: string, args: string[], env: Record<string, string>, cwd: string): { shellProcess: pty.IPty; resume: boolean } {
+  protected ensureShellProcess(shell: string, args: string[], env: Record<string, string | undefined>, cwd: string): { shellProcess: pty.IPty; resume: boolean } {
     const resume = ShellSession.processes.has(this.terminalId);
     const shellProcess = getOrInsertWith(ShellSession.processes, this.terminalId, () => (
       pty.spawn(shell, args, {
         rows: 30,
         cols: 80,
         cwd,
-        env,
+        env: env as Record<string, string>,
         name: "xterm-256color",
         // TODO: Something else is broken here so we need to force the use of winPty on windows
         useConpty: false,
@@ -163,7 +163,7 @@ export abstract class ShellSession {
     this.websocket.send(serialize(message));
   }
 
-  protected async getCwd(env: Record<string, string>): Promise<string> {
+  protected async getCwd(env: Record<string, string | undefined>): Promise<string> {
     const cwdOptions = [this.cwd];
 
     if (isWindows) {
@@ -204,7 +204,7 @@ export abstract class ShellSession {
     return "."; // Always valid
   }
 
-  protected async openShellProcess(shell: string, args: string[], env: Record<string, string>) {
+  protected async openShellProcess(shell: string, args: string[], env: Record<string, string | undefined>) {
     const cwd = await this.getCwd(env);
     const { shellProcess, resume } = this.ensureShellProcess(shell, args, env, cwd);
 

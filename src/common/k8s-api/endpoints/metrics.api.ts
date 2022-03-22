@@ -158,14 +158,14 @@ export function getItemMetrics(metrics: Record<string, IMetrics>, itemName: stri
   return itemMetrics;
 }
 
-export function getMetricLastPoints(metrics: Record<string, IMetrics>) {
+export function getMetricLastPoints<T extends Partial<Record<string, IMetrics>>>(metrics: T): Record<keyof T, number> {
   const result: Partial<{ [metric: string]: number }> = {};
 
   Object.keys(metrics).forEach(metricName => {
     try {
       const metric = metrics[metricName];
 
-      if (metric.data.result.length) {
+      if (metric?.data.result.length) {
         result[metricName] = +metric.data.result[0].values.slice(-1)[0][1];
       }
     } catch {
@@ -175,5 +175,5 @@ export function getMetricLastPoints(metrics: Record<string, IMetrics>) {
     return result;
   }, {});
 
-  return result;
+  return result as Record<keyof T, number>;
 }

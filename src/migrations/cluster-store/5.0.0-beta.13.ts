@@ -11,6 +11,7 @@ import { moveSync, removeSync } from "fs-extra";
 import { getLegacyGlobalDiForExtensionApi } from "../../extensions/as-legacy-globals-for-extension-api/legacy-global-di-for-extension-api";
 import directoryForUserDataInjectable
   from "../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
+import { isDefined } from "../../common/utils";
 
 function mergePrometheusPreferences(left: ClusterPrometheusPreferences, right: ClusterPrometheusPreferences): ClusterPrometheusPreferences {
   if (left.prometheus && left.prometheusProvider) {
@@ -49,12 +50,14 @@ function mergeLabels(left: Record<string, string>, right: Record<string, string>
   };
 }
 
-function mergeSet(...iterables: Iterable<string>[]): string[] {
+function mergeSet(...iterables: Iterable<string | undefined>[]): string[] {
   const res = new Set<string>();
 
   for (const iterable of iterables) {
     for (const val of iterable) {
-      res.add(val);
+      if (val) {
+        res.add(val);
+      }
     }
   }
 
@@ -103,16 +106,17 @@ export default {
 
     for (const { id: oldId, ...cluster } of oldClusters) {
       const newId = generateNewIdFor(cluster);
+      const newCluster = clusters.get(newId);
 
-      if (clusters.has(newId)) {
+      if (newCluster) {
         migrationLog(`Duplicate entries for ${newId}`, { oldId });
-        clusters.set(newId, mergeClusterModel(clusters.get(newId), cluster));
+        clusters.set(newId, mergeClusterModel(newCluster, cluster));
       } else {
         migrationLog(`First entry for ${newId}`, { oldId });
         clusters.set(newId, {
           ...cluster,
           id: newId,
-          workspaces: [cluster.workspace].filter(Boolean),
+          workspaces: [cluster.workspace].filter(isDefined),
         });
         moveStorageFolder({ folder, newId, oldId });
       }

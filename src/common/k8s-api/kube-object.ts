@@ -33,8 +33,8 @@ export interface OwnerReference {
   kind: string;
   name: string;
   uid: string;
-  controller: boolean;
-  blockOwnerDeletion: boolean;
+  controller?: boolean;
+  blockOwnerDeletion?: boolean;
 }
 
 export interface KubeObjectMetadata {

@@ -4,7 +4,7 @@
  */
 
 import { catalogCategoryRegistry } from "../catalog/catalog-category-registry";
-import { CatalogEntity, CatalogEntityActionContext, CatalogEntityContextMenuContext, CatalogEntityMetadata, CatalogEntityStatus, CatalogCategory, CatalogCategorySpec } from "../catalog";
+import { CatalogEntity, CatalogEntityActionContext, CatalogEntityContextMenuContext, CatalogEntityMetadata, CatalogEntityStatus, CatalogCategory, CatalogCategorySpec, categoryVersion } from "../catalog";
 import { ClusterStore } from "../cluster-store/cluster-store";
 import { broadcastMessage } from "../ipc";
 import { app } from "electron";
@@ -148,10 +148,7 @@ class KubernetesClusterCategory extends CatalogCategory {
   public spec: CatalogCategorySpec = {
     group: "entity.k8slens.dev",
     versions: [
-      {
-        name: "v1alpha1",
-        entityClass: KubernetesCluster as CatalogEntityConstructor<KubernetesCluster>,
-      },
+      categoryVersion("v1alpha1", KubernetesCluster as CatalogEntityConstructor<KubernetesCluster>),
     ],
     names: {
       kind: "KubernetesCluster",

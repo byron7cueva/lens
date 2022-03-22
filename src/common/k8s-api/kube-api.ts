@@ -16,7 +16,7 @@ import { KubeObjectConstructor, KubeObject, KubeStatus, isKubeStatusData, KubeOb
 import byline from "byline";
 import type { IKubeWatchEvent } from "./kube-watch-event";
 import { KubeJsonApi, KubeJsonApiData } from "./kube-json-api";
-import { Disposer, noop, WrappedAbortController } from "../utils";
+import { Disposer, isDefined, noop, WrappedAbortController } from "../utils";
 import type { RequestInit } from "node-fetch";
 import type AbortController from "abort-controller";
 import { Agent, AgentOptions } from "https";
@@ -358,7 +358,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
 
   get apiVersionWithGroup() {
     return [this.apiGroup, this.apiVersionPreferred ?? this.apiVersion]
-      .filter(Boolean)
+      .filter(isDefined)
       .join("/");
   }
 
@@ -427,7 +427,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
       this.apiPrefix = apiPrefix;
       this.apiGroup = apiGroup;
 
-      const url = [apiPrefix, apiGroup].filter(Boolean).join("/");
+      const url = [apiPrefix, apiGroup].filter(isDefined).join("/");
       const res = await this.request.get<IKubePreferredVersion>(url);
 
       this.apiVersionPreferred = res?.preferredVersion?.version;

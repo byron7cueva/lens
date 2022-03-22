@@ -81,15 +81,17 @@ export interface IPodContainer extends Partial<Record<PodContainerProbe, IContai
     protocol: string;
   }[];
   resources?: {
-    limits: {
+    limits?: {
       cpu: string;
       memory: string;
     };
-    requests: {
+    requests?: {
       cpu: string;
       memory: string;
     };
   };
+  terminationMessagePath?: string;
+  terminationMessagePolicy?: string;
   env?: {
     name: string;
     value?: string;

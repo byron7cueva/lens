@@ -5,6 +5,7 @@
 
 import { compile } from "path-to-regexp";
 import type { RouteProps } from "react-router";
+import { isDefined } from "./type-narrowing";
 
 export interface UrlRouteProps extends RouteProps {
   path: string;
@@ -27,7 +28,7 @@ export function buildURL<P extends object = {}, Q extends object = {}>(path: str
       fragment && `#${fragment}`,
     ];
 
-    return parts.filter(Boolean).join("");
+    return parts.filter(isDefined).join("");
   };
 }
 

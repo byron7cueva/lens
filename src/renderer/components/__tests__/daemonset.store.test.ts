@@ -50,6 +50,9 @@ const runningPod = new Pod({
     uid: "foobar",
     ownerReferences: [{
       uid: "runningDaemonSet",
+      apiVersion: "apps/v1",
+      kind: "DaemonSet",
+      name: "running",
     }],
     namespace: "default",
   },
@@ -87,6 +90,9 @@ const pendingPod = new Pod({
     uid: "foobar-pending",
     ownerReferences: [{
       uid: "pendingDaemonSet",
+      apiVersion: "apps/v1",
+      kind: "DaemonSet",
+      name: "pending",
     }],
     namespace: "default",
   },
@@ -101,6 +107,9 @@ const failedPod = new Pod({
     uid: "foobar-failed",
     ownerReferences: [{
       uid: "failedDaemonSet",
+      apiVersion: "apps/v1",
+      kind: "DaemonSet",
+      name: "failed",
     }],
     namespace: "default",
   },
