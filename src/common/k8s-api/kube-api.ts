@@ -12,7 +12,7 @@ import logger from "../../main/logger";
 import { apiManager } from "./api-manager";
 import { apiBase, apiKube } from "./index";
 import { createKubeApiURL, parseKubeApi } from "./kube-api-parse";
-import { KubeObjectConstructor, KubeObject, KubeStatus, isKubeStatusData, KubeObjectMetadata, KubeJsonApiDataFor, KubeObjectConstructorData } from "./kube-object";
+import { KubeObjectConstructor, KubeObject, KubeStatus, isKubeStatusData, KubeJsonApiDataFor, KubeObjectConstructorData, KubeObjectMetadata } from "./kube-object";
 import byline from "byline";
 import type { IKubeWatchEvent } from "./kube-watch-event";
 import { KubeJsonApi, KubeJsonApiData } from "./kube-json-api";
@@ -237,22 +237,6 @@ export function forRemoteCluster<
   return new apiClass({
     objectConstructor: kubeClass as KubeObjectConstructor<T>,
     request,
-  });
-}
-
-export interface KubeJsonApiDataWithSelflink<Metadata extends KubeObjectMetadata> extends KubeJsonApiData<Metadata> {
-  metadata: Metadata & ({
-    selfLink: string;
-  });
-}
-
-export function ensureObjectSelfLink<Metadata extends KubeObjectMetadata, Data extends KubeJsonApiData<Metadata>>(api: KubeApi<KubeObject, Data>, object: KubeJsonApiData<Metadata>): asserts object is KubeJsonApiDataWithSelflink<Metadata> {
-  object.metadata.selfLink ||= createKubeApiURL({
-    apiPrefix: api.apiPrefix,
-    apiVersion: api.apiVersionWithGroup,
-    resource: api.apiResource,
-    namespace: api.isNamespaced ? object.metadata.namespace : undefined,
-    name: object.metadata.name,
   });
 }
 
@@ -495,13 +479,13 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
       this.setResourceVersion("", metadata.resourceVersion);
 
       return items.map((item) => {
+        const ensuredLinkData = this.ensureObjectSelfLink(item as Data);
+
         const object = new KubeObjectConstructor({
-          ...(item as Data),
+          ...ensuredLinkData,
           kind: this.kind,
           apiVersion,
         });
-
-        ensureObjectSelfLink(this, object);
 
         return object;
       });
@@ -509,11 +493,9 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
 
     // process a single item
     if (KubeObject.isJsonApiData(data)) {
-      const object = new KubeObjectConstructor(data as Data);
+      const ensuredLinkData = this.ensureObjectSelfLink(data as Data);
 
-      ensureObjectSelfLink(this, object);
-
-      return object;
+      return new KubeObjectConstructor(ensuredLinkData);
     }
 
     // custom apis might return array for list response, e.g. users, groups, etc.
@@ -522,6 +504,18 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
     }
 
     return null;
+  }
+
+  ensureObjectSelfLink<T extends { metadata: { selfLink?: string; namespace?: string; name: string }}>(data: T): T & { metadata: { selfLink: string }} {
+    data.metadata.selfLink ||= createKubeApiURL({
+      apiPrefix: this.apiPrefix,
+      apiVersion: this.apiVersionWithGroup,
+      resource: this.apiResource,
+      namespace: (this.isNamespaced ? data.metadata.namespace : undefined) as never,
+      name: data.metadata.name,
+    });
+
+    return data as never;
   }
 
   async list({ namespace = "", reqInit }: KubeApiListOptions = {}, query?: IKubeApiQueryParams): Promise<T[] | null> {
@@ -715,7 +709,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
 
         byline(response.body).on("data", (line) => {
           try {
-            const event: IKubeWatchEvent<KubeJsonApiData> = JSON.parse(line);
+            const event = JSON.parse(line) as IKubeWatchEvent<KubeJsonApiData<KubeObjectMetadata>>;
 
             if (event.type === "ERROR" && isKubeStatusData(event.object)) {
               errorReceived = true;
@@ -741,12 +735,12 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
     };
   }
 
-  protected modifyWatchEvent(event: IKubeWatchEvent<KubeJsonApiData>) {
+  protected modifyWatchEvent(event: IKubeWatchEvent<KubeJsonApiData<KubeObjectMetadata>>) {
     if (event.type === "ERROR") {
       return;
     }
 
-    ensureObjectSelfLink(this, event.object);
+    this.ensureObjectSelfLink(event.object);
 
     const { namespace, resourceVersion } = event.object.metadata;
 

@@ -22,7 +22,7 @@ export interface ContainerEnvironmentProps {
 }
 
 export const ContainerEnvironment = observer((props: ContainerEnvironmentProps) => {
-  const { container: { env, envFrom }, namespace } = props;
+  const { container: { env, envFrom = [] }, namespace } = props;
 
   useEffect( () => autorun(() => {
     for (const { valueFrom } of env ?? []) {
@@ -171,8 +171,10 @@ const SecretKey = (props: SecretKeyProps) => {
     setSecret(secret);
   };
 
-  if (secret?.data?.[key]) {
-    return <>{base64.decode(secret.data[key])}</>;
+  const value = secret?.data?.[key];
+
+  if (value) {
+    return <>{base64.decode(value)}</>;
   }
 
   return (

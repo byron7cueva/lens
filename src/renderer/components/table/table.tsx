@@ -69,8 +69,8 @@ export interface TableProps<Item> extends React.DOMAttributes<HTMLDivElement> {
    */
   rowLineHeight?: number;
   customRowHeights?: (item: Item, lineHeight: number, paddings: number) => number;
-  getTableRow?: (uid: string) => React.ReactElement<TableRowProps<Item>>;
-  renderRow?: (item: Item) => React.ReactElement<TableRowProps<Item>>;
+  getTableRow?: (uid: string) => React.ReactElement<TableRowProps<Item>> | undefined;
+  renderRow?: (item: Item) => React.ReactElement<TableRowProps<Item>> | undefined;
 }
 
 export const sortByUrlParam = createPageParam({
@@ -200,7 +200,7 @@ class NonInjectedTable<Item extends ItemObject> extends React.Component<TablePro
     const content = React.Children.toArray(children) as (TableRowElem<Item> | TableHeadElem)[];
 
     if (renderRow) {
-      content.push(...items.map(renderRow));
+      content.push(...items.map(renderRow).filter(isDefined));
     }
 
     return content;

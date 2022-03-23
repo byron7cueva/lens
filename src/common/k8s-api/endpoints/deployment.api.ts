@@ -5,7 +5,7 @@
 
 import moment from "moment";
 
-import { KubeApi } from "../kube-api";
+import { DerivedKubeApiOptions, KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
 import type { IPodMetrics, PodSpec } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
@@ -13,6 +13,13 @@ import { KubeObject, KubeObjectMetadata, KubeObjectStatus, LabelSelector } from 
 import { hasTypedProperty, isNumber, isObject } from "../../utils";
 
 export class DeploymentApi extends KubeApi<Deployment> {
+  constructor(opts?: DerivedKubeApiOptions) {
+    super({
+      objectConstructor: Deployment,
+      ...opts ?? {},
+    });
+  }
+
   protected getScaleApiUrl(params: { namespace: string; name: string }) {
     return `${this.getUrl(params)}/scale`;
   }
@@ -158,14 +165,6 @@ export class Deployment extends KubeObject<KubeObjectMetadata, DeploymentStatus,
   }
 }
 
-let deploymentApi: DeploymentApi;
-
-if (isClusterPageContext()) {
-  deploymentApi = new DeploymentApi({
-    objectConstructor: Deployment,
-  });
-}
-
-export {
-  deploymentApi,
-};
+export const deploymentApi = isClusterPageContext()
+  ? new DeploymentApi()
+  : undefined;

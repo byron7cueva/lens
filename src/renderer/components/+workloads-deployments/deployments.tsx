@@ -34,7 +34,7 @@ export interface DeploymentsProps extends RouteComponentProps<DeploymentsRoutePa
 @observer
 export class Deployments extends React.Component<DeploymentsProps> {
   renderPods(deployment: Deployment) {
-    const { replicas, availableReplicas } = deployment.status;
+    const { replicas, availableReplicas } = deployment.status ?? {};
 
     return `${availableReplicas || 0}/${replicas || 0}`;
   }

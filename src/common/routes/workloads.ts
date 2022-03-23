@@ -5,7 +5,6 @@
 
 import type { RouteProps } from "react-router";
 import { buildURL, URLParams, UrlRouteProps } from "../utils/buildUrl";
-import type { KubeResource } from "../rbac";
 
 // Routes
 export const overviewRoute: UrlRouteProps = {
@@ -82,7 +81,7 @@ export const replicaSetsURL = buildURL<ReplicaSetsRouteParams>(replicaSetsRoute.
 export const jobsURL = buildURL<JobsRouteParams>(jobsRoute.path);
 export const cronJobsURL = buildURL<CronJobsRouteParams>(cronJobsRoute.path);
 
-export const workloadURL: Partial<Record<KubeResource, ReturnType<typeof buildURL>>> = {
+export const workloadURL = {
   "pods": podsURL,
   "deployments": deploymentsURL,
   "daemonsets": daemonSetsURL,

@@ -37,7 +37,7 @@ export interface OwnerReference {
   blockOwnerDeletion?: boolean;
 }
 
-export interface KubeObjectMetadata {
+export interface KubeJsonApiObjectMetadata {
   uid: string;
   name: string;
   namespace?: string;
@@ -51,6 +51,10 @@ export interface KubeObjectMetadata {
   annotations?: Record<string, string | undefined>;
   ownerReferences?: OwnerReference[];
   [key: string]: unknown;
+}
+
+export interface KubeObjectMetadata extends KubeJsonApiObjectMetadata {
+  selfLink: string;
 }
 
 export interface KubeStatusData {
@@ -115,7 +119,7 @@ export interface KubeObjectStatus {
   conditions?: BaseKubeObjectCondition[];
 }
 
-export type KubeMetaField = keyof KubeObjectMetadata;
+export type KubeMetaField = keyof KubeJsonApiObjectMetadata;
 
 export class KubeCreationError extends Error {
   constructor(message: string, public data: any) {
@@ -200,7 +204,12 @@ export type GetNamespaceResult<Namespaced extends KubeObjectScope> = (
       : string | undefined
 );
 
-export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata, Status = unknown, Spec = unknown, Namespaced extends KubeObjectScope = KubeObjectScope> implements ItemObject {
+export class KubeObject<
+  Metadata extends KubeObjectMetadata = KubeObjectMetadata,
+  Status = unknown,
+  Spec = unknown,
+  Namespaced extends KubeObjectScope = KubeObjectScope,
+> implements ItemObject {
   static readonly kind?: string;
   static readonly namespaced?: boolean;
   static readonly apiBase?: string;
@@ -212,7 +221,11 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
   spec!: Spec;
   managedFields?: object;
 
-  static create(data: KubeJsonApiData) {
+  static create<
+    Metadata extends KubeObjectMetadata = KubeObjectMetadata,
+    Status = unknown,
+    Spec = unknown,
+  >(data: KubeJsonApiData<Metadata, Status, Spec>) {
     return new KubeObject(data);
   }
 
@@ -237,7 +250,7 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
     );
   }
 
-  static isKubeJsonApiMetadata(object: unknown): object is KubeObjectMetadata {
+  static isKubeJsonApiMetadata(object: unknown): object is KubeJsonApiObjectMetadata {
     return (
       isObject(object)
       && hasTypedProperty(object, "uid", isString)
@@ -253,7 +266,7 @@ export class KubeObject<Metadata extends KubeObjectMetadata = KubeObjectMetadata
     );
   }
 
-  static isPartialJsonApiMetadata(object: unknown): object is Partial<KubeObjectMetadata> {
+  static isPartialJsonApiMetadata(object: unknown): object is Partial<KubeJsonApiObjectMetadata> {
     return (
       isObject(object)
       && hasOptionalTypedProperty(object, "uid", isString)

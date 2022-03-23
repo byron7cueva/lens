@@ -10,7 +10,7 @@ import { autoBind, Disposer, includes, isRequestError, noop, rejectPromiseBy } f
 import { KubeJsonApiDataFor, KubeObject, KubeStatus } from "./kube-object";
 import type { IKubeWatchEvent } from "./kube-watch-event";
 import { ItemStore } from "../item.store";
-import { ensureObjectSelfLink, IKubeApiQueryParams, KubeApi, KubeApiWatchCallback } from "./kube-api";
+import type { IKubeApiQueryParams, KubeApi, KubeApiWatchCallback } from "./kube-api";
 import { parseKubeApi } from "./kube-api-parse";
 import type { RequestInit } from "node-fetch";
 import AbortController from "abort-controller";
@@ -51,6 +51,10 @@ export interface KubeObjectStoreSubscribeParams {
    * An optional parent abort controller
    */
   abortController?: AbortController;
+}
+
+export interface StatusProvider<K> {
+  getStatuses(items: K[]): Record<string, number>;
 }
 
 export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K> = KubeApi<K>> extends ItemStore<K> {
@@ -107,8 +111,6 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K>
 
     return { limit };
   }
-
-  getStatuses?(items: K[]): Record<string, number>;
 
   getAllByNs(namespace: string | string[], strict = false): K[] {
     const namespaces = [namespace].flat();
@@ -331,7 +333,7 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K>
   private postUpdate(newItem: K): K {
     const index = this.items.findIndex(item => item.getId() === newItem.getId());
 
-    ensureObjectSelfLink(this.api, newItem);
+    this.api.ensureObjectSelfLink(newItem);
 
     if (index < 0) {
       this.items.push(newItem);

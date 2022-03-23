@@ -24,7 +24,7 @@ export interface VirtualListProps<T extends { getId(): string } | string> {
   initialOffset?: number;
   readyOffset?: number;
   selectedItemId?: string;
-  getRow?: (uid: T extends string ? number : string) => React.ReactElement;
+  getRow?: (uid: T extends string ? number : string) => React.ReactElement | undefined;
   onScroll?: (props: ListOnScrollProps) => void;
   outerRef?: React.Ref<any>;
 

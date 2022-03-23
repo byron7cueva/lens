@@ -9,7 +9,6 @@ import type { KubeObject } from "../../../../common/k8s-api/kube-object";
 import { DockStore, DockTabCreateSpecific, TabId, TabKind } from "../dock/store";
 import type { EditResourceTabStore } from "./store";
 import { runInAction } from "mobx";
-import assert from "assert";
 
 interface Dependencies {
   dockStore: DockStore;
@@ -36,8 +35,6 @@ const createEditResourceTab = ({ dockStore, editResourceStore }: Dependencies) =
       },
       false,
     );
-
-    assert(object.selfLink, "selfLink should always be present");
 
     editResourceStore.setData(tab.id, {
       resource: object.selfLink,

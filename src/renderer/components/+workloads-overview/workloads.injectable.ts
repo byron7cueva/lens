@@ -3,9 +3,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 import { getInjectable } from "@ogre-tools/injectable";
-import type { KubeResource } from "../../../common/rbac";
-import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
 import { podsStore } from "../+workloads-pods/pods.store";
 import { deploymentStore } from "../+workloads-deployments/deployments.store";
 import { daemonSetStore } from "../+workloads-daemonsets/daemonsets.store";
@@ -16,6 +13,7 @@ import { cronJobStore } from "../+workloads-cronjobs/cronjob.store";
 import isAllowedResourceInjectable from "../../../common/utils/is-allowed-resource.injectable";
 import namespaceStoreInjectable from "../+namespaces/namespace-store/namespace-store.injectable";
 import { workloads } from "./workloads";
+import { object } from "../../utils";
 
 const workloadsInjectable = getInjectable({
   id: "workloads",
@@ -24,15 +22,14 @@ const workloadsInjectable = getInjectable({
     workloads({
       isAllowedResource: di.inject(isAllowedResourceInjectable),
       namespaceStore: di.inject(namespaceStoreInjectable),
-
-      workloadStores: new Map<KubeResource, KubeObjectStore<KubeObject>>([
-        ["pods", podsStore],
-        ["deployments", deploymentStore],
-        ["daemonsets", daemonSetStore],
-        ["statefulsets", statefulSetStore],
-        ["replicasets", replicaSetStore],
-        ["jobs", jobStore],
-        ["cronjobs", cronJobStore],
+      workloadStores: object.fromEntries([
+        ["pods", podsStore as never],
+        ["deployments", deploymentStore as never],
+        ["daemonsets", daemonSetStore as never],
+        ["statefulsets", statefulSetStore as never],
+        ["replicasets", replicaSetStore as never],
+        ["jobs", jobStore as never],
+        ["cronjobs", cronJobStore as never],
       ]),
     }),
 });

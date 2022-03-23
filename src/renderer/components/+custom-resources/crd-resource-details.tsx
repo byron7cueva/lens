@@ -62,8 +62,8 @@ export class CustomResourceDetails extends React.Component<CustomResourceDetails
       return null;
     }
 
-    const conditions = customResource.status.conditions
-      .filter(({ type, reason }) => type || reason)
+    const conditions = customResource.status?.conditions
+      ?.filter(({ type, reason }) => type || reason)
       .map(({ type, reason, message, status }) => ({ kind: type || reason, message, status }))
       .map(({ kind, message, status }, index) => (
         <Badge

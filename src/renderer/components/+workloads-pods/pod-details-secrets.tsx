@@ -26,7 +26,8 @@ export class PodDetailsSecrets extends Component<PodDetailsSecretsProps> {
         const { pod } = this.props;
 
         const secrets = await Promise.all(
-          pod.getSecrets().map(secretName => secretsApi.get({
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          pod.getSecrets().map(secretName => secretsApi!.get({
             name: secretName,
             namespace: pod.getNs(),
           })),

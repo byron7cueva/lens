@@ -18,6 +18,7 @@ export interface AnimateProps {
   onLeave?: () => void;
   enterDuration?: number;
   leaveDuration?: number;
+  children?: React.ReactNode;
 }
 
 @observer

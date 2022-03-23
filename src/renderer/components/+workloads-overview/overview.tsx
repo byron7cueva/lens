@@ -24,11 +24,8 @@ import { TooltipPosition } from "../tooltip";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import clusterFrameContextInjectable from "../../cluster-frame-context/cluster-frame-context.injectable";
 import type { ClusterFrameContext } from "../../cluster-frame-context/cluster-frame-context";
-import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
-import type { Disposer } from "../../../common/utils";
 import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
-import type { KubeWatchSubscribeStoreOptions } from "../../kube-watch-api/kube-watch-api";
+import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 import detailComponentsInjectable from "./detail-components.injectable";
 
 export interface WorkloadsOverviewProps extends RouteComponentProps<WorkloadsOverviewRouteParams> {
@@ -37,7 +34,7 @@ export interface WorkloadsOverviewProps extends RouteComponentProps<WorkloadsOve
 interface Dependencies {
   detailComponents: IComputedValue<React.ComponentType<{}>[]>;
   clusterFrameContext: ClusterFrameContext;
-  subscribeStores: (stores: KubeObjectStore<KubeObject>[], options: KubeWatchSubscribeStoreOptions) => Disposer;
+  subscribeStores: SubscribeStores;
 }
 
 @observer

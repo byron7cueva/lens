@@ -40,7 +40,7 @@ export class Jobs extends React.Component<JobsProps> {
         sortingCallbacks={{
           [columnId.name]: job => job.getName(),
           [columnId.namespace]: job => job.getNs(),
-          [columnId.conditions]: job => job.getCondition() != null ? job.getCondition().type : "",
+          [columnId.conditions]: job => job.getCondition()?.type,
           [columnId.age]: job => -job.getCreationTimestamp(),
         }}
         searchFilters={[

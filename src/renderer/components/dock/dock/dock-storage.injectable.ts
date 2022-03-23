@@ -22,6 +22,7 @@ const dockStorageInjectable = getInjectable({
           pinned: false,
         },
       ],
+      isOpen: false,
     });
   },
 });
