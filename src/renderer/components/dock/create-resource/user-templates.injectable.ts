@@ -6,7 +6,7 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { computed, IComputedValue, observable } from "mobx";
 import path from "path";
 import os from "os";
-import { delay, getOrInsert, waitForPath } from "../../../utils";
+import { delay, getOrInsert, isErrnoException, waitForPath } from "../../../utils";
 import { watch } from "chokidar";
 import { readFile } from "fs/promises";
 import logger from "../../../../common/logger";
@@ -47,7 +47,7 @@ function watchUserCreateResourceTemplates(): IComputedValue<RawTemplates[]> {
 
       templates.set(filePath, contents);
     } catch (error) {
-      if (error?.code === "ENOENT") {
+      if (isErrnoException(error) && error.code === "ENOENT") {
         // ignore, file disappeared
       } else {
         logger.warn(`[USER-CREATE-RESOURCE-TEMPLATES]: encountered error while reading ${filePath}`, error);

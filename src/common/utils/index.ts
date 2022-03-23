@@ -40,6 +40,7 @@ export * from "./toJS";
 export * from "./type-narrowing";
 export * from "./types";
 export * from "./wait-for-path";
+export * from "./wait";
 
 export type { Tuple } from "./tuple";
 

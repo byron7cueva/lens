@@ -4,6 +4,7 @@
  */
 import { getInjectable } from "@ogre-tools/injectable";
 import { when } from "mobx";
+import { waitUntilDefinied } from "../../../../common/utils/wait";
 import { TerminalApi, TerminalChannels } from "../../../api/terminal-api";
 import { noop } from "../../../utils";
 import { Notifications } from "../../notifications";
@@ -15,7 +16,7 @@ import getTerminalApiInjectable from "./get-terminal-api.injectable";
 interface Dependencies {
   selectTab: (tabId: TabId) => void;
   createTerminalTab: () => DockTab;
-  getTerminalApi: (tabId: TabId) => TerminalApi;
+  getTerminalApi: (tabId: TabId) => TerminalApi | undefined;
 }
 
 export interface SendCommandOptions {
@@ -44,10 +45,12 @@ const sendCommand = ({ selectTab, createTerminalTab, getTerminalApi }: Dependenc
     tabId = createTerminalTab().id;
   }
 
-  await when(() => Boolean(tabId && getTerminalApi(tabId)));
-
-  const terminalApi = getTerminalApi(tabId);
-  const shellIsReady = when(() =>terminalApi.isReady);
+  const terminalApi = await waitUntilDefinied(() => (
+    tabId
+      ? getTerminalApi(tabId)
+      : undefined
+  ));
+  const shellIsReady = when(() => terminalApi.isReady);
   const notifyVeryLong = setTimeout(() => {
     shellIsReady.cancel();
     Notifications.info(

@@ -25,5 +25,5 @@ export const KubeObjectAge = ({ object, compact = true }: KubeObjectAgeProps) =>
         compact={compact}
       />
     )
-    : "<unknown>"
+    : <>{"<unknown>"}</>
 );

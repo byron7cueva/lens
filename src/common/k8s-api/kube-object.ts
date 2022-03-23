@@ -147,11 +147,21 @@ export type LabelMatchExpression = {
 );
 
 export interface Toleration {
-  key: string;
-  operator: string;
-  effect: string;
-  value: string;
-  tolerationSeconds: number;
+  key?: string;
+  operator?: string;
+  effect?: string;
+  value?: string;
+  tolerationSeconds?: number;
+}
+
+export interface LocalObjectReference {
+  name?: string;
+}
+
+export interface TypedLocalObjecReference {
+  apiGroup?: string;
+  kind: string;
+  name: string;
 }
 
 export interface NodeAffinity {

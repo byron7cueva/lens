@@ -5,7 +5,7 @@
 
 import "./chart.scss";
 import React, { CSSProperties } from "react";
-import ChartJS from "chart.js";
+import ChartJS, { PluginServiceRegistrationOptions } from "chart.js";
 import { remove } from "lodash";
 import { cssNames } from "../../utils";
 import { StatusBrick } from "../status-brick";
@@ -30,7 +30,7 @@ export interface ChartProps {
   showLegend?: boolean;
   legendPosition?: "bottom";
   legendColors?: string[];  // Hex colors for each of the labels in data object
-  plugins?: any[];
+  plugins?: PluginServiceRegistrationOptions[];
   redraw?: boolean;  // If true - recreate chart instance with no animation
   title?: string;
   className?: string;

@@ -141,18 +141,22 @@ export function isMetricsEmpty(metrics: Partial<Record<string, IMetrics>>) {
   return Object.values(metrics).every(metric => !metric?.data?.result?.length);
 }
 
-export function getItemMetrics(metrics: Record<string, IMetrics>, itemName: string): Record<string, IMetrics> | void {
-  if (!metrics) return;
+export function getItemMetrics(metrics: Partial<Record<string, IMetrics>> | null | undefined, itemName: string): Partial<Record<string, IMetrics>> | undefined {
+  if (!metrics) {
+    return undefined;
+  }
+
   const itemMetrics = { ...metrics };
 
   for (const metric in metrics) {
     if (!metrics[metric]?.data?.result) {
       continue;
     }
-    const results = metrics[metric].data.result;
-    const result = results.find(res => Object.values(res.metric)[0] == itemName);
+    const results = metrics[metric]?.data.result;
+    const result = results?.find(res => Object.values(res.metric)[0] == itemName);
 
-    itemMetrics[metric].data.result = result ? [result] : [];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    itemMetrics[metric]!.data.result = result ? [result] : [];
   }
 
   return itemMetrics;

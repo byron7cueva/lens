@@ -3,13 +3,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { action, IReactionDisposer, makeObservable, observable, when } from "mobx";
+import { action, makeObservable, observable, when } from "mobx";
 import logger from "../../../main/logger";
 import { clusterVisibilityHandler } from "../../../common/ipc/cluster";
 import { ClusterStore } from "../../../common/cluster-store/cluster-store";
 import type { ClusterId } from "../../../common/cluster-types";
-import { getClusterFrameUrl, Singleton } from "../../utils";
+import { Disposer, getClusterFrameUrl, onceDefined, Singleton } from "../../utils";
 import { ipcRenderer } from "electron";
+import assert from "assert";
 
 export interface LensView {
   isLoaded: boolean;
@@ -31,14 +32,17 @@ export class ClusterFrameHandler extends Singleton {
   @action
   public initView(clusterId: ClusterId) {
     const cluster = ClusterStore.getInstance().getById(clusterId);
+    const parentElem = document.getElementById("lens-views");
+
+    assert(parentElem, "Tag #lens-views missing from DOM");
 
     if (!cluster || this.views.has(clusterId)) {
       return;
     }
 
     logger.info(`[LENS-VIEW]: init dashboard, clusterId=${clusterId}`);
-    const parentElem = document.getElementById("lens-views");
     const iframe = document.createElement("iframe");
+    const view: LensView = { frame: iframe, isLoaded: false };
 
     iframe.id = `cluster-frame-${cluster.id}`;
     iframe.name = cluster.contextName;
@@ -46,9 +50,9 @@ export class ClusterFrameHandler extends Singleton {
     iframe.setAttribute("src", getClusterFrameUrl(clusterId));
     iframe.addEventListener("load", () => {
       logger.info(`[LENS-VIEW]: loaded from ${iframe.src}`);
-      this.views.get(clusterId).isLoaded = true;
+      view.isLoaded = true;
     }, { once: true });
-    this.views.set(clusterId, { frame: iframe, isLoaded: false });
+    this.views.set(clusterId, view);
     parentElem.appendChild(iframe);
 
     logger.info(`[LENS-VIEW]: waiting cluster to be ready, clusterId=${clusterId}`);
@@ -66,12 +70,12 @@ export class ClusterFrameHandler extends Singleton {
           () => {
             const cluster = ClusterStore.getInstance().getById(clusterId);
 
-            return !cluster || (cluster.disconnected && this.views.get(clusterId)?.isLoaded);
+            return Boolean(!cluster || (cluster.disconnected && this.views.get(clusterId)?.isLoaded));
           },
           () => {
             logger.info(`[LENS-VIEW]: remove dashboard, clusterId=${clusterId}`);
             this.views.delete(clusterId);
-            iframe.parentNode.removeChild(iframe);
+            parentElem.removeChild(iframe);
             dispose();
           },
         );
@@ -79,7 +83,7 @@ export class ClusterFrameHandler extends Singleton {
     );
   }
 
-  private prevVisibleClusterChange?: IReactionDisposer;
+  private prevVisibleClusterChange?: Disposer;
 
   public setVisibleCluster(clusterId: ClusterId | null) {
     // Clear the previous when ASAP
@@ -92,14 +96,24 @@ export class ClusterFrameHandler extends Singleton {
       view.style.display = "none";
     }
 
-    const cluster = ClusterStore.getInstance().getById(clusterId);
+    const cluster = clusterId
+      ? ClusterStore.getInstance().getById(clusterId)
+      : undefined;
 
-    if (cluster) {
-      this.prevVisibleClusterChange = when(
-        () => cluster.available && cluster.ready && this.views.get(clusterId)?.isLoaded,
+    if (cluster && clusterId) {
+      this.prevVisibleClusterChange = onceDefined(
         () => {
+          const view = this.views.get(clusterId);
+
+          if (cluster.available && cluster.ready && view?.isLoaded) {
+            return view;
+          }
+
+          return undefined;
+        },
+        (view) => {
           logger.info(`[LENS-VIEW]: cluster id=${clusterId} should now be visible`);
-          this.views.get(clusterId).frame.style.display = "flex";
+          view.frame.style.display = "flex";
           ipcRenderer.send(clusterVisibilityHandler, clusterId);
         },
       );

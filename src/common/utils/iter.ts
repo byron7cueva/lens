@@ -6,13 +6,19 @@
 export type Falsey = false | 0 | "" | null | undefined;
 
 export function pipeline<T>(src: Iterable<T>) {
-  return new Iterator<T>(src);
+  return Iterator[createPipeline](src);
 }
 
-export class Iterator<T> {
-  #inner: Iterable<T>;
+const createPipeline = Symbol("create-pipeline");
 
-  constructor(inner: Iterable<T>) {
+export class Iterator<T> {
+  #inner: Iterable<any>;
+
+  static [createPipeline]<T>(inner: Iterable<T>) {
+    return new Iterator(inner);
+  }
+
+  private constructor(inner: Iterable<T>) {
     this.#inner = inner;
   }
 
@@ -29,7 +35,9 @@ export class Iterator<T> {
    * Wrap the interior iterator with an filterMap
    */
   public filterMap<U>(fn: (val: T) => Falsey | U): Iterator<U> {
-    return new Iterator(filterMap(this.#inner, fn));
+    this.#inner = filterMap(this.#inner, fn);
+
+    return this as never;
   }
 
   /**
@@ -44,6 +52,12 @@ export class Iterator<T> {
    */
   public collect<U>(fn: (values: Iterable<T>) => U): U {
     return fn(this.#inner);
+  }
+
+  public map<U>(fn: (val: T) => U): Iterator<U> {
+    this.#inner = map(this.#inner, fn);
+
+    return this as never;
   }
 }
 

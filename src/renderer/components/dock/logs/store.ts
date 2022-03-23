@@ -3,8 +3,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { observable, IComputedValue, when } from "mobx";
+import { observable, IComputedValue } from "mobx";
 import type { IPodLogsQuery, Pod } from "../../../../common/k8s-api/endpoints";
+import { waitUntilDefinied } from "../../../../common/utils/wait";
 import { getOrInsertWith, interval, IntervalFn } from "../../../utils";
 import type { TabId } from "../dock/store";
 import type { LogTabData } from "./tab-store";
@@ -107,12 +108,22 @@ export class LogStore {
    * @returns A fetch request promise
    */
   private async loadLogs(computedPod: IComputedValue<Pod | undefined>, logTabData: IComputedValue<LogTabData | undefined>, params: Partial<IPodLogsQuery>): Promise<string[]> {
-    await when(() => Boolean(computedPod.get() && logTabData.get()), { timeout: 5_000 });
+    const {
+      pod,
+      tabData: {
+        selectedContainer,
+        showPrevious,
+      },
+    } = await waitUntilDefinied(() => {
+      const pod = computedPod.get();
+      const tabData = logTabData.get();
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const { selectedContainer, showPrevious } = logTabData.get()!;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const pod = computedPod.get()!;
+      if (pod && tabData) {
+        return { pod, tabData };
+      }
+
+      return undefined;
+    });
     const namespace = pod.getNs();
     const name = pod.getName();
 

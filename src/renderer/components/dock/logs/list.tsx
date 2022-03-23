@@ -89,7 +89,7 @@ export class LogList extends React.Component<LogListProps> {
    */
   @computed
   get logs(): string[] {
-    const { showTimestamps } = this.props.model.logTabData.get();
+    const { showTimestamps } = this.props.model.logTabData.get() ?? {};
 
     if (!showTimestamps) {
       return this.props.model.logsWithoutTimestamps.get();

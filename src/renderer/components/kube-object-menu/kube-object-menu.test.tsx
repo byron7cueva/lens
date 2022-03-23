@@ -110,13 +110,13 @@ describe("kube-object-menu", () => {
     di.override(clusterInjectable, () => null);
 
     expect(() => {
-      render(<KubeObjectMenu object={null} toolbar={true} />);
+      render(<KubeObjectMenu object={null as any} toolbar={true} />);
     }).not.toThrow();
   });
 
   it("given no kube object, renders", () => {
     const { baseElement } = render(
-      <KubeObjectMenu object={null} toolbar={true} />,
+      <KubeObjectMenu object={null as any} toolbar={true} />,
     );
 
     expect(baseElement).toMatchSnapshot();

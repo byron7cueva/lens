@@ -7,9 +7,8 @@ import "./table-row.scss";
 
 import React, { CSSProperties } from "react";
 import { cssNames } from "../../utils";
-import type { ItemObject } from "../../../common/item.store";
 
-export type TableRowElem<Item extends ItemObject> = React.ReactElement<TableRowProps<Item>>;
+export type TableRowElem<Item> = React.ReactElement<TableRowProps<Item>>;
 
 export interface TableRowProps<Item> extends React.DOMAttributes<HTMLDivElement> {
   className?: string;
@@ -21,7 +20,7 @@ export interface TableRowProps<Item> extends React.DOMAttributes<HTMLDivElement>
   disabled?: boolean;
 }
 
-export class TableRow<Item extends ItemObject> extends React.Component<TableRowProps<Item>> {
+export class TableRow<Item> extends React.Component<TableRowProps<Item>> {
   render() {
     const { className, nowrap, selected, disabled, children, sortItem, searchItem, ...rowProps } = this.props;
     const classNames = cssNames("TableRow", className, { selected, nowrap, disabled });

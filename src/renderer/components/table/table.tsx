@@ -27,7 +27,7 @@ export interface TableSortParams {
   sortBy: TableSortBy;
   orderBy: TableOrderBy;
 }
-export type TableSortCallback<Item> = (data: Item) => string | number | (string | number)[];
+export type TableSortCallback<Item> = (data: Item) => undefined | string | number | (string | number)[];
 export type TableSortCallbacks<Item> = Record<string, TableSortCallback<Item>>;
 
 export interface TableProps<Item> extends React.DOMAttributes<HTMLDivElement> {

@@ -40,7 +40,7 @@ export class ClusterView extends React.Component<ClusterViewProps> {
   @computed get isReady(): boolean {
     const { cluster, clusterId } = this;
 
-    return cluster?.ready && cluster?.available && ClusterFrameHandler.getInstance().hasLoadedView(clusterId);
+    return Boolean(cluster?.ready && cluster?.available && ClusterFrameHandler.getInstance().hasLoadedView(clusterId));
   }
 
   componentDidMount() {
@@ -49,7 +49,7 @@ export class ClusterView extends React.Component<ClusterViewProps> {
 
   componentWillUnmount() {
     ClusterFrameHandler.getInstance().clearVisibleCluster();
-    catalogEntityRegistry.activeEntity = null;
+    catalogEntityRegistry.activeEntity = undefined;
   }
 
   bindEvents() {

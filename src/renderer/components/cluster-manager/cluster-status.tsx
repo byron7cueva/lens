@@ -63,7 +63,7 @@ export class ClusterStatus extends React.Component<ClusterStatusProps> {
       await requestClusterActivation(this.cluster.id, true);
     } catch (error) {
       this.authOutput.push({
-        message: error.toString(),
+        message: String(error),
         isError: true,
       });
     } finally {

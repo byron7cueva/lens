@@ -80,27 +80,16 @@ export class KubeObjectDetails extends React.Component {
     ]);
   }
 
-  render() {
-    const { object, isLoading, loadingError } = this;
-    const isOpen = !!(object || isLoading || loadingError);
-
+  renderTitle(object: KubeObject | null | undefined) {
     if (!object) {
-      return (
-        <Drawer
-          className="KubeObjectDetails flex column"
-          open={isOpen}
-          title=""
-          toolbar={<KubeObjectMenu object={object} toolbar={true} />}
-          onClose={hideDetails}
-        >
-          {isLoading && <Spinner center />}
-          {loadingError && <div className="box center">{loadingError}</div>}
-        </Drawer>
-      );
+      return "";
     }
 
-    const { kind, getName } = object;
-    const title = `${kind}: ${getName()}`;
+    return `${object.kind}: ${object.getName()}`;
+  }
+
+  renderContents(object: KubeObject) {
+    const { isLoading, loadingError } = this;
     const details = KubeObjectDetailRegistry
       .getInstance()
       .getItemsForKind(object.kind, object.apiVersion)
@@ -128,16 +117,26 @@ export class KubeObjectDetails extends React.Component {
     }
 
     return (
-      <Drawer
-        className="KubeObjectDetails flex column"
-        open={isOpen}
-        title={title}
-        toolbar={<KubeObjectMenu object={object} toolbar={true}/>}
-        onClose={hideDetails}
-      >
+      <>
         {isLoading && <Spinner center/>}
         {loadingError && <div className="box center">{loadingError}</div>}
         {details}
+      </>
+    );
+  }
+
+  render() {
+    const { object, isLoading, loadingError } = this;
+
+    return (
+      <Drawer
+        className="KubeObjectDetails flex column"
+        open={!!(object || isLoading || loadingError)}
+        title={this.renderTitle(object)}
+        toolbar={object && <KubeObjectMenu object={object} toolbar={true}/>}
+        onClose={hideDetails}
+      >
+        {object && this.renderContents(object)}
       </Drawer>
     );
   }

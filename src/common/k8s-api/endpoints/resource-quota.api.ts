@@ -7,9 +7,7 @@ import { KubeObject } from "../kube-object";
 import { KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 
-export interface IResourceQuotaValues {
-  [quota: string]: string | undefined;
-
+export interface IResourceQuotaValues extends Partial<Record<string, string>> {
   // Compute Resource Quota
   "limits.cpu"?: string;
   "limits.memory"?: string;

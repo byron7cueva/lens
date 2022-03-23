@@ -10,7 +10,7 @@ import { StatefulSetScaleDialog } from "./statefulset-scale-dialog";
 import { render, waitFor, fireEvent } from "@testing-library/react";
 import React from "react";
 
-const dummyStatefulSet: StatefulSet = {
+const dummyStatefulSet = new StatefulSet({
   apiVersion: "v1",
   kind: "dummy",
   metadata: {
@@ -20,8 +20,6 @@ const dummyStatefulSet: StatefulSet = {
     resourceVersion: "dummy",
     selfLink: "link",
   },
-  selfLink: "link",
-
   spec: {
     serviceName: "dummy",
     replicas: 1,
@@ -78,32 +76,7 @@ const dummyStatefulSet: StatefulSet = {
     updateRevision: "dummy",
     collisionCount: 1,
   },
-
-  getImages: jest.fn(),
-  getReplicas: jest.fn(),
-  getSelectors: jest.fn(),
-  getTemplateLabels: jest.fn(),
-  getAffinity: jest.fn(),
-  getTolerations: jest.fn(),
-  getNodeSelectors: jest.fn(),
-  getAffinityNumber: jest.fn(),
-  getId: jest.fn(),
-  getResourceVersion: jest.fn(),
-  getName: jest.fn(),
-  getNs: jest.fn(),
-  getAge: jest.fn(),
-  getCreationTimestamp: jest.fn(),
-  getTimeDiffFromNow: jest.fn(),
-  getFinalizers: jest.fn(),
-  getLabels: jest.fn(),
-  getAnnotations: jest.fn(),
-  getOwnerRefs: jest.fn(),
-  getSearchFields: jest.fn(),
-  toPlainObject: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  patch: jest.fn(),
-};
+});
 
 describe("<StatefulSetScaleDialog />", () => {
   let statefulSetApi: StatefulSetApi;
@@ -152,7 +125,7 @@ describe("<StatefulSetScaleDialog />", () => {
     await waitFor(async () => {
       expect(await component.findByTestId("desired-scale")).toHaveTextContent(`${initReplicas}`);
       expect(await component.findByTestId("current-scale")).toHaveTextContent(`${initReplicas}`);
-      expect((await component.baseElement.querySelector("input").value)).toBe(`${initReplicas}`);
+      expect((component.baseElement.querySelector("input")?.value)).toBe(`${initReplicas}`);
     });
 
     const up = await component.findByTestId("desired-replicas-up");
@@ -161,12 +134,12 @@ describe("<StatefulSetScaleDialog />", () => {
     fireEvent.click(up);
     expect(await component.findByTestId("desired-scale")).toHaveTextContent(`${initReplicas + 1}`);
     expect(await component.findByTestId("current-scale")).toHaveTextContent(`${initReplicas}`);
-    expect((await component.baseElement.querySelector("input").value)).toBe(`${initReplicas + 1}`);
+    expect((component.baseElement.querySelector("input")?.value)).toBe(`${initReplicas + 1}`);
 
     fireEvent.click(down);
     expect(await component.findByTestId("desired-scale")).toHaveTextContent(`${initReplicas}`);
     expect(await component.findByTestId("current-scale")).toHaveTextContent(`${initReplicas}`);
-    expect((await component.baseElement.querySelector("input").value)).toBe(`${initReplicas}`);
+    expect((component.baseElement.querySelector("input")?.value)).toBe(`${initReplicas}`);
 
     // edge case, desiredScale must >= 0
     let times = 10;
@@ -175,7 +148,7 @@ describe("<StatefulSetScaleDialog />", () => {
       fireEvent.click(down);
     }
     expect(await component.findByTestId("desired-scale")).toHaveTextContent("0");
-    expect((await component.baseElement.querySelector("input").value)).toBe("0");
+    expect((component.baseElement.querySelector("input")?.value)).toBe("0");
 
     // edge case, desiredScale must <= scaleMax (100)
     times = 120;
@@ -184,7 +157,7 @@ describe("<StatefulSetScaleDialog />", () => {
       fireEvent.click(up);
     }
     expect(await component.findByTestId("desired-scale")).toHaveTextContent("100");
-    expect((component.baseElement.querySelector("input").value)).toBe("100");
+    expect((component.baseElement.querySelector("input")?.value)).toBe("100");
     expect(await component.findByTestId("warning"))
       .toHaveTextContent("High number of replicas may cause cluster performance issues");
   });

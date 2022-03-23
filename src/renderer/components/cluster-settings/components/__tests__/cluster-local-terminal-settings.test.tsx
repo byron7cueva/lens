@@ -9,6 +9,7 @@ import { ClusterLocalTerminalSetting } from "../cluster-local-terminal-settings"
 import userEvent from "@testing-library/user-event";
 import { stat } from "fs/promises";
 import { Notifications } from "../../../notifications";
+import type { Stats } from "fs";
 
 const mockStat = stat as jest.MockedFunction<typeof stat>;
 
@@ -28,7 +29,7 @@ describe("ClusterLocalTerminalSettings", () => {
   });
 
   it("should render without errors", () => {
-    const dom = render(<ClusterLocalTerminalSetting cluster={null}/>);
+    const dom = render(<ClusterLocalTerminalSetting cluster={null as any}/>);
 
     expect(dom.container).toBeInstanceOf(HTMLElement);
   });
@@ -87,12 +88,12 @@ describe("ClusterLocalTerminalSettings", () => {
   });
 
   it("should save the new CWD if path is a directory", async () => {
-    mockStat.mockImplementation(async (path: string) => {
+    mockStat.mockImplementation(async (path) => {
       expect(path).toBe("/foobar");
 
       return {
         isDirectory: () => true,
-      } as any;
+      } as Stats;
     });
 
     const cluster = {
@@ -112,13 +113,13 @@ describe("ClusterLocalTerminalSettings", () => {
   });
 
   it("should not save the new CWD if path is a file", async () => {
-    mockStat.mockImplementation(async (path: string) => {
+    mockStat.mockImplementation(async (path) => {
       expect(path).toBe("/foobar");
 
       return {
         isDirectory: () => false,
         isFile: () => true,
-      } as any;
+      } as Stats;
     });
 
     const cluster = {

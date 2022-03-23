@@ -92,7 +92,7 @@ describe("<DeleteClusterDialog />", () => {
   beforeEach(async () => {
     const { mainDi, runSetups } = getDisForUnitTesting({ doGeneralOverrides: true });
 
-    mainDi.override(createContextHandlerInjectable, () => () => undefined);
+    mainDi.override(createContextHandlerInjectable, () => () => undefined as any);
 
     mockFs();
 

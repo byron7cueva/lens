@@ -14,8 +14,7 @@ import { eventStore } from "../+events/event.store";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
 import { nodesApi, Pod } from "../../../common/k8s-api/endpoints";
 import { StatusBrick } from "../status-brick";
-import { cssNames, getConvertedParts, stopPropagation } from "../../utils";
-import toPairs from "lodash/toPairs";
+import { cssNames, getConvertedParts, object, stopPropagation } from "../../utils";
 import startCase from "lodash/startCase";
 import kebabCase from "lodash/kebabCase";
 import { apiManager } from "../../../common/k8s-api/api-manager";
@@ -42,11 +41,25 @@ export interface PodsProps extends RouteComponentProps<PodsRouteParams> {
 
 @observer
 export class Pods extends React.Component<PodsProps> {
-  renderContainersStatus(pod: Pod) {
-    return pod.getContainerStatuses().map(containerStatus => {
-      const { name, state, ready } = containerStatus;
+  renderState<T extends string>(name: string, ready: boolean, key: string, data: Partial<Record<T, string | number>> | undefined) {
+    return data && (
+      <>
+        <div className="title">
+          {name} <span className="text-secondary">({key}{ready ? ", ready" : ""})</span>
+        </div>
+        {object.entries(data).map(([name, value]) => (
+          <div key={name} className="flex gaps align-center">
+            <div className="name">{startCase(name)}</div>
+            <div className="value">{value}</div>
+          </div>
+        ))}
+      </>
+    );
+  }
 
-      return (
+  renderContainersStatus(pod: Pod) {
+    return pod.getContainerStatuses()
+      .map(({ name, state = {}, ready }) => (
         <Fragment key={name}>
           <StatusBrick
             className={cssNames(state, { ready })}
@@ -54,24 +67,16 @@ export class Pods extends React.Component<PodsProps> {
               formatters: {
                 tableView: true,
               },
-              children: Object.keys(state).map((status: keyof typeof state) => (
-                <Fragment key={status}>
-                  <div className="title">
-                    {name} <span className="text-secondary">({status}{ready ? ", ready" : ""})</span>
-                  </div>
-                  {toPairs(state[status]).map(([name, value]) => (
-                    <div key={name} className="flex gaps align-center">
-                      <div className="name">{startCase(name)}</div>
-                      <div className="value">{value}</div>
-                    </div>
-                  ))}
-                </Fragment>
-              )),
-            }}
-          />
+              children: (
+                <>
+                  {this.renderState(name, ready, "running", state.running)}
+                  {this.renderState(name, ready, "waiting", state.waiting)}
+                  {this.renderState(name, ready, "terminated", state.terminated)}
+                </>
+              ),
+            }} />
         </Fragment>
-      );
-    });
+      ));
   }
 
   render() {
@@ -96,7 +101,7 @@ export class Pods extends React.Component<PodsProps> {
         searchFilters={[
           pod => pod.getSearchFields(),
           pod => pod.getStatusMessage(),
-          pod => pod.status.podIP,
+          pod => pod.status?.podIP,
           pod => pod.getNodeName(),
         ]}
         renderHeaderTitle="Pods"

@@ -8,7 +8,7 @@ import "./pod-details-container.scss";
 import React from "react";
 import type { IPodContainer, IPodContainerStatus, Pod } from "../../../common/k8s-api/endpoints";
 import { DrawerItem } from "../drawer";
-import { cssNames } from "../../utils";
+import { cssNames, isDefined } from "../../utils";
 import { StatusBrick } from "../status-brick";
 import { Badge } from "../badge";
 import { ContainerEnvironment } from "./pod-container-env";
@@ -27,7 +27,7 @@ import portForwardStoreInjectable from "../../port-forward/port-forward-store/po
 export interface PodDetailsContainerProps {
   pod: Pod;
   container: IPodContainer;
-  metrics?: { [key: string]: IMetrics };
+  metrics?: Partial<Record<string, IMetrics>>;
 }
 
 interface Dependencies {
@@ -128,15 +128,15 @@ class NonInjectedPodDetailsContainer extends React.Component<PodDetailsContainer
         {ports && ports.length > 0 &&
         <DrawerItem name="Ports">
           {
-            ports.map((port) => {
-              const key = `${container.name}-port-${port.containerPort}-${port.protocol}`;
-
-              return (
-                <PodContainerPort pod={pod}
+            ports
+              .filter(isDefined)
+              .map((port) => (
+                <PodContainerPort
+                  pod={pod}
                   port={port}
-                  key={key}/>
-              );
-            })
+                  key={`${container.name}-port-${port.containerPort}-${port.protocol}`}
+                />
+              ))
           }
         </DrawerItem>
         }

@@ -6,7 +6,7 @@
 import { IMetrics, metricsApi } from "./metrics.api";
 import { KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import { KubeObject, KubeObjectMetadata, Affinity, Toleration } from "../kube-object";
+import { KubeObject, KubeObjectMetadata, Affinity, Toleration, LocalObjectReference, LabelSelector } from "../kube-object";
 
 export class PodsApi extends KubeApi<Pod> {
   getLogs = async (params: { namespace: string; name: string }, query?: IPodLogsQuery): Promise<string> => {
@@ -70,16 +70,29 @@ export enum PodStatusPhase {
   EVICTED = "Evicted",
 }
 
+export interface ContainerPort {
+  containerPort: number;
+  hostIP?: string;
+  hostPort?: number;
+  name?: string;
+  protocol?: "UDP" | "TCP" | "SCTP";
+}
+
+export interface VolumeMount {
+  name: string;
+  readOnly?: boolean;
+  mountPath: string;
+  mountPropagation?: string;
+  subPath?: string;
+  subPathExpr?: string;
+}
+
 export interface IPodContainer extends Partial<Record<PodContainerProbe, IContainerProbe>> {
   name: string;
   image: string;
   command?: string[];
   args?: string[];
-  ports?: {
-    name?: string;
-    containerPort: number;
-    protocol: string;
-  }[];
+  ports?: ContainerPort[];
   resources?: {
     limits?: {
       cpu: string;
@@ -118,12 +131,8 @@ export interface IPodContainer extends Partial<Record<PodContainerProbe, IContai
       name: string;
     };
   }[];
-  volumeMounts?: {
-    name: string;
-    readOnly: boolean;
-    mountPath: string;
-  }[];
-  imagePullPolicy: string;
+  volumeMounts?: VolumeMount[];
+  imagePullPolicy?: string;
 }
 
 export type PodContainerProbe = "livenessProbe" | "readinessProbe" | "startupProbe";
@@ -212,38 +221,87 @@ export interface PodSpecVolume {
   };
 }
 
+export interface HostAlias {
+  ip: string;
+  hostnames: string[];
+}
+
+export interface SELinuxOptions {
+  level?: string;
+  role?: string;
+  type?: string;
+  user?: string;
+}
+
+export interface SeccompProfile {
+  localhostProfile?: string;
+  type: string;
+}
+
+export interface Sysctl {
+  name: string;
+  value: string;
+}
+
+export interface WindowsSecurityContextOptions {
+  labelSelector?: LabelSelector;
+  maxSkew: number;
+  topologyKey: string;
+  whenUnsatisfiable: string;
+}
+
+export interface PodSecurityContext {
+  fsGroup?: number;
+  fsGroupChangePolicy?: string;
+  runAsGroup?: number;
+  runAsNonRoot?: boolean;
+  runAsUser?: number;
+  seLinuxOptions?: SELinuxOptions;
+  seccompProfile?: SeccompProfile;
+  supplementalGroups?: number[];
+  sysctls?: Sysctl;
+  windowsOptions?: WindowsSecurityContextOptions;
+}
+
+export interface TopologySpreadConstraint {
+
+}
+
 export interface PodSpec {
-  volumes?: PodSpecVolume[];
-  initContainers?: IPodContainer[];
-  containers?: IPodContainer[];
-  restartPolicy?: string;
-  terminationGracePeriodSeconds?: number;
   activeDeadlineSeconds?: number;
-  dnsPolicy?: string;
-  serviceAccountName: string;
-  serviceAccount: string;
+  affinity?: Affinity;
   automountServiceAccountToken?: boolean;
-  priority?: number;
-  priorityClassName?: string;
-  nodeName?: string;
-  nodeSelector?: Record<string, string | undefined>;
-  securityContext?: {};
-  imagePullSecrets?: {
-    name: string;
-  }[];
+  containers?: IPodContainer[];
+  dnsPolicy?: string;
+  enableServiceLinks?: boolean;
+  ephemeralContainers?: unknown[];
+  hostAliases?: HostAlias[];
+  hostIPC?: boolean;
+  hostname?: string;
   hostNetwork?: boolean;
   hostPID?: boolean;
-  hostIPC?: boolean;
-  shareProcessNamespace?: boolean;
-  hostname?: string;
-  subdomain?: string;
+  imagePullSecrets?: LocalObjectReference[];
+  initContainers?: IPodContainer[];
+  nodeName?: string;
+  nodeSelector?: Record<string, string | undefined>;
+  overhead?: Record<string, string | undefined>;
+  preemptionPolicy?: string;
+  priority?: number;
+  priorityClassName?: string;
+  readinessGates?: unknown[];
+  restartPolicy?: string;
+  runtimeClassName?: string;
   schedulerName?: string;
+  securityContext?: PodSecurityContext;
+  serviceAccount?: string;
+  serviceAccountName?: string;
+  setHostnameAsFQDN?: boolean;
+  shareProcessNamespace?: boolean;
+  subdomain?: string;
+  terminationGracePeriodSeconds?: number;
   tolerations?: Toleration[];
-  hostAliases?: {
-    ip: string;
-    hostnames: string[];
-  };
-  affinity?: Affinity;
+  topologySpreadConstraints?: TopologySpreadConstraint[];
+  volumes?: PodSpecVolume[];
 }
 
 export interface PodCondition {

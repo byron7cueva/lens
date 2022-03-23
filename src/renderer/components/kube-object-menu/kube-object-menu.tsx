@@ -17,7 +17,7 @@ import kubeObjectMenuItemsInjectable from "./dependencies/kube-object-menu-items
 import apiManagerInjectable from "./dependencies/api-manager.injectable";
 
 export interface KubeObjectMenuProps<TKubeObject extends KubeObject> extends MenuActionsProps {
-  object: TKubeObject | null | undefined;
+  object: TKubeObject;
   editable?: boolean;
   removable?: boolean;
 }
@@ -81,13 +81,17 @@ class NonInjectedKubeObjectMenu<TKubeObject extends KubeObject> extends React.Co
     );
   }
 
-  getMenuItems(): React.ReactChild[] {
-    const { object, toolbar } = this.props;
+  getMenuItems(object: KubeObject, toolbar: boolean): React.ReactChild[] {
+    if (!object) {
+      return [];
+    }
 
     return this.props.kubeObjectMenuItems.map((MenuItem, index) => (
-      <MenuItem object={object}
+      <MenuItem
+        object={object}
         toolbar={toolbar}
-        key={`menu-item-${index}`} />
+        key={`menu-item-${index}`}
+      />
     ));
   }
 
@@ -103,7 +107,7 @@ class NonInjectedKubeObjectMenu<TKubeObject extends KubeObject> extends React.Co
         removeConfirmationMessage={renderRemoveMessage}
         {...menuProps}
       >
-        {this.getMenuItems()}
+        {this.getMenuItems(object, this.props.toolbar ?? false)}
       </MenuActions>
     );
   }
@@ -122,8 +126,6 @@ const InjectedKubeObjectMenu = withInjectables<Dependencies, KubeObjectMenuProps
   }),
 });
 
-export function KubeObjectMenu<T extends KubeObject>(
-  props: KubeObjectMenuProps<T>,
-) {
+export function KubeObjectMenu<T extends KubeObject>(props: KubeObjectMenuProps<T>) {
   return <InjectedKubeObjectMenu {...props} />;
 }

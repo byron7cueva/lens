@@ -313,9 +313,7 @@ export class PortForwardStore extends ItemStore<PortForwardItem> {
    *
    * @throws if the port-forward does not exist in the store
    */
-  getPortForward = async (
-    portForward: ForwardedPort,
-  ): Promise<ForwardedPort | undefined> => {
+  getPortForward = async (portForward: ForwardedPort): Promise<ForwardedPort | undefined> => {
     if (!this.findPortForward(portForward)) {
       throw new Error("port-forward not found");
     }

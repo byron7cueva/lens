@@ -19,13 +19,13 @@ async function onClusterDelete(clusterId: string) {
     return console.warn("[KUBERNETES-CLUSTER]: cannot delete cluster, does not exist in store", { clusterId });
   }
 
-  const { config, error } = loadConfigFromString(await fs.promises.readFile(cluster.kubeConfigPath, "utf-8"));
+  const result = loadConfigFromString(await fs.promises.readFile(cluster.kubeConfigPath, "utf-8"));
 
-  if (error) {
-    throw error;
+  if (result.error) {
+    throw result.error;
   }
 
-  DeleteClusterDialog.open({ cluster, config });
+  DeleteClusterDialog.open({ cluster, config: result.config });
 }
 
 interface Dependencies {

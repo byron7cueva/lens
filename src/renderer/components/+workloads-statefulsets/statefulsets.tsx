@@ -31,7 +31,7 @@ export interface StatefulSetsProps extends RouteComponentProps<StatefulSetsRoute
 @observer
 export class StatefulSets extends React.Component<StatefulSetsProps> {
   renderPods(statefulSet: StatefulSet) {
-    const { readyReplicas, currentReplicas } = statefulSet.status;
+    const { readyReplicas, currentReplicas } = statefulSet.status ?? {};
 
     return `${readyReplicas || 0}/${currentReplicas || 0}`;
   }

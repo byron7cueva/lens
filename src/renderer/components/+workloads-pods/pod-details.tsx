@@ -34,8 +34,8 @@ export interface PodDetailsProps extends KubeObjectDetailsProps<Pod> {
 
 @observer
 export class PodDetails extends React.Component<PodDetailsProps> {
-  @observable metrics: IPodMetrics;
-  @observable containerMetrics: IPodMetrics;
+  @observable metrics: IPodMetrics | null = null;
+  @observable containerMetrics: IPodMetrics | null = null;
 
   constructor(props: PodDetailsProps) {
     super(props);
@@ -73,7 +73,7 @@ export class PodDetails extends React.Component<PodDetailsProps> {
     }
 
     const { status, spec } = pod;
-    const { conditions, podIP } = status;
+    const { conditions, podIP } = status ?? {};
     const podIPs = pod.getIPs();
     const { nodeName } = spec;
     const nodeSelector = pod.getNodeSelectors();
@@ -180,7 +180,7 @@ export class PodDetails extends React.Component<PodDetailsProps> {
                 key={name}
                 pod={pod}
                 container={container}
-                metrics={metrics || null}
+                metrics={metrics}
               />
             );
           })

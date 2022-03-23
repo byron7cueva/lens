@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeObject, KubeObjectMetadata, LabelSelector } from "../kube-object";
+import { KubeObject, KubeObjectMetadata, LabelSelector, TypedLocalObjecReference } from "../kube-object";
 import { IMetrics, metricsApi } from "./metrics.api";
 import type { Pod } from "./pods.api";
 import { KubeApi } from "../kube-api";
@@ -29,15 +29,20 @@ export interface IPvcMetrics {
   diskCapacity: IMetrics;
 }
 
+export interface ResourceRequirements {
+  limits?: Partial<Record<string, string>>;
+  requests?: Partial<Record<string, string>>;
+}
+
 export interface PersistentVolumeClaimSpec {
-  accessModes: string[];
-  storageClassName: string;
+  accessModes?: string[];
+  dataSource?: TypedLocalObjecReference;
+  dataSourceRef?: TypedLocalObjecReference;
+  resources?: ResourceRequirements;
   selector?: LabelSelector;
-  resources?: {
-    requests?: {
-      storage: string; // 8Gi
-    };
-  };
+  storageClassName?: string;
+  volumeMode?: string;
+  volumeName?: string;
 }
 
 export interface PersistentVolumeClaimStatus {

@@ -28,7 +28,7 @@ export interface MonacoEditorProps {
   options?: Partial<editor.IStandaloneEditorConstructionOptions>; // customize editor's initialization options
   value: string;
   onChange?(value: string, evt: editor.IModelContentChangedEvent): void; // catch latest value updates
-  onError?(error?: Error | unknown): void; // provide syntax validation error, etc.
+  onError?(error: unknown): void; // provide syntax validation error, etc.
   onDidLayoutChange?(info: editor.EditorLayoutInfo): void;
   onDidContentSizeChange?(evt: editor.IContentSizeChangedEvent): void;
   onModelChange?(model: editor.ITextModel, prev?: editor.ITextModel): void;

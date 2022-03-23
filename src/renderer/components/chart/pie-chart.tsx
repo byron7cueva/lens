@@ -14,59 +14,82 @@ import { ThemeStore } from "../../theme.store";
 export interface PieChartProps extends ChartProps {
 }
 
-@observer
-export class PieChart extends React.Component<PieChartProps> {
-  render() {
-    const { data, className, options, ...chartProps } = this.props;
-    const { contentColor } = ThemeStore.getInstance().activeTheme.colors;
-    const cutouts = [88, 76, 63];
-    const opts: ChartOptions = this.props.showChart === false ? {} : {
-      maintainAspectRatio: false,
-      tooltips: {
-        mode: "index",
-        callbacks: {
-          title: () => "",
-          label: (tooltipItem, data) => {
-            const dataset: any = data["datasets"][tooltipItem.datasetIndex];
-            const metaData = Object.values<{ total: number }>(dataset["_meta"])[0];
-            const percent = Math.round((dataset["data"][tooltipItem["index"]] / metaData.total) * 100);
-            const label = dataset["label"];
-
-            if (isNaN(percent)) return `${label}: N/A`;
-
-            return `${label}: ${percent}%`;
-          },
-        },
-        filter: ({ datasetIndex, index }, { datasets }) => {
-          const { data } = datasets[datasetIndex];
-
-          if (datasets.length === 1) return true;
-
-          return index !== data.length - 1;
-        },
-        position: "cursor",
-      },
-      elements: {
-        arc: {
-          borderWidth: 1,
-          borderColor: contentColor,
-        },
-      },
-      cutoutPercentage: cutouts[data.datasets.length - 1] || 50,
-      responsive: true,
-      ...options,
-    };
-
-    return (
-      <Chart
-        className={cssNames("PieChart flex column align-center", className)}
-        data={data}
-        options={opts}
-        {...chartProps}
-      />
-    );
+function getCutout(length: number | undefined): number {
+  switch (length) {
+    case 0:
+    case 1:
+      return 88;
+    case 2:
+      return 76;
+    case 3:
+      return 63;
+    default:
+      return 50;
   }
 }
+
+export const PieChart = observer((props: PieChartProps) => {
+  const { data, className, options, ...chartProps } = props;
+  const { contentColor } = ThemeStore.getInstance().activeTheme.colors;
+  const opts: ChartOptions = {
+    maintainAspectRatio: false,
+    tooltips: {
+      mode: "index",
+      callbacks: {
+        title: () => "",
+        label: ({ datasetIndex, index }, { datasets = [] }) => {
+          if (datasetIndex === undefined || index === undefined) {
+            return "<unknown>";
+          }
+
+          const { data = [], label, _meta } = (datasets[datasetIndex] as ChartJS.ChartDataSets & { _meta: Record<string, { total: number }> });
+          const value = data[index] as number | undefined;
+          const { total } = Object.values(_meta)[0];
+
+          if (!value) {
+            return `${label}: N/A`;
+          }
+
+          const percent = Math.round((value / total) * 100);
+
+          return isNaN(percent)
+            ? `${label}: N/A`
+            : `${label}: ${percent}%`;
+        },
+      },
+      filter: ({ datasetIndex, index }, { datasets = [] }) => {
+        if (datasetIndex === undefined) {
+          return false;
+        }
+
+        const { data = [] } = datasets[datasetIndex];
+
+        if (datasets.length === 1) return true;
+
+        return index !== data.length - 1;
+      },
+      position: "cursor",
+    },
+    elements: {
+      arc: {
+        borderWidth: 1,
+        borderColor: contentColor,
+      },
+    },
+    cutoutPercentage: getCutout(data.datasets?.length),
+    responsive: true,
+    ...options,
+  };
+
+  return (
+    <Chart
+      className={cssNames("PieChart flex column align-center", className)}
+      data={data}
+      options={props.showChart ? {} : opts}
+      {...chartProps}
+    />
+  );
+});
 
 ChartJS.Tooltip.positioners.cursor = function (elements: any, position: { x: number; y: number }) {
   return position;

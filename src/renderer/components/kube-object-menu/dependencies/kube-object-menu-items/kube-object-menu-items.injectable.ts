@@ -10,7 +10,7 @@ import rendererExtensionsInjectable from "../../../../../extensions/renderer-ext
 
 const kubeObjectMenuItemsInjectable = getInjectable({
   id: "kube-object-menu-items",
-  instantiate: (di, { kubeObject }: { kubeObject: KubeObject | undefined | null }) =>
+  instantiate: (di, { kubeObject }: { kubeObject: KubeObject }) =>
     getKubeObjectMenuItems({
       extensions: di.inject(rendererExtensionsInjectable).get(),
       kubeObject,
