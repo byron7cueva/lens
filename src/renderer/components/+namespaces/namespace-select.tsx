@@ -27,6 +27,7 @@ export type NamespaceSelectProps<ShowAllNamespaces extends boolean = false> = (
     false
   >
   & {
+    showIcons?: boolean;
     sort?: NamespaceSelectSort;
   }
   & (
@@ -64,9 +65,14 @@ function getOptions(namespaceStore: NamespaceStore, showAllNamespacesOption: boo
 
 const NonInjectedNamespaceSelect = observer(({
   namespaceStore,
+  showIcons,
   formatOptionLabel = (data) => {
     if (data === selectAllNamespaces) {
       return "All Namespaces";
+    }
+
+    if (!showIcons) {
+      return data;
     }
 
     return (

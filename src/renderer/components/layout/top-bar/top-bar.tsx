@@ -42,7 +42,7 @@ ipcRendererOn("history:can-go-forward", (event, state: boolean) => {
 });
 
 const NonInjectedTopBar = observer(({ items, isWindows, isLinux }: TopBarProps & Dependencies) => {
-  const elem = useRef<HTMLDivElement>();
+  const elem = useRef<HTMLDivElement | null>(null);
 
   const openAppContextMenu = () => {
     emitOpenAppMenuAsContextMenu();

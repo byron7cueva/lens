@@ -233,7 +233,7 @@ export class Node extends KubeObject {
   }
 
   getKubeletVersion() {
-    return this.status.nodeInfo?.kubeletVersion;
+    return this.status.nodeInfo?.kubeletVersion ?? "<unknown>";
   }
 
   getOperatingSystem(): string {

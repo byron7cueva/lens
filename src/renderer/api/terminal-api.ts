@@ -48,11 +48,11 @@ enum TerminalColor {
   NO_COLOR = "\u001b[0m",
 }
 
-export type TerminalApiQuery = Record<string, string> & {
+export interface TerminalApiQuery extends Record<string, string | undefined> {
   id: string;
   node?: string;
   type?: string;
-};
+}
 
 export interface TerminalEvents extends WebSocketEvents {
   ready: () => void;

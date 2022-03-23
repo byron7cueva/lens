@@ -7,7 +7,7 @@ import "./item-list-layout.scss";
 
 import React, { ReactNode } from "react";
 import { observer } from "mobx-react";
-import { cssNames, IClassName } from "../../utils";
+import { cssNames, IClassName, isDefined } from "../../utils";
 import type { ItemObject, ItemStore } from "../../../common/item.store";
 import type { Filter } from "./page-filters.store";
 import type { HeaderCustomizer, HeaderPlaceholders, SearchFilter } from "./list-layout";
@@ -31,16 +31,14 @@ export interface ItemListLayoutHeaderProps<I extends ItemObject> {
 }
 
 @observer
-export class ItemListLayoutHeader<I extends ItemObject> extends React.Component<
-  ItemListLayoutHeaderProps<I>
-> {
+export class ItemListLayoutHeader<I extends ItemObject> extends React.Component<ItemListLayoutHeaderProps<I>> {
   render() {
     const {
       showHeader,
       customizeHeader,
       renderHeaderTitle,
       headerClassName,
-      searchFilters,
+      searchFilters = [],
       getItems,
       store,
       getFilters,
@@ -68,7 +66,7 @@ export class ItemListLayoutHeader<I extends ItemObject> extends React.Component<
         : `${allItemsCount} items`;
     };
 
-    const customizeHeaderFunctions = [customizeHeader].flat().filter(Boolean);
+    const customizeHeaderFunctions = [customizeHeader].flat().filter(isDefined);
     const renderedTitle = typeof renderHeaderTitle === "function"
       ? renderHeaderTitle(this)
       : renderHeaderTitle;

@@ -13,3 +13,5 @@ export type OptionVarient<Key, Base, RequiredKey extends keyof Base> = {
 } & Pick<Base, RequiredKey> & {
   [OtherKey in Exclude<keyof Base, RequiredKey>]?: undefined;
 };
+
+export type SingleOrMany<T> = T | T[];

@@ -78,7 +78,7 @@ export class NodesRoute extends React.Component<NodesRouteProps> {
     return metricNames.map(metricName => {
       try {
         const metric = this.metrics[metricName];
-        const result = metric.data.result.find(({ metric: { node, instance, kubernetes_node }}) => (
+        const result = metric?.data.result.find(({ metric: { node, instance, kubernetes_node }}) => (
           nodeName === node
           || nodeName === instance
           || nodeName === kubernetes_node
@@ -238,7 +238,7 @@ export class NodesRoute extends React.Component<NodesRouteProps> {
                 </Tooltip>
               </>,
               node.getRoleLabels(),
-              node.status.nodeInfo.kubeletVersion,
+              node.getKubeletVersion(),
               <KubeObjectAge key="age" object={node} />,
               this.renderConditions(node),
             ];

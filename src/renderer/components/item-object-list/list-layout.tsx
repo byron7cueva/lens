@@ -9,7 +9,7 @@ import React, { ReactNode } from "react";
 import { computed, makeObservable, untracked } from "mobx";
 import type { ConfirmDialogParams } from "../confirm-dialog";
 import type { TableCellProps, TableProps, TableRowProps, TableSortCallbacks } from "../table";
-import { boundMethod, cssNames, IClassName, noop, StorageHelper } from "../../utils";
+import { boundMethod, cssNames, IClassName, noop, SingleOrMany, StorageHelper } from "../../utils";
 import type { AddRemoveButtonsProps } from "../add-remove-buttons";
 import type { ItemObject, ItemStore } from "../../../common/item.store";
 import type { SearchInputUrlProps } from "../input";
@@ -26,7 +26,7 @@ import { ItemListLayoutFilters } from "./filters";
 import { observer } from "mobx-react";
 import type { Primitive } from "type-fest";
 
-export type SearchFilter<I extends ItemObject> = (item: I) => string | number | (string | number)[];
+export type SearchFilter<I extends ItemObject> = (item: I) => SingleOrMany<string | number | undefined | null>;
 export type SearchFilters<I extends ItemObject> = Record<string, SearchFilter<I>>;
 export type ItemsFilter<I extends ItemObject> = (items: I[]) => I[];
 export type ItemsFilters<I extends ItemObject> = Record<string, ItemsFilter<I>>;

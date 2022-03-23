@@ -28,7 +28,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
   }
 
   back = () => {
-    this.setState({ error: null, errorInfo: null });
+    this.setState({ error: undefined, errorInfo: undefined });
     navigation.goBack();
   };
 
@@ -55,7 +55,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
           <div className="wrapper">
             <code className="block">
               <p className="contrast">Component stack:</p>
-              {errorInfo.componentStack}
+              {errorInfo?.componentStack}
             </code>
             <code className="block">
               <p className="contrast">Error stack:</p>

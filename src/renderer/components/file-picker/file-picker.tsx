@@ -17,11 +17,11 @@ import _ from "lodash";
 export interface FileUploadProps {
     uploadDir: string;
     rename?: boolean;
-    handler?(path: string[]): void;
+    handler(path: string[]): void;
 }
 
 export interface MemoryUseProps {
-    handler?(file: File[]): void;
+    handler(file: File[]): void;
 }
 
 enum FileInputStatus {
@@ -71,7 +71,7 @@ export interface BaseProps {
 
 export type FilePickerProps = BaseProps & (MemoryUseProps | FileUploadProps);
 
-const defaultProps: Partial<FilePickerProps> = {
+const defaultProps = {
   maxSize: Infinity,
   onOverSizeLimit: OverSizeLimitStyle.REJECT,
   maxTotalSize: Infinity,
@@ -80,13 +80,13 @@ const defaultProps: Partial<FilePickerProps> = {
 };
 
 @observer
-export class FilePicker extends React.Component<FilePickerProps> {
+class DefaultedFilePicker extends React.Component<FilePickerProps & typeof defaultProps> {
   static defaultProps = defaultProps as Object;
 
   @observable status = FileInputStatus.CLEAR;
   @observable errorText?: string;
 
-  constructor(props: FilePickerProps) {
+  constructor(props: FilePickerProps & typeof defaultProps) {
     super(props);
     makeObservable(this);
   }
@@ -147,8 +147,8 @@ export class FilePicker extends React.Component<FilePickerProps> {
       case OverTotalSizeLimitStyle.FILTER_LAST: {
         let newTotalSize = totalSize;
 
-        for (;files.length > 0;) {
-          newTotalSize -= files.pop().size;
+        for (let file = files.pop(); file; file = files.pop()) {
+          newTotalSize -= file.size;
 
           if (newTotalSize <= maxTotalSize) {
             break;
@@ -162,8 +162,8 @@ export class FilePicker extends React.Component<FilePickerProps> {
     }
   }
 
-  async handlePickFiles(selectedFiles: FileList) {
-    const files: File[] = Array.from(selectedFiles);
+  async handlePickFiles(selectedFiles: FileList | null) {
+    const files = Array.from(selectedFiles ?? []);
 
     try {
       const numberLimitedFiles = this.handleFileCount(files);
@@ -192,7 +192,7 @@ export class FilePicker extends React.Component<FilePickerProps> {
       }
     } catch (errorText) {
       this.status = FileInputStatus.ERROR;
-      this.errorText = errorText;
+      this.errorText = String(errorText);
 
       return;
     }
@@ -225,3 +225,5 @@ export class FilePicker extends React.Component<FilePickerProps> {
     }
   }
 }
+
+export const FilePicker = (props: FilePickerProps) => <DefaultedFilePicker {...(props as never)} />;

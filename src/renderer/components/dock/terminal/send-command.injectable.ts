@@ -36,7 +36,7 @@ export interface SendCommandOptions {
 }
 
 const sendCommand = ({ selectTab, createTerminalTab, getTerminalApi }: Dependencies) => async (command: string, options: SendCommandOptions = {}): Promise<void> => {
-  let { tabId } = options;
+  let tabId: string | undefined = options.tabId;
 
   if (tabId) {
     selectTab(tabId);
@@ -44,7 +44,7 @@ const sendCommand = ({ selectTab, createTerminalTab, getTerminalApi }: Dependenc
     tabId = createTerminalTab().id;
   }
 
-  await when(() => Boolean(getTerminalApi(tabId)));
+  await when(() => Boolean(tabId && getTerminalApi(tabId)));
 
   const terminalApi = getTerminalApi(tabId);
   const shellIsReady = when(() =>terminalApi.isReady);

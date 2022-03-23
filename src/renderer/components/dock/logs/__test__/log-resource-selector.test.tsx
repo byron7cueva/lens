@@ -21,6 +21,7 @@ import { LogTabViewModel, LogTabViewModelDependencies } from "../logs-view-model
 import type { TabId } from "../../dock/store";
 import userEvent from "@testing-library/user-event";
 import { SearchStore } from "../../../../search-store/search-store";
+import assert from "assert";
 
 jest.mock("electron", () => ({
   app: {
@@ -175,8 +176,11 @@ describe("<LogResourceSelector />", () => {
   it("renders sibling pods in dropdown", async () => {
     const model = getFewPodsTabData("foobar");
     const { container, findByText } = render(<LogResourceSelector model={model} />);
+    const selector = container.querySelector<HTMLElement>(".pod-selector");
 
-    selectEvent.openMenu(container.querySelector(".pod-selector"));
+    assert(selector);
+
+    selectEvent.openMenu(selector);
     expect(await findByText("deploymentPod2", { selector: ".pod-selector-menu .Select__option" })).toBeInTheDocument();
     expect(await findByText("deploymentPod1", { selector: ".pod-selector-menu .Select__option" })).toBeInTheDocument();
   });
@@ -184,8 +188,12 @@ describe("<LogResourceSelector />", () => {
   it("renders sibling containers in dropdown", async () => {
     const model = getFewPodsTabData("foobar");
     const { findByText, container } = render(<LogResourceSelector model={model} />);
+    const selector = container.querySelector<HTMLElement>(".container-selector");
 
-    selectEvent.openMenu(container.querySelector(".container-selector"));
+    assert(selector);
+
+    selectEvent.openMenu(selector);
+
     expect(await findByText("node-exporter-1")).toBeInTheDocument();
     expect(await findByText("init-node-exporter")).toBeInTheDocument();
     expect(await findByText("init-node-exporter-1")).toBeInTheDocument();
@@ -204,9 +212,11 @@ describe("<LogResourceSelector />", () => {
     const renameTab = jest.fn();
     const model = getFewPodsTabData("foobar", { renameTab });
     const { findByText, container } = render(<LogResourceSelector model={model} />);
+    const selector = container.querySelector<HTMLElement>(".pod-selector");
 
-    selectEvent.openMenu(container.querySelector(".pod-selector"));
+    assert(selector);
 
+    selectEvent.openMenu(selector);
     userEvent.click(await findByText("deploymentPod2", { selector: ".pod-selector-menu .Select__option" }));
     expect(renameTab).toBeCalledWith("foobar", "Pod deploymentPod2");
   });

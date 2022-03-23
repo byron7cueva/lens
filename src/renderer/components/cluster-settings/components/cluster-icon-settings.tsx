@@ -43,7 +43,7 @@ export class ClusterIconSetting extends React.Component<ClusterIconSettingProps>
 
       cluster.preferences.icon = `data:${file.type};base64,${buf.toString("base64")}`;
     } catch (e) {
-      this.errorText = e.toString();
+      this.errorText = String(e);
       this.status = GeneralInputStatus.ERROR;
     }
   }
@@ -60,8 +60,8 @@ export class ClusterIconSetting extends React.Component<ClusterIconSettingProps>
   onUploadClick() {
     this.element
       .current
-      .querySelector<HTMLInputElement>("input[type=file]")
-      .click();
+      ?.querySelector<HTMLInputElement>("input[type=file]")
+      ?.click();
   }
 
   render() {

@@ -22,13 +22,13 @@ import { withInjectables } from "@ogre-tools/injectable-react";
 import type { ClusterFrameContext } from "../../cluster-frame-context/cluster-frame-context";
 import clusterFrameContextInjectable from "../../cluster-frame-context/cluster-frame-context.injectable";
 import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
-import type { SubscribeStores } from "../../kube-watch-api/kube-watch-api";
+import type { SubscribableStore, SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 
 export interface KubeObjectListLayoutProps<K extends KubeObject> extends Omit<ItemListLayoutProps<K>, "getItems" | "dependentStores"> {
   items?: K[];
   getItems?: () => K[];
   store: KubeObjectStore<K>;
-  dependentStores?: KubeObjectStore<KubeObject>[];
+  dependentStores?: SubscribableStore[];
   subscribeStores?: boolean;
 }
 

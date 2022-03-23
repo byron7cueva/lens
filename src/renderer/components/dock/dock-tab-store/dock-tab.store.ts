@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { action, observable, reaction } from "mobx";
+import { action, observable, reaction, when } from "mobx";
 import { autoBind, StorageHelper, toJS } from "../../../utils";
 import type { TabId } from "../dock/store";
 
@@ -40,11 +40,11 @@ export class DockTabStore<T> {
 
     // auto-save to local-storage
     if (storageKey) {
-      this.storage = this.dependencies.createStorage<T>(storageKey, {});
+      const storage = this.storage = this.dependencies.createStorage<T>(storageKey, {});
 
-      this.storage.whenReady.then(() => {
-        this.data.replace(this.storage.value);
-        reaction(() => this.toJSON(), data => this.storage.set(data));
+      storage.whenReady.then(() => {
+        this.data.replace(storage.value);
+        reaction(() => this.toJSON(), data => storage.set(data));
       });
     }
   }
@@ -79,6 +79,13 @@ export class DockTabStore<T> {
 
   isReady(tabId: TabId): boolean {
     return this.getData(tabId) !== undefined;
+  }
+
+  async waitForData(tabId: TabId): Promise<T> {
+    await when(() => this.data.has(tabId));
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return this.data.get(tabId)!;
   }
 
   getData(tabId: TabId) {

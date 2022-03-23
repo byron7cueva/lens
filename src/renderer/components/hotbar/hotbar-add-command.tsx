@@ -15,7 +15,7 @@ import uniqueHotbarNameInjectable from "../input/validators/unique-hotbar-name.i
 interface Dependencies {
   closeCommandOverlay: () => void;
   addHotbar: (data: CreateHotbarData, { setActive }?: CreateHotbarOptions) => void;
-  uniqueHotbarName: InputValidator;
+  uniqueHotbarName: InputValidator<boolean>;
 }
 
 const NonInjectedHotbarAddCommand = observer(({ closeCommandOverlay, addHotbar, uniqueHotbarName }: Dependencies) => {
