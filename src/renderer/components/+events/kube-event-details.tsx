@@ -72,9 +72,11 @@ class NonInjectedKubeEventDetails extends React.Component<KubeEventDetailsProps 
                 <DrawerItem name="Sub-object">
                   {event.involvedObject.fieldPath}
                 </DrawerItem>
-                <DrawerItem name="Last seen">
-                  <LocaleDate date={event.lastTimestamp} />
-                </DrawerItem>
+                {event.lastTimestamp && (
+                  <DrawerItem name="Last seen">
+                    <LocaleDate date={event.lastTimestamp} />
+                  </DrawerItem>
+                )}
               </div>
             ))}
           </div>

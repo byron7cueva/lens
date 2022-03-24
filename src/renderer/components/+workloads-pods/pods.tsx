@@ -12,7 +12,7 @@ import { podsStore } from "./pods.store";
 import type { RouteComponentProps } from "react-router";
 import { eventStore } from "../+events/event.store";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
-import { nodesApi, Pod } from "../../../common/k8s-api/endpoints";
+import { nodeApi, Pod } from "../../../common/k8s-api/endpoints";
 import { StatusBrick } from "../status-brick";
 import { cssNames, getConvertedParts, object, stopPropagation } from "../../utils";
 import startCase from "lodash/startCase";
@@ -148,7 +148,7 @@ export class Pods extends React.Component<PodsProps> {
               className="node"
               tooltip={pod.getNodeName()}
               expandable={false}>
-              <Link to={getDetailsUrl(nodesApi.getUrl({ name: pod.getNodeName() }))} onClick={stopPropagation}>
+              <Link to={getDetailsUrl(nodeApi.getUrl({ name: pod.getNodeName() }))} onClick={stopPropagation}>
                 {pod.getNodeName()}
               </Link>
             </Badge>

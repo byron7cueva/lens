@@ -30,10 +30,10 @@ export interface SecretData extends KubeJsonApiData<KubeObjectMetadata, void, vo
   data?: Partial<Record<string, string>>;
 }
 
-export class Secret extends KubeObject<KubeObjectMetadata, void, void, "namespace-scoped"> {
-  static kind = "Secret";
-  static namespaced = true;
-  static apiBase = "/api/v1/secrets";
+export class Secret extends KubeObject<void, void, "namespace-scoped"> {
+  static readonly kind = "Secret";
+  static readonly namespaced = true;
+  static readonly apiBase = "/api/v1/secrets";
 
   type: SecretType;
   data: Partial<Record<string, string>>;
@@ -66,4 +66,4 @@ export class SecretApi extends KubeApi<Secret, SecretData> {
 
 export const secretsApi = isClusterPageContext()
   ? new SecretApi()
-  : undefined;
+  : undefined as never;

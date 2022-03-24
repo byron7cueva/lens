@@ -4,20 +4,13 @@
  */
 
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import { autoBind } from "../../utils";
-import { Job, jobApi } from "../../../common/k8s-api/endpoints/job.api";
+import { Job, JobApi, jobApi } from "../../../common/k8s-api/endpoints/job.api";
 import { CronJob, Pod, PodStatusPhase } from "../../../common/k8s-api/endpoints";
 import { podsStore } from "../+workloads-pods/pods.store";
 import { apiManager } from "../../../common/k8s-api/api-manager";
+import { isClusterPageContext } from "../../utils";
 
-export class JobStore extends KubeObjectStore<Job> {
-  api = jobApi;
-
-  constructor() {
-    super();
-    autoBind(this);
-  }
-
+export class JobStore extends KubeObjectStore<Job, JobApi> {
   getChildPods(job: Job): Pod[] {
     return podsStore.getPodsByOwnerId(job.getId());
   }
@@ -32,26 +25,28 @@ export class JobStore extends KubeObjectStore<Job> {
   getStatuses(jobs?: Job[]) {
     const status = { succeeded: 0, running: 0, failed: 0, pending: 0 };
 
-    jobs?.forEach(job => {
-      const pods = this.getChildPods(job);
+    for (const job of jobs ?? []) {
+      const statuses = new Set(this.getChildPods(job).map(pod => pod.getStatus()));
 
-      if (pods.some(pod => pod.getStatus() === PodStatusPhase.FAILED)) {
+      if (statuses.has(PodStatusPhase.FAILED)) {
         status.failed++;
-      }
-      else if (pods.some(pod => pod.getStatus() === PodStatusPhase.PENDING)) {
+      } else if (statuses.has(PodStatusPhase.PENDING)) {
         status.pending++;
-      }
-      else if (pods.some(pod => pod.getStatus() === PodStatusPhase.RUNNING)) {
+      } else if (statuses.has(PodStatusPhase.RUNNING)) {
         status.running++;
-      }
-      else {
+      } else {
         status.succeeded++;
       }
-    });
+    }
 
     return status;
   }
 }
 
-export const jobStore = new JobStore();
-apiManager.registerStore(jobStore);
+export const jobStore = isClusterPageContext()
+  ? new JobStore(jobApi)
+  : undefined as never;
+
+if (isClusterPageContext()) {
+  apiManager.registerStore(jobStore);
+}

@@ -4,10 +4,51 @@
  */
 
 import { autoBind } from "../../utils";
-import { KubeObject } from "../kube-object";
-import { KubeApi } from "../kube-api";
+import { KubeObject, KubeObjectMetadata, ObjectReference } from "../kube-object";
+import { DerivedKubeApiOptions, KubeApi } from "../kube-api";
 import type { KubeJsonApiData } from "../kube-json-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
+
+export function formatEndpointSubset(subset: EndpointSubset): string {
+  const { addresses, ports } = subset;
+
+  if (!addresses || !ports) {
+    return "";
+  }
+
+  return addresses
+    .map(address => (
+      ports
+        .map(port => `${address.ip}:${port.port}`)
+        .join(", ")
+    ))
+    .join(", ");
+
+}
+
+export interface ForZone {
+  name: string;
+}
+
+export interface EndpointHints {
+  forZones?: ForZone[];
+}
+
+export interface EndpointConditions {
+  ready?: boolean;
+  serving?: boolean;
+  terminating?: boolean;
+}
+
+export interface EndpointData {
+  addresses: string[];
+  conditions?: EndpointConditions;
+  hints?: EndpointHints;
+  hostname?: string;
+  nodeName?: string;
+  targetRef?: ObjectReference;
+  zone?: string;
+}
 
 export interface EndpointPort {
   appProtocol?: string;
@@ -16,126 +57,64 @@ export interface EndpointPort {
   port: number;
 }
 
-export interface EndpointAddressDeclaration {
+export interface EndpointAddress {
   hostname?: string;
   ip: string;
   nodeName?: string;
-  targetRef?: TargetRef;
+  targetRef?: ObjectReference;
 }
 
-export interface EndpointSubsetData {
-  addresses?: EndpointAddressDeclaration[];
-  notReadyAddresses?: EndpointAddressDeclaration[];
+export interface EndpointSubset {
+  addresses?: EndpointAddress[];
+  notReadyAddresses?: EndpointAddress[];
   ports?: EndpointPort[];
 }
 
-export interface TargetRef {
-  apiVersion?: string;
-  fieldPath?: string;
-  kind?: string;
-  name?: string;
-  namespace?: string;
-  resourceVersion?: string;
-  uid?: string;
+export interface EndpointsData extends KubeJsonApiData<KubeObjectMetadata, void, void> {
+  subsets?: EndpointSubset[];
 }
 
-export interface EndpointAddressData extends EndpointAddressDeclaration {
-  targetRef?: Omit<TargetRef, "apiVersion">;
-}
-
-export class EndpointAddress implements EndpointAddressDeclaration {
-  hostname?: string;
-  ip: string;
-  nodeName?: string;
-  targetRef?: Omit<TargetRef, "apiVersion">;
-
-  static create(data: EndpointAddressData): EndpointAddress {
-    return new EndpointAddress(data);
-  }
-
-  constructor(data: EndpointAddressData) {
-    this.hostname = data.hostname;
-    this.ip = data.ip;
-    this.nodeName = data.nodeName;
-    this.targetRef = data.targetRef;
-  }
-
-  getId() {
-    return this.ip;
-  }
-
-  getName() {
-    return this.hostname;
-  }
-
-  getTargetRef(): TargetRef | undefined {
-    if (this.targetRef) {
-      return Object.assign(this.targetRef, { apiVersion: "v1" });
-    }
-
-    return undefined;
-  }
-}
-
-export class EndpointSubset {
-  addresses: EndpointAddressDeclaration[];
-  notReadyAddresses: EndpointAddressDeclaration[];
-  ports: EndpointPort[];
-
-  constructor(data: EndpointSubsetData) {
-    this.addresses = data.addresses ?? [];
-    this.notReadyAddresses = data.notReadyAddresses ?? [];
-    this.ports = data.ports ?? [];
-  }
-
-  getAddresses(): EndpointAddress[] {
-    return this.addresses.map(EndpointAddress.create);
-  }
-
-  getNotReadyAddresses(): EndpointAddress[] {
-    return this.notReadyAddresses.map(EndpointAddress.create);
-  }
-
-  toString(): string {
-    return this.addresses
-      .map(address => (
-        this.ports
-          .map(port => `${address.ip}:${port.port}`)
-          .join(", ")
-      ))
-      .join(", ");
-  }
-}
-
-export class Endpoint extends KubeObject {
+export class Endpoints extends KubeObject<void, void, "namespace-scoped"> {
   static kind = "Endpoints";
   static namespaced = true;
   static apiBase = "/api/v1/endpoints";
 
-  declare subsets?: EndpointSubset[];
+  subsets: Required<EndpointSubset>[];
 
-  constructor(data: KubeJsonApiData) {
-    super(data);
+  constructor({ subsets = [], ...rest }: EndpointsData) {
+    super(rest);
     autoBind(this);
+    this.subsets = subsets.map(({
+      addresses = [],
+      notReadyAddresses = [],
+      ports = [],
+    }) => ({
+      addresses,
+      notReadyAddresses,
+      ports,
+    }));
   }
 
   getEndpointSubsets(): EndpointSubset[] {
-    return this.subsets?.map(s => new EndpointSubset(s)) ?? [];
+    return this.subsets;
   }
 
   toString(): string {
-    return this.getEndpointSubsets().map(String).join(", ") || "<none>";
+    return this.getEndpointSubsets()
+      .map(formatEndpointSubset)
+      .join(", ") || "<none>";
   }
 }
 
-let endpointApi: KubeApi<Endpoint>;
-
-if (isClusterPageContext()) {
-  endpointApi = new KubeApi<Endpoint>({
-    objectConstructor: Endpoint,
-  });
+export class EndpointsApi extends KubeApi<Endpoints, EndpointsData> {
+  constructor(opts: DerivedKubeApiOptions = {}) {
+    super({
+      objectConstructor: Endpoints,
+      ...opts,
+    });
+  }
 }
 
-export {
-  endpointApi,
-};
+export const endpointsApi = isClusterPageContext()
+  ? new EndpointsApi()
+  : undefined as never;

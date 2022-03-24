@@ -12,7 +12,7 @@ import { KubeObjectListLayout } from "../kube-object-list-layout";
 import { getDetailsUrl } from "../kube-detail-params";
 import { stopPropagation } from "../../utils";
 import { volumesStore } from "./volumes.store";
-import { pvcApi, storageClassApi } from "../../../common/k8s-api/endpoints";
+import { persistentVolumeClaimApi, storageClassApi } from "../../../common/k8s-api/endpoints";
 import { KubeObjectStatusIcon } from "../kube-object-status-icon";
 import type { VolumesRouteParams } from "../../../common/routes";
 import { KubeObjectAge } from "../kube-object/age";
@@ -75,7 +75,7 @@ export class PersistentVolumes extends React.Component<PersistentVolumesProps> {
             </Link>,
             volume.getCapacity(),
             claimRef && (
-              <Link to={getDetailsUrl(pvcApi.getUrl(claimRef))} onClick={stopPropagation}>
+              <Link to={getDetailsUrl(persistentVolumeClaimApi.getUrl(claimRef))} onClick={stopPropagation}>
                 {claimRef.name}
               </Link>
             ),

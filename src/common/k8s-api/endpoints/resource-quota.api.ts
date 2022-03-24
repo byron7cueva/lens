@@ -4,7 +4,7 @@
  */
 
 import { KubeObject } from "../kube-object";
-import { KubeApi } from "../kube-api";
+import { DerivedKubeApiOptions, KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 
 export interface IResourceQuotaValues extends Partial<Record<string, string>> {
@@ -33,44 +33,41 @@ export interface IResourceQuotaValues extends Partial<Record<string, string>> {
   "count/deployments.extensions"?: string;
 }
 
-export interface ResourceQuota {
-  spec: {
-    hard: IResourceQuotaValues;
-    scopeSelector?: {
-      matchExpressions: {
-        operator: string;
-        scopeName: string;
-        values: string[];
-      }[];
-    };
-  };
-
-  status: {
-    hard: IResourceQuotaValues;
-    used: IResourceQuotaValues;
+export interface ResourceQuotaSpec {
+  hard: IResourceQuotaValues;
+  scopeSelector?: {
+    matchExpressions: {
+      operator: string;
+      scopeName: string;
+      values: string[];
+    }[];
   };
 }
 
-export class ResourceQuota extends KubeObject {
-  static kind = "ResourceQuota";
-  static namespaced = true;
-  static apiBase = "/api/v1/resourcequotas";
+export interface ResourceQuotaStatus {
+  hard: IResourceQuotaValues;
+  used: IResourceQuotaValues;
+}
+
+export class ResourceQuota extends KubeObject<ResourceQuotaStatus, ResourceQuotaSpec, "namespace-scoped"> {
+  static readonly kind = "ResourceQuota";
+  static readonly namespaced = true;
+  static readonly apiBase = "/api/v1/resourcequotas";
 
   getScopeSelector() {
-    const { matchExpressions = [] } = this.spec.scopeSelector || {};
-
-    return matchExpressions;
+    return this.spec.scopeSelector?.matchExpressions ?? [];
   }
 }
 
-let resourceQuotaApi: KubeApi<ResourceQuota>;
-
-if (isClusterPageContext()) {
-  resourceQuotaApi = new KubeApi<ResourceQuota>({
-    objectConstructor: ResourceQuota,
-  });
+export class ResourceQuotaApi extends KubeApi<ResourceQuota> {
+  constructor(opts: DerivedKubeApiOptions = {}) {
+    super({
+      objectConstructor: ResourceQuota,
+      ...opts,
+    });
+  }
 }
 
-export {
-  resourceQuotaApi,
-};
+export const resourceQuotaApi = isClusterPageContext()
+  ? new ResourceQuotaApi()
+  : undefined as never;

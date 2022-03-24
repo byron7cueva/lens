@@ -3,18 +3,11 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 import { apiManager } from "../../../../common/k8s-api/api-manager";
-import { ClusterRole, clusterRoleApi } from "../../../../common/k8s-api/endpoints";
+import { ClusterRole, ClusterRoleApi, clusterRoleApi, ClusterRoleData } from "../../../../common/k8s-api/endpoints";
 import { KubeObjectStore } from "../../../../common/k8s-api/kube-object.store";
-import { autoBind } from "../../../utils";
+import { isClusterPageContext } from "../../../utils";
 
-export class ClusterRolesStore extends KubeObjectStore<ClusterRole> {
-  api = clusterRoleApi;
-
-  constructor() {
-    super();
-    autoBind(this);
-  }
-
+export class ClusterRolesStore extends KubeObjectStore<ClusterRole, ClusterRoleApi, ClusterRoleData> {
   protected sortItems(items: ClusterRole[]) {
     return super.sortItems(items, [
       clusterRole => clusterRole.kind,
@@ -23,6 +16,10 @@ export class ClusterRolesStore extends KubeObjectStore<ClusterRole> {
   }
 }
 
-export const clusterRolesStore = new ClusterRolesStore();
+export const clusterRolesStore = isClusterPageContext()
+  ? new ClusterRolesStore(clusterRoleApi)
+  : undefined as never;
 
-apiManager.registerStore(clusterRolesStore);
+if (isClusterPageContext()) {
+  apiManager.registerStore(clusterRolesStore);
+}

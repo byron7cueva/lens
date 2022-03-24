@@ -31,6 +31,7 @@ export interface KubeJsonApiData<
   metadata: Metadata;
   status?: Status;
   spec?: Spec;
+  [otherKeys: string]: unknown;
 }
 
 export interface KubeJsonApiError extends JsonApiError {

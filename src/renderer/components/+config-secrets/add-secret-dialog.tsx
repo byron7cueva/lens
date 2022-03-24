@@ -103,8 +103,7 @@ export class AddSecretDialog extends React.Component<AddSecretDialogProps> {
     const { data = [], labels = [], annotations = [] } = this.secret[type] ?? {};
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const newSecret = await secretsApi!.create({ namespace, name }, {
+      const newSecret = await secretsApi.create({ namespace, name }, {
         type,
         data: this.getDataFromFields(data, val => val ? base64.encode(val) : ""),
         metadata: {

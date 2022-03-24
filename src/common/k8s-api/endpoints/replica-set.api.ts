@@ -3,21 +3,29 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeApi } from "../kube-api";
+import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { IPodMetrics, PodSpec } from "./pods.api";
+import type { IPodMetrics } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import { KubeObject, KubeObjectMetadata, KubeObjectStatus, LabelSelector } from "../kube-object";
+import { KubeObject, KubeObjectStatus, LabelSelector } from "../kube-object";
+import type { PodTemplateSpec } from "./types/pod-template-spec";
 
 export class ReplicaSetApi extends KubeApi<ReplicaSet> {
+  constructor(opts: DerivedKubeApiOptions & IgnoredKubeApiOptions = {}) {
+    super({
+      ...opts,
+      objectConstructor: ReplicaSet,
+    });
+  }
+
   protected getScaleApiUrl(params: { namespace: string; name: string }) {
     return `${this.getUrl(params)}/scale`;
   }
 
-  getReplicas(params: { namespace: string; name: string }): Promise<number> {
-    return this.request
-      .get(this.getScaleApiUrl(params))
-      .then(({ status }: any) => status?.replicas);
+  async getReplicas(params: { namespace: string; name: string }): Promise<number> {
+    const { status } = await this.request.get(this.getScaleApiUrl(params));
+
+    return (status as { replicas: number })?.replicas;
   }
 
   scale(params: { namespace: string; name: string }, replicas: number) {
@@ -52,14 +60,7 @@ export function getMetricsForReplicaSets(replicasets: ReplicaSet[], namespace: s
 export interface ReplicaSetSpec {
   replicas?: number;
   selector: LabelSelector;
-  template?: {
-    metadata: {
-      labels: {
-        app: string;
-      };
-    };
-    spec?: PodSpec;
-  };
+  template?: PodTemplateSpec;
   minReadySeconds?: number;
 }
 
@@ -71,7 +72,7 @@ export interface ReplicaSetStatus extends KubeObjectStatus {
   observedGeneration?: number;
 }
 
-export class ReplicaSet extends KubeObject<KubeObjectMetadata, ReplicaSetStatus, ReplicaSetSpec, "namespace-scoped"> {
+export class ReplicaSet extends KubeObject<ReplicaSetStatus, ReplicaSetSpec, "namespace-scoped"> {
   static kind = "ReplicaSet";
   static namespaced = true;
   static apiBase = "/apis/apps/v1/replicasets";
@@ -85,7 +86,7 @@ export class ReplicaSet extends KubeObject<KubeObjectMetadata, ReplicaSetStatus,
   }
 
   getTemplateLabels(): string[] {
-    return KubeObject.stringifyLabels(this.spec.template?.metadata.labels);
+    return KubeObject.stringifyLabels(this.spec.template?.metadata?.labels);
   }
 
   getTolerations() {
@@ -119,14 +120,6 @@ export class ReplicaSet extends KubeObject<KubeObjectMetadata, ReplicaSetStatus,
   }
 }
 
-let replicaSetApi: ReplicaSetApi;
-
-if (isClusterPageContext()) {
-  replicaSetApi = new ReplicaSetApi({
-    objectConstructor: ReplicaSet,
-  });
-}
-
-export {
-  replicaSetApi,
-};
+export const replicaSetApi = isClusterPageContext()
+  ? new ReplicaSetApi()
+  : undefined as never;

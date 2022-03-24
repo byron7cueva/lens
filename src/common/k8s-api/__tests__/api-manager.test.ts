@@ -14,7 +14,7 @@ class TestApi extends KubeApi<KubeObject> {
   }
 }
 
-class TestStore extends KubeObjectStore<KubeObject> {
+class TestStore extends KubeObjectStore<KubeObject, TestApi> {
 
 }
 

@@ -23,19 +23,15 @@ import type { ClusterFrameContext } from "../../cluster-frame-context/cluster-fr
 import clusterFrameContextInjectable from "../../cluster-frame-context/cluster-frame-context.injectable";
 import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectable";
 import type { SubscribableStore, SubscribeStores } from "../../kube-watch-api/kube-watch-api";
+import type { KubeApi } from "../../../common/k8s-api/kube-api";
 
-export interface KubeObjectListLayoutProps<K extends KubeObject> extends Omit<ItemListLayoutProps<K>, "getItems" | "dependentStores"> {
+export interface KubeObjectListLayoutProps<K extends KubeObject, A extends KubeApi<K>> extends Omit<ItemListLayoutProps<K>, "getItems" | "dependentStores"> {
   items?: K[];
   getItems?: () => K[];
-  store: KubeObjectStore<K>;
+  store: KubeObjectStore<K, A>;
   dependentStores?: SubscribableStore[];
   subscribeStores?: boolean;
 }
-
-const defaultProps: Partial<KubeObjectListLayoutProps<KubeObject>> = {
-  onDetails: (item) => toggleDetails(item.selfLink),
-  subscribeStores: true,
-};
 
 interface Dependencies {
   clusterFrameContext: ClusterFrameContext;
@@ -43,10 +39,13 @@ interface Dependencies {
 }
 
 @observer
-class NonInjectedKubeObjectListLayout<K extends KubeObject> extends React.Component<KubeObjectListLayoutProps<K> & Dependencies> {
-  static defaultProps = defaultProps as object;
+class NonInjectedKubeObjectListLayout<K extends KubeObject, A extends KubeApi<K>> extends React.Component<KubeObjectListLayoutProps<K, A> & Dependencies> {
+  static defaultProps = {
+    onDetails: (item: KubeObject) => toggleDetails(item.selfLink),
+    subscribeStores: true,
+  };
 
-  constructor(props: KubeObjectListLayoutProps<K> & Dependencies) {
+  constructor(props: KubeObjectListLayoutProps<K, A> & Dependencies) {
     super(props);
     makeObservable(this);
   }
@@ -139,7 +138,7 @@ class NonInjectedKubeObjectListLayout<K extends KubeObject> extends React.Compon
   }
 }
 
-const InjectedKubeObjectListLayout = withInjectables<Dependencies, KubeObjectListLayoutProps<KubeObject>>(NonInjectedKubeObjectListLayout, {
+const InjectedKubeObjectListLayout = withInjectables<Dependencies, KubeObjectListLayoutProps<KubeObject, KubeApi<KubeObject>>>(NonInjectedKubeObjectListLayout, {
   getProps: (di, props) => ({
     clusterFrameContext: di.inject(clusterFrameContextInjectable),
     subscribeToStores: di.inject(kubeWatchApiInjectable).subscribeStores,
@@ -147,6 +146,6 @@ const InjectedKubeObjectListLayout = withInjectables<Dependencies, KubeObjectLis
   }),
 });
 
-export function KubeObjectListLayout<K extends KubeObject>(props: KubeObjectListLayoutProps<K>) {
+export function KubeObjectListLayout<K extends KubeObject, A extends KubeApi<K>>(props: KubeObjectListLayoutProps<K, A>) {
   return <InjectedKubeObjectListLayout {...(props as never)} />;
 }

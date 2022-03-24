@@ -3,44 +3,44 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeApi } from "../kube-api";
+import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { IPodMetrics, PodSpec } from "./pods.api";
+import type { IPodMetrics } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import { KubeObject, KubeObjectMetadata, LabelSelector } from "../kube-object";
+import { KubeObject, KubeObjectStatus, LabelSelector } from "../kube-object";
+import type { PodTemplateSpec } from "./types/pod-template-spec";
+
+export interface RollingUpdateDaemonSet {
+  maxUnavailable?: number | string;
+  maxSurge?: number | string;
+}
+
+export interface DaemonSetUpdateStrategy {
+  type: string;
+  rollingUpdate: RollingUpdateDaemonSet;
+}
 
 export interface DaemonSetSpec {
   selector: LabelSelector;
-  template: {
-    metadata: {
-      creationTimestamp?: string;
-      labels: {
-        name: string;
-      };
-    };
-    spec: PodSpec;
-  };
-  updateStrategy: {
-    type: string;
-    rollingUpdate: {
-      maxUnavailable: number;
-    };
-  };
-  revisionHistoryLimit: number;
+  template: PodTemplateSpec;
+  updateStrategy: DaemonSetUpdateStrategy;
+  minReadySeconds?: number;
+  revisionHistoryLimit?: number;
 }
 
-export interface DaemonSetStatus {
+export interface DaemonSetStatus extends KubeObjectStatus {
+  collisionCount?: number;
   currentNumberScheduled: number;
-  numberMisscheduled: number;
   desiredNumberScheduled: number;
+  numberAvailable?: number;
+  numberMisscheduled: number;
   numberReady: number;
-  observedGeneration: number;
-  updatedNumberScheduled: number;
-  numberAvailable: number;
-  numberUnavailable: number;
+  numberUnavailable?: number;
+  observedGeneration?: number;
+  updatedNumberScheduled?: number;
 }
 
-export class DaemonSet extends KubeObject<KubeObjectMetadata, DaemonSetStatus, DaemonSetSpec, "namespace-scoped"> {
+export class DaemonSet extends KubeObject<DaemonSetStatus, DaemonSetSpec, "namespace-scoped"> {
   static kind = "DaemonSet";
   static namespaced = true;
   static apiBase = "/apis/apps/v1/daemonsets";
@@ -50,19 +50,19 @@ export class DaemonSet extends KubeObject<KubeObjectMetadata, DaemonSetStatus, D
   }
 
   getNodeSelectors(): string[] {
-    return KubeObject.stringifyLabels(this.spec.template.spec.nodeSelector);
+    return KubeObject.stringifyLabels(this.spec.template.spec?.nodeSelector);
   }
 
   getTemplateLabels(): string[] {
-    return KubeObject.stringifyLabels(this.spec.template.metadata.labels);
+    return KubeObject.stringifyLabels(this.spec.template.metadata?.labels);
   }
 
   getTolerations() {
-    return this.spec.template.spec.tolerations ?? [];
+    return this.spec.template.spec?.tolerations ?? [];
   }
 
   getAffinity() {
-    return this.spec.template.spec.affinity;
+    return this.spec.template.spec?.affinity;
   }
 
   getAffinityNumber() {
@@ -78,6 +78,12 @@ export class DaemonSet extends KubeObject<KubeObjectMetadata, DaemonSetStatus, D
 }
 
 export class DaemonSetApi extends KubeApi<DaemonSet> {
+  constructor(opts: DerivedKubeApiOptions & IgnoredKubeApiOptions = {}) {
+    super({
+      ...opts,
+      objectConstructor: DaemonSet,
+    });
+  }
 }
 
 export function getMetricsForDaemonSets(daemonsets: DaemonSet[], namespace: string, selector = ""): Promise<IPodMetrics> {
@@ -97,17 +103,6 @@ export function getMetricsForDaemonSets(daemonsets: DaemonSet[], namespace: stri
   });
 }
 
-/**
- * Only available within kubernetes cluster pages
- */
-let daemonSetApi: DaemonSetApi;
-
-if (isClusterPageContext()) {
-  daemonSetApi = new DaemonSetApi({
-    objectConstructor: DaemonSet,
-  });
-}
-
-export {
-  daemonSetApi,
-};
+export const daemonSetApi = isClusterPageContext()
+  ? new DaemonSetApi()
+  : undefined as never;

@@ -4,10 +4,10 @@
  */
 
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import { ConfigMap, configMapApi } from "../../../common/k8s-api/endpoints/configmap.api";
+import { ConfigMap, ConfigMapApi, configMapApi, ConfigMapData } from "../../../common/k8s-api/endpoints/configmap.api";
 import { apiManager } from "../../../common/k8s-api/api-manager";
 
-export class ConfigMapsStore extends KubeObjectStore<ConfigMap> {
+export class ConfigMapsStore extends KubeObjectStore<ConfigMap, ConfigMapApi, ConfigMapData> {
   api = configMapApi;
 }
 

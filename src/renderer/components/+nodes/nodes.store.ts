@@ -6,15 +6,13 @@ import { sum } from "lodash";
 import { computed, makeObservable } from "mobx";
 
 import { apiManager } from "../../../common/k8s-api/api-manager";
-import { Node, nodesApi } from "../../../common/k8s-api/endpoints";
+import { Node, NodeApi, nodeApi } from "../../../common/k8s-api/endpoints";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { autoBind } from "../../utils";
 
-export class NodesStore extends KubeObjectStore<Node> {
-  api = nodesApi;
-
+export class NodesStore extends KubeObjectStore<Node, NodeApi> {
   constructor() {
-    super();
+    super(nodeApi);
 
     makeObservable(this);
     autoBind(this);

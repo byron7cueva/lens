@@ -233,6 +233,7 @@ const getKubeObjectStub = (kind: string, apiVersion: string) => KubeObject.creat
     name: "some-name",
     resourceVersion: "some-resource-version",
     namespace: "some-namespace",
+    selfLink: "/foo",
   },
 });
 

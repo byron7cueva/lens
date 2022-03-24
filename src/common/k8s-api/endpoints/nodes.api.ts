@@ -4,14 +4,19 @@
  */
 
 import { BaseKubeObjectCondition, KubeObject } from "../kube-object";
-import { autoBind, cpuUnitsToNumber, iter, unitsToBytes } from "../../../renderer/utils";
+import { cpuUnitsToNumber, unitsToBytes } from "../../../renderer/utils";
 import { IMetrics, metricsApi } from "./metrics.api";
-import { KubeApi } from "../kube-api";
-import type { KubeJsonApiData } from "../kube-json-api";
+import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 import { TypedRegEx } from "typed-regex";
 
-export class NodesApi extends KubeApi<Node> {
+export class NodeApi extends KubeApi<Node> {
+  constructor(opts: DerivedKubeApiOptions & IgnoredKubeApiOptions = {}) {
+    super({
+      ...opts,
+      objectConstructor: Node,
+    });
+  }
 }
 
 export function getMetricsForAllNodes(): Promise<INodeMetrics> {
@@ -63,107 +68,92 @@ export interface NodeCondition extends BaseKubeObjectCondition {
   lastHeartbeatTime?: string;
 }
 
-export interface Node {
-  spec: {
-    podCIDR?: string;
-    podCIDRs?: string[];
-    providerID?: string;
-    /**
-     * @deprecated see https://issues.k8s.io/61966
-     */
-    externalID?: string;
-    taints?: NodeTaint[];
-    unschedulable?: boolean;
-  };
-  status: {
-    capacity?: {
-      cpu: string;
-      "ephemeral-storage": string;
-      "hugepages-1Gi": string;
-      "hugepages-2Mi": string;
-      memory: string;
-      pods: string;
-    };
-    allocatable?: {
-      cpu: string;
-      "ephemeral-storage": string;
-      "hugepages-1Gi": string;
-      "hugepages-2Mi": string;
-      memory: string;
-      pods: string;
-    };
-    conditions?: NodeCondition[];
-    addresses?: {
-      type: string;
-      address: string;
-    }[];
-    daemonEndpoints?: {
-      kubeletEndpoint: {
-        Port: number; //it must be uppercase for backwards compatibility
-      };
-    };
-    nodeInfo?: {
-      machineID: string;
-      systemUUID: string;
-      bootID: string;
-      kernelVersion: string;
-      osImage: string;
-      containerRuntimeVersion: string;
-      kubeletVersion: string;
-      kubeProxyVersion: string;
-      operatingSystem: string;
-      architecture: string;
-    };
-    images?: {
-      names: string[];
-      sizeBytes?: number;
-    }[];
-    volumesInUse?: string[];
-    volumesAttached?: {
-      name: string;
-      devicePath: string;
-    }[];
-  };
-}
-
-/**
- * Iterate over `conditions` yielding the `type` field if the `status` field is
- * the string `"True"`
- * @param conditions An iterator of some conditions
- */
-function* getTrueConditionTypes(conditions: IterableIterator<NodeCondition> | Iterable<NodeCondition>): IterableIterator<string> {
-  for (const { status, type } of conditions) {
-    if (status === "True") {
-      yield type;
-    }
-  }
-}
-
 /**
  * This regex is used in the `getRoleLabels()` method bellow, but placed here
  * as factoring out regexes is best practice.
  */
 const nodeRoleLabelKeyMatcher = TypedRegEx("^.*node-role.kubernetes.io/+(?<role>.+)$");
 
-export class Node extends KubeObject {
-  static kind = "Node";
-  static namespaced = false;
-  static apiBase = "/api/v1/nodes";
+export interface NodeSpec {
+  podCIDR?: string;
+  podCIDRs?: string[];
+  providerID?: string;
+  /**
+   * @deprecated see https://issues.k8s.io/61966
+   */
+  externalID?: string;
+  taints?: NodeTaint[];
+  unschedulable?: boolean;
+}
 
-  constructor(data: KubeJsonApiData) {
-    super(data);
-    autoBind(this);
-  }
+export interface NodeStatus {
+  capacity?: {
+    cpu: string;
+    "ephemeral-storage": string;
+    "hugepages-1Gi": string;
+    "hugepages-2Mi": string;
+    memory: string;
+    pods: string;
+  };
+  allocatable?: {
+    cpu: string;
+    "ephemeral-storage": string;
+    "hugepages-1Gi": string;
+    "hugepages-2Mi": string;
+    memory: string;
+    pods: string;
+  };
+  conditions?: NodeCondition[];
+  addresses?: {
+    type: string;
+    address: string;
+  }[];
+  daemonEndpoints?: {
+    kubeletEndpoint: {
+      Port: number; //it must be uppercase for backwards compatibility
+    };
+  };
+  nodeInfo?: {
+    machineID: string;
+    systemUUID: string;
+    bootID: string;
+    kernelVersion: string;
+    osImage: string;
+    containerRuntimeVersion: string;
+    kubeletVersion: string;
+    kubeProxyVersion: string;
+    operatingSystem: string;
+    architecture: string;
+  };
+  images?: {
+    names: string[];
+    sizeBytes?: number;
+  }[];
+  volumesInUse?: string[];
+  volumesAttached?: {
+    name: string;
+    devicePath: string;
+  }[];
+}
+
+export class Node extends KubeObject<NodeStatus, NodeSpec, "cluster-scoped"> {
+  static readonly kind = "Node";
+  static readonly namespaced = false;
+  static readonly apiBase = "/api/v1/nodes";
 
   /**
    * Returns the concatination of all current condition types which have a status
    * of `"True"`
    */
   getNodeConditionText(): string {
-    return iter.join(
-      getTrueConditionTypes(this.status?.conditions ?? []),
-      " ",
-    );
+    if (!this.status?.conditions) {
+      return "";
+    }
+
+    return this.status.conditions
+      .filter(condition => condition.status === "True")
+      .map(condition => condition.type)
+      .join(" ");
   }
 
   getTaints() {
@@ -199,19 +189,19 @@ export class Node extends KubeObject {
   }
 
   getCpuCapacity() {
-    if (!this.status.capacity || !this.status.capacity.cpu) return 0;
+    if (!this.status?.capacity || !this.status.capacity.cpu) return 0;
 
     return cpuUnitsToNumber(this.status.capacity.cpu);
   }
 
   getMemoryCapacity() {
-    if (!this.status.capacity || !this.status.capacity.memory) return 0;
+    if (!this.status?.capacity || !this.status.capacity.memory) return 0;
 
     return unitsToBytes(this.status.capacity.memory);
   }
 
   getConditions() {
-    const conditions = this.status.conditions || [];
+    const conditions = this.status?.conditions || [];
 
     if (this.isUnschedulable()) {
       return [{ type: "SchedulingDisabled", status: "True" }, ...conditions];
@@ -233,7 +223,7 @@ export class Node extends KubeObject {
   }
 
   getKubeletVersion() {
-    return this.status.nodeInfo?.kubeletVersion ?? "<unknown>";
+    return this.status?.nodeInfo?.kubeletVersion ?? "<unknown>";
   }
 
   getOperatingSystem(): string {
@@ -248,14 +238,6 @@ export class Node extends KubeObject {
   }
 }
 
-let nodesApi: NodesApi;
-
-if (isClusterPageContext()) {
-  nodesApi = new NodesApi({
-    objectConstructor: Node,
-  });
-}
-
-export {
-  nodesApi,
-};
+export const nodeApi = isClusterPageContext()
+  ? new NodeApi()
+  : undefined as never;

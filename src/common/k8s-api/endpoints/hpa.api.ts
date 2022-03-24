@@ -3,8 +3,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { BaseKubeObjectCondition, KubeObject, KubeObjectMetadata, LabelSelector } from "../kube-object";
-import { KubeApi } from "../kube-api";
+import { BaseKubeObjectCondition, KubeObject, LabelSelector } from "../kube-object";
+import { DerivedKubeApiOptions, KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 import type { OptionVarient } from "../../utils";
 
@@ -96,10 +96,10 @@ interface MetricCurrentTarget {
   target?: string | undefined;
 }
 
-export class HorizontalPodAutoscaler extends KubeObject<KubeObjectMetadata, HorizontalPodAutoscalerStatus, HorizontalPodAutoscalerSpec> {
-  static kind = "HorizontalPodAutoscaler";
-  static namespaced = true;
-  static apiBase = "/apis/autoscaling/v2beta1/horizontalpodautoscalers";
+export class HorizontalPodAutoscaler extends KubeObject<HorizontalPodAutoscalerStatus, HorizontalPodAutoscalerSpec, "namespace-scoped"> {
+  static readonly kind = "HorizontalPodAutoscaler";
+  static readonly namespaced = true;
+  static readonly apiBase = "/apis/autoscaling/v2beta1/horizontalpodautoscalers";
 
   getMaxPods() {
     return this.spec.maxReplicas ?? 0;
@@ -250,14 +250,15 @@ export class HorizontalPodAutoscaler extends KubeObject<KubeObjectMetadata, Hori
   }
 }
 
-let hpaApi: KubeApi<HorizontalPodAutoscaler>;
-
-if (isClusterPageContext()) {
-  hpaApi = new KubeApi<HorizontalPodAutoscaler>({
-    objectConstructor: HorizontalPodAutoscaler,
-  });
+export class HorizontalPodAutoscalerApi extends KubeApi<HorizontalPodAutoscaler> {
+  constructor(opts?: DerivedKubeApiOptions) {
+    super({
+      objectConstructor: HorizontalPodAutoscaler,
+      ...opts ?? {},
+    });
+  }
 }
 
-export {
-  hpaApi,
-};
+export const hpaApi = isClusterPageContext()
+  ? new HorizontalPodAutoscalerApi()
+  : undefined as never;

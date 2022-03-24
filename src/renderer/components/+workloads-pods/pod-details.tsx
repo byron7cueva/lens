@@ -10,7 +10,7 @@ import kebabCase from "lodash/kebabCase";
 import { disposeOnUnmount, observer } from "mobx-react";
 import { Link } from "react-router-dom";
 import { observable, reaction, makeObservable } from "mobx";
-import { type IPodMetrics, nodesApi, Pod, pvcApi, configMapApi, getMetricsForPods } from "../../../common/k8s-api/endpoints";
+import { type IPodMetrics, nodeApi, Pod, persistentVolumeClaimApi, configMapApi, getMetricsForPods } from "../../../common/k8s-api/endpoints";
 import { DrawerItem, DrawerTitle } from "../drawer";
 import { Badge } from "../badge";
 import { boundMethod, cssNames, toJS } from "../../utils";
@@ -98,7 +98,7 @@ export class PodDetails extends React.Component<PodDetailsProps> {
         </DrawerItem>
         <DrawerItem name="Node">
           {nodeName && (
-            <Link to={getDetailsUrl(nodesApi.getUrl({ name: nodeName }))}>
+            <Link to={getDetailsUrl(nodeApi.getUrl({ name: nodeName }))}>
               {nodeName}
             </Link>
           )}
@@ -235,7 +235,7 @@ export class PodDetails extends React.Component<PodDetailsProps> {
                   {claimName && (
                     <DrawerItem name="Claim Name">
                       <Link
-                        to={getDetailsUrl(pvcApi.getUrl({
+                        to={getDetailsUrl(persistentVolumeClaimApi.getUrl({
                           name: claimName,
                           namespace: pod.getNs(),
                         }))}

@@ -3,14 +3,22 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeApi } from "../kube-api";
+import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { IPodMetrics, PodSpec } from "./pods.api";
+import type { IPodMetrics } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import { KubeObject, KubeObjectMetadata, LabelSelector } from "../kube-object";
-import type { PersistentVolumeClaimSpec } from "./persistent-volume-claims.api";
+import { KubeObject, LabelSelector } from "../kube-object";
+import type { PodTemplateSpec } from "./types/pod-template-spec";
+import type { PersistentVolumeClaimTemplateSpec } from "./types/persistent-volume-claim-template-spec";
 
 export class StatefulSetApi extends KubeApi<StatefulSet> {
+  constructor(opts: DerivedKubeApiOptions & IgnoredKubeApiOptions = {}) {
+    super({
+      ...opts,
+      objectConstructor: StatefulSet,
+    });
+  }
+
   protected getScaleApiUrl(params: { namespace: string; name: string }) {
     return `${this.getUrl(params)}/scale`;
   }
@@ -58,20 +66,8 @@ export interface StatefulSetSpec {
   serviceName: string;
   replicas: number;
   selector: LabelSelector;
-  template: {
-    metadata: {
-      labels: {
-        app: string;
-      };
-    };
-    spec: PodSpec;
-  };
-  volumeClaimTemplates: {
-    metadata: {
-      name: string;
-    };
-    spec: PersistentVolumeClaimSpec;
-  }[];
+  template: PodTemplateSpec;
+  volumeClaimTemplates: PersistentVolumeClaimTemplateSpec[];
 }
 
 export interface StatefulSetStatus {
@@ -84,33 +80,33 @@ export interface StatefulSetStatus {
   collisionCount: number;
 }
 
-export class StatefulSet extends KubeObject<KubeObjectMetadata, StatefulSetStatus, StatefulSetSpec, "namespace-scoped"> {
-  static kind = "StatefulSet";
-  static namespaced = true;
-  static apiBase = "/apis/apps/v1/statefulsets";
+export class StatefulSet extends KubeObject<StatefulSetStatus, StatefulSetSpec, "namespace-scoped"> {
+  static readonly kind = "StatefulSet";
+  static readonly namespaced = true;
+  static readonly apiBase = "/apis/apps/v1/statefulsets";
 
   getSelectors(): string[] {
     return KubeObject.stringifyLabels(this.spec.selector.matchLabels);
   }
 
   getNodeSelectors(): string[] {
-    return KubeObject.stringifyLabels(this.spec.template.spec.nodeSelector);
+    return KubeObject.stringifyLabels(this.spec.template.spec?.nodeSelector);
   }
 
   getTemplateLabels(): string[] {
-    return KubeObject.stringifyLabels(this.spec.template.metadata.labels);
+    return KubeObject.stringifyLabels(this.spec.template.metadata?.labels);
   }
 
   getTolerations() {
-    return this.spec.template.spec.tolerations ?? [];
+    return this.spec.template.spec?.tolerations ?? [];
   }
 
   getAffinity() {
-    return this.spec.template.spec.affinity;
+    return this.spec.template.spec?.affinity ?? {};
   }
 
   getAffinityNumber() {
-    return Object.keys(this.getAffinity() ?? {}).length;
+    return Object.keys(this.getAffinity()).length;
   }
 
   getReplicas() {
@@ -124,14 +120,6 @@ export class StatefulSet extends KubeObject<KubeObjectMetadata, StatefulSetStatu
   }
 }
 
-let statefulSetApi: StatefulSetApi;
-
-if (isClusterPageContext()) {
-  statefulSetApi = new StatefulSetApi({
-    objectConstructor: StatefulSet,
-  });
-}
-
-export {
-  statefulSetApi,
-};
+export const statefulSetApi = isClusterPageContext()
+  ? new StatefulSetApi()
+  : undefined as never;

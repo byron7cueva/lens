@@ -7,13 +7,6 @@
 
 import { splitArray } from "../utils";
 
-export interface IKubeObjectRef {
-  kind: string;
-  apiVersion: string;
-  name: string;
-  namespace?: string;
-}
-
 export interface IKubeApiLinkRef {
   apiPrefix?: string;
   apiVersion: string;

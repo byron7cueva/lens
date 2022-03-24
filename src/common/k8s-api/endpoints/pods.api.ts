@@ -4,11 +4,18 @@
  */
 
 import { IMetrics, metricsApi } from "./metrics.api";
-import { KubeApi } from "../kube-api";
+import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import { KubeObject, KubeObjectMetadata, Affinity, Toleration, LocalObjectReference, LabelSelector } from "../kube-object";
+import { KubeObject, Affinity, Toleration, LocalObjectReference, LabelSelector } from "../kube-object";
 
-export class PodsApi extends KubeApi<Pod> {
+export class PodApi extends KubeApi<Pod> {
+  constructor(opts: DerivedKubeApiOptions & IgnoredKubeApiOptions = {}) {
+    super({
+      objectConstructor: Pod,
+      ...opts,
+    });
+  }
+
   getLogs = async (params: { namespace: string; name: string }, query?: IPodLogsQuery): Promise<string> => {
     const path = `${this.getUrl(params)}/log`;
 
@@ -328,7 +335,7 @@ export interface PodStatus {
   reason?: string;
 }
 
-export class Pod extends KubeObject<KubeObjectMetadata, PodStatus, PodSpec, "namespace-scoped"> {
+export class Pod extends KubeObject<PodStatus, PodSpec, "namespace-scoped"> {
   static kind = "Pod";
   static namespaced = true;
   static apiBase = "/api/v1/pods";
@@ -554,14 +561,6 @@ export class Pod extends KubeObject<KubeObjectMetadata, PodStatus, PodSpec, "nam
   }
 }
 
-let podsApi: PodsApi;
-
-if (isClusterPageContext()) {
-  podsApi = new PodsApi({
-    objectConstructor: Pod,
-  });
-}
-
-export {
-  podsApi,
-};
+export const podApi = isClusterPageContext()
+  ? new PodApi()
+  : undefined as never;

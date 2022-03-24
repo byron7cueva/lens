@@ -22,7 +22,7 @@ import { stat } from "fs/promises";
 import { getOrInsertWith } from "../../common/utils";
 
 export class ShellOpenError extends Error {
-  constructor(message: string, public cause: Error) {
+  constructor(message: string, public cause: unknown) {
     super(`${message}: ${cause}`);
     this.name = this.constructor.name;
     Error.captureStackTrace(this);
@@ -106,10 +106,10 @@ export enum WebSocketCloseEvent {
 }
 
 export abstract class ShellSession {
-  abstract ShellType: string;
+  abstract readonly ShellType: string;
 
-  private static shellEnvs = new Map<string, Record<string, string | undefined>>();
-  private static processes = new Map<string, pty.IPty>();
+  private static readonly shellEnvs = new Map<string, Record<string, string | undefined>>();
+  private static readonly processes = new Map<string, pty.IPty>();
 
   /**
    * Kill all remaining shell backing processes. Should be called when about to
@@ -128,8 +128,8 @@ export abstract class ShellSession {
   }
 
   protected running = false;
-  protected kubectlBinDirP: Promise<string>;
-  protected kubeconfigPathP: Promise<string>;
+  protected readonly kubectlBinDirP: Promise<string>;
+  protected readonly kubeconfigPathP: Promise<string>;
   protected readonly terminalId: string;
 
   protected abstract get cwd(): string | undefined;
@@ -153,7 +153,7 @@ export abstract class ShellSession {
     return { shellProcess, resume };
   }
 
-  constructor(protected kubectl: Kubectl, protected websocket: WebSocket, protected cluster: Cluster, terminalId: string) {
+  constructor(protected readonly kubectl: Kubectl, protected readonly websocket: WebSocket, protected readonly cluster: Cluster, terminalId: string) {
     this.kubeconfigPathP = this.cluster.getProxyKubeconfigPath();
     this.kubectlBinDirP = this.kubectl.binDir();
     this.terminalId = `${cluster.id}:${terminalId}`;
@@ -258,7 +258,7 @@ export abstract class ShellSession {
           logger.error(`[SHELL-SESSION]: failed to handle message for ${this.terminalId}`, error);
         }
       })
-      .on("close", code => {
+      .once("close", code => {
         logger.info(`[SHELL-SESSION]: websocket for ${this.terminalId} closed with code=${WebSocketCloseEvent[code]}(${code})`, { cluster: this.cluster.getMeta() });
 
         const stopShellSession = this.running

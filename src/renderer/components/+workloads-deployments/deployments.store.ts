@@ -2,24 +2,14 @@
  * Copyright (c) OpenLens Authors. All rights reserved.
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
-import { makeObservable } from "mobx";
 
 import { podsStore } from "../+workloads-pods/pods.store";
 import { apiManager } from "../../../common/k8s-api/api-manager";
-import { Deployment, deploymentApi, PodStatusPhase } from "../../../common/k8s-api/endpoints";
+import { Deployment, DeploymentApi, deploymentApi, PodStatusPhase } from "../../../common/k8s-api/endpoints";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import { autoBind } from "../../utils";
+import { isClusterPageContext } from "../../utils";
 
-export class DeploymentStore extends KubeObjectStore<Deployment> {
-  api = deploymentApi;
-
-  constructor() {
-    super();
-
-    makeObservable(this);
-    autoBind(this);
-  }
-
+export class DeploymentStore extends KubeObjectStore<Deployment, DeploymentApi> {
   protected sortItems(items: Deployment[]) {
     return super.sortItems(items, [
       item => item.getReplicas(),
@@ -53,5 +43,10 @@ export class DeploymentStore extends KubeObjectStore<Deployment> {
   }
 }
 
-export const deploymentStore = new DeploymentStore();
-apiManager.registerStore(deploymentStore);
+export const deploymentStore = isClusterPageContext()
+  ? new DeploymentStore(deploymentApi)
+  : undefined as never;
+
+if (isClusterPageContext()) {
+  apiManager.registerStore(deploymentStore);
+}

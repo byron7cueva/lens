@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import { observer } from "mobx-react";
 import { DrawerItem, DrawerTitle } from "../drawer";
 import { Badge } from "../badge";
-import { PersistentVolume, pvcApi } from "../../../common/k8s-api/endpoints";
+import { PersistentVolume, persistentVolumeClaimApi } from "../../../common/k8s-api/endpoints";
 import type { KubeObjectDetailsProps } from "../kube-object-details";
 import { KubeObjectMeta } from "../kube-object-meta";
 import { getDetailsUrl } from "../kube-detail-params";
@@ -99,7 +99,7 @@ export class PersistentVolumeDetails extends React.Component<PersistentVolumeDet
               {claimRef.kind}
             </DrawerItem>
             <DrawerItem name="Name">
-              <Link to={getDetailsUrl(pvcApi.getUrl(claimRef))}>
+              <Link to={getDetailsUrl(persistentVolumeClaimApi.getUrl(claimRef))}>
                 {claimRef.name}
               </Link>
             </DrawerItem>

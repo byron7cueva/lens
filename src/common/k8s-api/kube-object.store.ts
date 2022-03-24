@@ -57,14 +57,24 @@ export interface StatusProvider<K> {
   getStatuses(items: K[]): Record<string, number>;
 }
 
-export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K> = KubeApi<K>> extends ItemStore<K> {
-  static defaultContext = observable.box<ClusterContext>(); // TODO: support multiple cluster contexts
+export interface KubeObjectStoreOptions {
+  limit?: number;
+  bufferSize?: number;
+}
 
-  // TODO: remove this assertion
-  public api!: A;
+export type KubeApiDataFrom<K extends KubeObject, A> = A extends KubeApi<K, infer D>
+  ? D extends KubeJsonApiDataFor<K>
+    ? D
+    : never
+  : never;
+
+export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K, Data>, Data extends KubeJsonApiDataFor<K> = KubeApiDataFrom<K, A>> extends ItemStore<K> {
+  static readonly defaultContext = observable.box<ClusterContext>(); // TODO: support multiple cluster contexts
+
+  public readonly api: A;
   public readonly limit?: number;
-  public readonly bufferSize: number = 50000;
-  @observable private loadedNamespaces?: string[];
+  public readonly bufferSize: number;
+  @observable private loadedNamespaces: string[] | undefined = undefined;
 
   get contextReady() {
     return when(() => Boolean(this.context));
@@ -74,9 +84,11 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K>
     return when(() => Boolean(this.loadedNamespaces));
   }
 
-  constructor(api?: A) {
+  constructor(api: A, opts?: KubeObjectStoreOptions) {
     super();
-    if (api) this.api = api;
+    this.api = api;
+    this.limit = opts?.limit;
+    this.bufferSize = opts?.bufferSize ?? 50_000;
 
     makeObservable(this);
     autoBind(this);
@@ -333,8 +345,6 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K>
   private postUpdate(newItem: K): K {
     const index = this.items.findIndex(item => item.getId() === newItem.getId());
 
-    this.api.ensureObjectSelfLink(newItem);
-
     if (index < 0) {
       this.items.push(newItem);
     } else {
@@ -386,7 +396,7 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K>
   }
 
   // collect items from watch-api events to avoid UI blowing up with huge streams of data
-  protected eventsBuffer = observable.array<IKubeWatchEvent<KubeJsonApiDataFor<K>>>([], { deep: false });
+  protected eventsBuffer = observable.array<IKubeWatchEvent<Data>>([], { deep: false });
 
   protected bindWatchEventsUpdater(delay = 1000) {
     reaction(() => this.eventsBuffer.length, this.updateFromEventsBuffer, {
@@ -430,7 +440,7 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K>
 
     const { signal } = abortController;
 
-    const callback: KubeApiWatchCallback<KubeJsonApiDataFor<K>> = (data, error) => {
+    const callback: KubeApiWatchCallback<Data> = (data, error) => {
       if (!this.isLoaded || error?.type === "aborted") return;
 
       if (error instanceof Response) {
@@ -483,7 +493,7 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K>
 
           // falls through
         case "MODIFIED": {
-          const newItem = new this.api.objectConstructor(event.object);
+          const newItem = new this.api.objectConstructor(event.object as Data);
 
           if (!item) {
             items.push(newItem);

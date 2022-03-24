@@ -9,7 +9,7 @@ import { DerivedKubeApiOptions, KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
 import type { IPodMetrics, PodSpec } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import { KubeObject, KubeObjectMetadata, KubeObjectStatus, LabelSelector } from "../kube-object";
+import { KubeObject, KubeObjectStatus, LabelSelector } from "../kube-object";
 import { hasTypedProperty, isNumber, isObject } from "../../utils";
 
 export class DeploymentApi extends KubeApi<Deployment> {
@@ -115,7 +115,7 @@ export interface DeploymentStatus extends KubeObjectStatus {
   unavailableReplicas?: number;
 }
 
-export class Deployment extends KubeObject<KubeObjectMetadata, DeploymentStatus, DeploymentSpec, "namespace-scoped"> {
+export class Deployment extends KubeObject<DeploymentStatus, DeploymentSpec, "namespace-scoped"> {
   static kind = "Deployment";
   static namespaced = true;
   static apiBase = "/apis/apps/v1/deployments";
@@ -167,4 +167,4 @@ export class Deployment extends KubeObject<KubeObjectMetadata, DeploymentStatus,
 
 export const deploymentApi = isClusterPageContext()
   ? new DeploymentApi()
-  : undefined;
+  : undefined as never;

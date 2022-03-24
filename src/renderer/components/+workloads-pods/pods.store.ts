@@ -4,24 +4,15 @@
  */
 
 import countBy from "lodash/countBy";
-import { observable, makeObservable } from "mobx";
+import { observable } from "mobx";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import { autoBind, cpuUnitsToNumber, unitsToBytes } from "../../utils";
-import { Pod, PodMetrics, podMetricsApi, podsApi } from "../../../common/k8s-api/endpoints";
+import { cpuUnitsToNumber, isClusterPageContext, unitsToBytes } from "../../utils";
+import { Pod, PodMetrics, podMetricsApi, PodApi, podApi } from "../../../common/k8s-api/endpoints";
 import { apiManager } from "../../../common/k8s-api/api-manager";
 import type { KubeObject } from "../../../common/k8s-api/kube-object";
 
-export class PodsStore extends KubeObjectStore<Pod> {
-  api = podsApi;
-
-  @observable kubeMetrics = observable.array<PodMetrics>([]);
-
-  constructor() {
-    super();
-
-    makeObservable(this);
-    autoBind(this);
-  }
+export class PodsStore extends KubeObjectStore<Pod, PodApi> {
+  readonly kubeMetrics = observable.array<PodMetrics>([]);
 
   async loadKubeMetrics(namespace?: string) {
     try {
@@ -33,14 +24,11 @@ export class PodsStore extends KubeObjectStore<Pod> {
     }
   }
 
-  getPodsByOwner(workload: KubeObject): Pod[] {
-    if (!workload) return [];
-
-    return this.items.filter(pod => {
-      const owners = pod.getOwnerRefs();
-
-      return owners.find(owner => owner.uid === workload.getId());
-    });
+  getPodsByOwner(workload: KubeObject<any, any, "namespace-scoped">): Pod[] {
+    return this.items.filter(pod => (
+      pod.getOwnerRefs()
+        .find(owner => owner.uid === workload.getId())
+    ));
   }
 
   getPodsByOwnerId(workloadId: string): Pod[] {
@@ -89,5 +77,10 @@ export class PodsStore extends KubeObjectStore<Pod> {
   }
 }
 
-export const podsStore = new PodsStore();
-apiManager.registerStore(podsStore);
+export const podsStore = isClusterPageContext()
+  ? new PodsStore(podApi)
+  : undefined as never;
+
+if (isClusterPageContext()) {
+  apiManager.registerStore(podsStore);
+}

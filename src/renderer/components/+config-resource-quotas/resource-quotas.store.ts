@@ -4,10 +4,10 @@
  */
 
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import { ResourceQuota, resourceQuotaApi } from "../../../common/k8s-api/endpoints/resource-quota.api";
+import { ResourceQuota, ResourceQuotaApi, resourceQuotaApi } from "../../../common/k8s-api/endpoints/resource-quota.api";
 import { apiManager } from "../../../common/k8s-api/api-manager";
 
-export class ResourceQuotasStore extends KubeObjectStore<ResourceQuota> {
+export class ResourceQuotasStore extends KubeObjectStore<ResourceQuota, ResourceQuotaApi> {
   api = resourceQuotaApi;
 }
 

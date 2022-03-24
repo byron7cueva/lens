@@ -3,8 +3,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { BaseKubeObjectCondition, KubeObject, KubeObjectMetadata } from "../kube-object";
-import { KubeApi } from "../kube-api";
+import { BaseKubeObjectCondition, KubeObject } from "../kube-object";
+import { DerivedKubeApiOptions, KubeApi } from "../kube-api";
 import { crdResourcesURL } from "../../routes";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 
@@ -98,7 +98,7 @@ export interface CustomResourceDefinitionStatus {
   storedVersions: string[];
 }
 
-export class CustomResourceDefinition extends KubeObject<KubeObjectMetadata, CustomResourceDefinitionStatus, CustomResourceDefinitionSpec> {
+export class CustomResourceDefinition extends KubeObject<CustomResourceDefinitionStatus, CustomResourceDefinitionSpec, "cluster-scoped"> {
   static kind = "CustomResourceDefinition";
   static namespaced = false;
   static apiBase = "/apis/apiextensions.k8s.io/v1/customresourcedefinitions";
@@ -216,18 +216,16 @@ export class CustomResourceDefinition extends KubeObject<KubeObjectMetadata, Cus
   }
 }
 
-/**
- * Only available within kubernetes cluster pages
- */
-let crdApi: KubeApi<CustomResourceDefinition>;
-
-if (isClusterPageContext()) {
-  crdApi = new KubeApi<CustomResourceDefinition>({
-    objectConstructor: CustomResourceDefinition,
-    checkPreferredVersion: true,
-  });
+export class CustomResourceDefinitionApi extends KubeApi<CustomResourceDefinition> {
+  constructor(opts: DerivedKubeApiOptions = {}) {
+    super({
+      objectConstructor: CustomResourceDefinition,
+      checkPreferredVersion: true,
+      ...opts,
+    });
+  }
 }
 
-export {
-  crdApi,
-};
+export const crdApi = isClusterPageContext()
+  ? new CustomResourceDefinitionApi()
+  : undefined as never;

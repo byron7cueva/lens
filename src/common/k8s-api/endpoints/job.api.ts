@@ -3,11 +3,11 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeApi } from "../kube-api";
+import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
 import type { IPodContainer, IPodMetrics, PodSpec } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
-import { KubeObject, KubeObjectMetadata, KubeObjectStatus, LabelSelector } from "../kube-object";
+import { KubeObject, KubeObjectStatus, LabelSelector } from "../kube-object";
 
 export interface JobSpec {
   parallelism?: number;
@@ -37,10 +37,10 @@ export interface JobStatus extends KubeObjectStatus {
   succeeded: number;
 }
 
-export class Job extends KubeObject<KubeObjectMetadata, JobStatus, JobSpec, "namespace-scoped"> {
-  static kind = "Job";
-  static namespaced = true;
-  static apiBase = "/apis/batch/v1/jobs";
+export class Job extends KubeObject<JobStatus, JobSpec, "namespace-scoped"> {
+  static readonly kind = "Job";
+  static readonly namespaced = true;
+  static readonly apiBase = "/apis/batch/v1/jobs";
 
   getSelectors(): string[] {
     return KubeObject.stringifyLabels(this.spec.selector?.matchLabels);
@@ -90,6 +90,12 @@ export class Job extends KubeObject<KubeObjectMetadata, JobStatus, JobSpec, "nam
 }
 
 export class JobApi extends KubeApi<Job> {
+  constructor(opts: DerivedKubeApiOptions & IgnoredKubeApiOptions = {}) {
+    super({
+      ...opts,
+      objectConstructor: Job,
+    });
+  }
 }
 
 export function getMetricsForJobs(jobs: Job[], namespace: string, selector = ""): Promise<IPodMetrics> {
@@ -109,14 +115,6 @@ export function getMetricsForJobs(jobs: Job[], namespace: string, selector = "")
   });
 }
 
-let jobApi: JobApi;
-
-if (isClusterPageContext()) {
-  jobApi = new JobApi({
-    objectConstructor: Job,
-  });
-}
-
-export {
-  jobApi,
-};
+export const jobApi = isClusterPageContext()
+  ? new JobApi()
+  : undefined as never;

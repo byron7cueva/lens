@@ -8,7 +8,7 @@ import "./volume-claims.scss";
 import React from "react";
 import { observer } from "mobx-react";
 import { Link, RouteComponentProps } from "react-router-dom";
-import { volumeClaimStore } from "./volume-claim.store";
+import { persistentVolumeClaimStore } from "./volume-claim.store";
 import { podsStore } from "../+workloads-pods/pods.store";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
 import { unitsToBytes } from "../../../common/utils/convertMemory";
@@ -40,7 +40,7 @@ export class PersistentVolumeClaims extends React.Component<PersistentVolumeClai
         isConfigurable
         tableId="storage_volume_claims"
         className="PersistentVolumeClaims"
-        store={volumeClaimStore}
+        store={persistentVolumeClaimStore}
         dependentStores={[podsStore]}
         sortingCallbacks={{
           [columnId.name]: pvc => pvc.getName(),

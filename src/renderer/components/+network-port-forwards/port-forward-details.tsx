@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 import { portForwardAddress, PortForwardItem } from "../../port-forward";
 import { Drawer, DrawerItem } from "../drawer";
 import { cssNames } from "../../utils";
-import { podsApi, serviceApi } from "../../../common/k8s-api/endpoints";
+import { podApi, serviceApi } from "../../../common/k8s-api/endpoints";
 import { getDetailsUrl } from "../kube-detail-params";
 import { PortForwardMenu } from "./port-forward-menu";
 
@@ -26,7 +26,7 @@ export class PortForwardDetails extends React.Component<PortForwardDetailsProps>
     const name = portForward.getName();
     const api = {
       "service": serviceApi,
-      "pod": podsApi,
+      "pod": podApi,
     }[portForward.kind];
 
     if (!api) {

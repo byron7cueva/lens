@@ -135,6 +135,7 @@ describe("kube-object-menu", () => {
           name: "some-name",
           resourceVersion: "some-resource-version",
           namespace: "some-namespace",
+          selfLink: "/foo",
         },
       });
 
@@ -212,6 +213,7 @@ describe("kube-object-menu", () => {
           name: "some-name",
           resourceVersion: "some-resource-version",
           namespace: "some-namespace",
+          selfLink: "/foo",
         },
       });
 
@@ -249,6 +251,7 @@ describe("kube-object-menu", () => {
           name: "some-name",
           resourceVersion: "some-resource-version",
           namespace: undefined,
+          selfLink: "/foo",
         },
       });
 

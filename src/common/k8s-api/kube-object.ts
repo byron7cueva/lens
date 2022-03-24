@@ -16,17 +16,17 @@ import type { Patch } from "rfc6902";
 import assert from "assert";
 import type { JsonObject } from "type-fest";
 
-export type KubeJsonApiDataFor<K extends KubeObject> = K extends KubeObject<infer Metadata, infer Status, infer Spec>
-  ? KubeJsonApiData<Metadata, Status, Spec>
+export type KubeJsonApiDataFor<K> = K extends KubeObject<infer Status, infer Spec, infer Scope>
+  ? KubeJsonApiData<KubeObjectMetadata<Scope>, Status, Spec>
   : never;
 
 export interface KubeObjectConstructorData {
-  kind?: string;
-  namespaced?: boolean;
-  apiBase?: string;
+  readonly kind?: string;
+  readonly namespaced?: boolean;
+  readonly apiBase?: string;
 }
 
-export type KubeObjectConstructor<K extends KubeObject, Data extends KubeJsonApiDataFor<K> = KubeJsonApiDataFor<K>> = (new (data: Data) => K) & KubeObjectConstructorData;
+export type KubeObjectConstructor<K extends KubeObject<any, any, KubeObjectScope>, Data> = (new (data: Data) => K) & KubeObjectConstructorData;
 
 export interface OwnerReference {
   apiVersion: string;
@@ -37,10 +37,10 @@ export interface OwnerReference {
   blockOwnerDeletion?: boolean;
 }
 
-export interface KubeJsonApiObjectMetadata {
+export interface KubeJsonApiObjectMetadata<Namespaced extends KubeObjectScope = KubeObjectScope> {
   uid: string;
   name: string;
-  namespace?: string;
+  namespace: ScopedNamespace<Namespaced>;
   creationTimestamp?: string;
   resourceVersion?: string;
   selfLink?: string;
@@ -53,7 +53,7 @@ export interface KubeJsonApiObjectMetadata {
   [key: string]: unknown;
 }
 
-export interface KubeObjectMetadata extends KubeJsonApiObjectMetadata {
+export interface KubeObjectMetadata<Namespaced extends KubeObjectScope = KubeObjectScope> extends KubeJsonApiObjectMetadata<Namespaced> {
   selfLink: string;
 }
 
@@ -158,6 +158,16 @@ export interface Toleration {
   tolerationSeconds?: number;
 }
 
+export interface ObjectReference {
+  apiVersion?: string;
+  fieldPath?: string;
+  kind?: string;
+  name?: string;
+  namespace?: string;
+  resourceVersion?: string;
+  uid?: string;
+}
+
 export interface LocalObjectReference {
   name?: string;
 }
@@ -196,7 +206,7 @@ export interface LabelSelector {
 }
 
 export type KubeObjectScope = "namespace-scoped" | "cluster-scoped";
-export type GetNamespaceResult<Namespaced extends KubeObjectScope> = (
+export type ScopedNamespace<Namespaced extends KubeObjectScope> = (
   Namespaced extends "namespace-scoped"
     ? string
     : Namespaced extends "cluster-scoped"
@@ -205,10 +215,9 @@ export type GetNamespaceResult<Namespaced extends KubeObjectScope> = (
 );
 
 export class KubeObject<
-  Metadata extends KubeObjectMetadata = KubeObjectMetadata,
-  Status = unknown,
-  Spec = unknown,
-  Namespaced extends KubeObjectScope = KubeObjectScope,
+  Status,
+  Spec,
+  Namespaced extends KubeObjectScope,
 > implements ItemObject {
   static readonly kind?: string;
   static readonly namespaced?: boolean;
@@ -216,7 +225,7 @@ export class KubeObject<
 
   apiVersion!: string;
   kind!: string;
-  metadata!: Metadata;
+  metadata!: KubeObjectMetadata<Namespaced>;
   status?: Status;
   spec!: Spec;
   managedFields?: object;
@@ -229,7 +238,7 @@ export class KubeObject<
     return new KubeObject(data);
   }
 
-  static isNonSystem(item: KubeJsonApiData | KubeObject) {
+  static isNonSystem(item: KubeJsonApiData | KubeObject<unknown, unknown, KubeObjectScope>) {
     return !item.metadata.name.startsWith("system:");
   }
 
@@ -324,7 +333,7 @@ export class KubeObject<
     ...KubeObject.nonEditablePathPrefixes,
   ]);
 
-  constructor(data: KubeJsonApiData<Metadata, Status, Spec>) {
+  constructor(data: KubeJsonApiData<KubeObjectMetadata<Namespaced>, Status, Spec>) {
     if (typeof data !== "object") {
       throw new TypeError(`Cannot create a KubeObject from ${typeof data}`);
     }
@@ -360,7 +369,7 @@ export class KubeObject<
     return this.metadata.name;
   }
 
-  getNs(): GetNamespaceResult<Namespaced> {
+  getNs(): ScopedNamespace<Namespaced> {
     // avoid "null" serialization via JSON.stringify when post data
     return (this.metadata.namespace || undefined) as never;
   }

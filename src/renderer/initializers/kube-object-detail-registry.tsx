@@ -15,7 +15,7 @@ import { CRDDetails } from "../components/+custom-resources";
 import { EventDetails } from "../components/+events";
 import { KubeEventDetails } from "../components/+events/kube-event-details";
 import { NamespaceDetails } from "../components/+namespaces";
-import { EndpointDetails } from "../components/+network-endpoints";
+import { EndpointsDetails } from "../components/+network-endpoints";
 import { IngressDetails } from "../components/+network-ingresses";
 import { NetworkPolicyDetails } from "../components/+network-policies";
 import { ServiceDetails } from "../components/+network-services";
@@ -134,7 +134,7 @@ export function initKubeObjectDetailRegistry() {
     kind: "Endpoints",
     apiVersions: ["v1"],
     components: {
-      Details: EndpointDetails,
+      Details: EndpointsDetails,
     },
   });
   registry.add({

@@ -31,7 +31,7 @@ export function DeploymentMenu(props: KubeObjectMenuProps<Deployment>) {
               name: object.getName(),
             });
           } catch (err) {
-            Notifications.error(err);
+            Notifications.checkedError(err, "Unknown error occured while restarting deployment");
           }
         },
         labelOk: `Restart`,

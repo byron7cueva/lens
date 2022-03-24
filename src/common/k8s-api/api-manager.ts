@@ -8,12 +8,22 @@ import type { KubeObjectStore } from "./kube-object.store";
 import { action, observable, makeObservable } from "mobx";
 import { autoBind, isDefined, iter } from "../utils";
 import type { KubeApi } from "./kube-api";
-import type { KubeJsonApiDataFor, KubeObject } from "./kube-object";
-import { IKubeObjectRef, parseKubeApi, createKubeApiURL } from "./kube-api-parse";
+import type { KubeJsonApiDataFor, KubeObject, ObjectReference } from "./kube-object";
+import { parseKubeApi, createKubeApiURL } from "./kube-api-parse";
+
+export type RegisterableStore<S> = S extends KubeObjectStore<any, any, any>
+  ? S
+  : never;
+export type RegisterableApi<A> = A extends KubeApi<any, any>
+  ? A
+  : never;
+export type KubeObjectStoreFrom<A> = A extends KubeApi<infer K, infer D>
+  ? KubeObjectStore<K, A, D>
+  : never;
 
 export class ApiManager {
   private readonly apis = observable.map<string, KubeApi<KubeObject>>();
-  private readonly stores = observable.map<string, KubeObjectStore<KubeObject>>();
+  private readonly stores = observable.map<string, KubeObjectStore<KubeObject, KubeApi<KubeObject>, KubeJsonApiDataFor<KubeObject>>>();
 
   constructor() {
     makeObservable(this);
@@ -32,7 +42,7 @@ export class ApiManager {
     return iter.find(this.apis.values(), api => api.kind === kind && api.apiVersionWithGroup === apiVersion);
   }
 
-  registerApi<K extends KubeObject, Data extends KubeJsonApiDataFor<K> = KubeJsonApiDataFor<K>>(apiBase: string, api: KubeApi<K, Data>) {
+  registerApi<A>(apiBase: string, api: RegisterableApi<A>) {
     if (!api.apiBase) return;
 
     if (!this.apis.has(apiBase)) {
@@ -68,8 +78,14 @@ export class ApiManager {
     }
   }
 
+  registerStore<K>(store: RegisterableStore<K>): void;
+  /**
+   * @deprecated KubeObjectStore's should only every be about a single KubeApi type
+   */
+  registerStore<K extends KubeObject>(store: KubeObjectStore<K, KubeApi<K>, KubeJsonApiDataFor<K>>, apis: KubeApi<K>[]): void;
+
   @action
-  registerStore<K extends KubeObject>(store: KubeObjectStore<K>, apis: KubeApi<K>[] = [store.api]) {
+  registerStore<K extends KubeObject>(store: KubeObjectStore<K, KubeApi<K>, KubeJsonApiDataFor<K>>, apis: KubeApi<K>[] = [store.api]): void {
     for (const api of apis.filter(isDefined)) {
       if (api.apiBase) {
         this.stores.set(api.apiBase, store as never);
@@ -77,12 +93,13 @@ export class ApiManager {
     }
   }
 
-  getStore(api: string | KubeApi<KubeObject>): KubeObjectStore<KubeObject> | undefined;
+  getStore(api: string): KubeObjectStore<KubeObject, KubeApi<KubeObject>, KubeJsonApiDataFor<KubeObject>> | undefined;
+  getStore<A>(api: RegisterableApi<A>): KubeObjectStoreFrom<A> | undefined;
   /**
    * @deprecated use an actual cast instead of hiding it with this unused type param
    */
-  getStore<S extends KubeObjectStore<KubeObject>>(api: string | KubeApi<KubeObject>): S | undefined ;
-  getStore(api: string | KubeApi<KubeObject>): KubeObjectStore<KubeObject> | undefined {
+  getStore<S extends KubeObjectStore<KubeObject, KubeApi<KubeObject>, KubeJsonApiDataFor<KubeObject>>>(api: string | KubeApi<KubeObject>): S | undefined ;
+  getStore(api: string | KubeApi<KubeObject>): KubeObjectStore<KubeObject, KubeApi<KubeObject>, KubeJsonApiDataFor<KubeObject>> | undefined {
     const { apiBase } = this.resolveApi(api) ?? {};
 
     if (apiBase) {
@@ -92,9 +109,9 @@ export class ApiManager {
     return undefined;
   }
 
-  lookupApiLink(ref: IKubeObjectRef, parentObject?: KubeObject): string {
+  lookupApiLink(ref: ObjectReference, parentObject?: KubeObject): string {
     const {
-      kind, apiVersion, name,
+      kind, apiVersion = "v1", name,
       namespace = parentObject?.getNs(),
     } = ref;
 

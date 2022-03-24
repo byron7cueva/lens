@@ -2,24 +2,14 @@
  * Copyright (c) OpenLens Authors. All rights reserved.
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
-import { makeObservable } from "mobx";
 
 import { podsStore } from "../+workloads-pods/pods.store";
 import { apiManager } from "../../../common/k8s-api/api-manager";
-import { PodStatusPhase, StatefulSet, statefulSetApi } from "../../../common/k8s-api/endpoints";
+import { PodStatusPhase, StatefulSet, StatefulSetApi, statefulSetApi } from "../../../common/k8s-api/endpoints";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
-import { autoBind } from "../../utils";
+import { isClusterPageContext } from "../../utils";
 
-export class StatefulSetStore extends KubeObjectStore<StatefulSet> {
-  api = statefulSetApi;
-
-  constructor() {
-    super();
-
-    makeObservable(this);
-    autoBind(this);
-  }
-
+export class StatefulSetStore extends KubeObjectStore<StatefulSet, StatefulSetApi> {
   getChildPods(statefulSet: StatefulSet) {
     return podsStore.getPodsByOwnerId(statefulSet.getId());
   }
@@ -27,23 +17,26 @@ export class StatefulSetStore extends KubeObjectStore<StatefulSet> {
   getStatuses(statefulSets: StatefulSet[]) {
     const status = { running: 0, failed: 0, pending: 0 };
 
-    statefulSets.forEach(statefulSet => {
-      const pods = this.getChildPods(statefulSet);
+    for (const statefulSet of statefulSets) {
+      const statuses = new Set(this.getChildPods(statefulSet).map(pod => pod.getStatus()));
 
-      if (pods.some(pod => pod.getStatus() === PodStatusPhase.FAILED)) {
+      if (statuses.has(PodStatusPhase.FAILED)) {
         status.failed++;
-      }
-      else if (pods.some(pod => pod.getStatus() === PodStatusPhase.PENDING)) {
+      } else if (statuses.has(PodStatusPhase.PENDING)) {
         status.pending++;
-      }
-      else {
+      } else {
         status.running++;
       }
-    });
+    }
 
     return status;
   }
 }
 
-export const statefulSetStore = new StatefulSetStore();
-apiManager.registerStore(statefulSetStore);
+export const statefulSetStore = isClusterPageContext()
+  ? new StatefulSetStore(statefulSetApi)
+  : undefined as never;
+
+if (isClusterPageContext()) {
+  apiManager.registerStore(statefulSetStore);
+}

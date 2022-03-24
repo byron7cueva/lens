@@ -4,14 +4,13 @@
  */
 
 import { apiManager } from "../../../../common/k8s-api/api-manager";
-import { RoleBinding, roleBindingApi, RoleBindingSubject } from "../../../../common/k8s-api/endpoints";
+import { RoleBinding, RoleBindingApi, roleBindingApi, RoleBindingData } from "../../../../common/k8s-api/endpoints";
+import type { Subject } from "../../../../common/k8s-api/endpoints/types/subject";
 import { KubeObjectStore } from "../../../../common/k8s-api/kube-object.store";
-import { HashSet } from "../../../utils";
+import { HashSet, isClusterPageContext } from "../../../utils";
 import { hashRoleBindingSubject } from "./hashers";
 
-export class RoleBindingsStore extends KubeObjectStore<RoleBinding> {
-  api = roleBindingApi;
-
+export class RoleBindingStore extends KubeObjectStore<RoleBinding, RoleBindingApi, RoleBindingData> {
   protected sortItems(items: RoleBinding[]) {
     return super.sortItems(items, [
       roleBinding => roleBinding.kind,
@@ -19,18 +18,14 @@ export class RoleBindingsStore extends KubeObjectStore<RoleBinding> {
     ]);
   }
 
-  protected async createItem(params: { name: string; namespace: string }, data?: Partial<RoleBinding>) {
-    return roleBindingApi.create(params, data);
-  }
-
-  async updateSubjects(roleBinding: RoleBinding, subjects: RoleBindingSubject[]) {
+  async updateSubjects(roleBinding: RoleBinding, subjects: Subject[]) {
     return this.update(roleBinding, {
       roleRef: roleBinding.roleRef,
       subjects,
     });
   }
 
-  async removeSubjects(roleBinding: RoleBinding, subjectsToRemove: Iterable<RoleBindingSubject>) {
+  async removeSubjects(roleBinding: RoleBinding, subjectsToRemove: Iterable<Subject>) {
     const currentSubjects = new HashSet(roleBinding.getSubjects(), hashRoleBindingSubject);
 
     for (const subject of subjectsToRemove) {
@@ -41,6 +36,10 @@ export class RoleBindingsStore extends KubeObjectStore<RoleBinding> {
   }
 }
 
-export const roleBindingsStore = new RoleBindingsStore();
+export const roleBindingsStore = isClusterPageContext()
+  ? new RoleBindingStore(roleBindingApi)
+  : undefined as never;
 
-apiManager.registerStore(roleBindingsStore);
+if (isClusterPageContext()) {
+  apiManager.registerStore(roleBindingsStore);
+}

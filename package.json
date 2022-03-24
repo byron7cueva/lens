@@ -204,7 +204,6 @@
     "@ogre-tools/injectable-react": "5.1.2",
     "@sentry/electron": "^2.5.4",
     "@sentry/integrations": "^6.15.0",
-    "@types/circular-dependency-plugin": "5.0.5",
     "abort-controller": "^3.0.0",
     "auto-bind": "^4.0.0",
     "autobind-decorator": "^2.4.0",
@@ -270,7 +269,7 @@
     "winston": "^3.6.0",
     "winston-console-format": "^1.0.8",
     "winston-transport-browserconsole": "^1.0.5",
-    "ws": "^7.5.5"
+    "ws": "^8.5.0"
   },
   "devDependencies": {
     "@async-fn/jest": "1.5.3",
@@ -284,6 +283,7 @@
     "@testing-library/user-event": "^13.5.0",
     "@types/byline": "^4.2.33",
     "@types/chart.js": "^2.9.35",
+    "@types/circular-dependency-plugin": "5.0.5",
     "@types/cli-progress": "^3.9.2",
     "@types/color": "^3.0.3",
     "@types/crypto-js": "^3.1.47",

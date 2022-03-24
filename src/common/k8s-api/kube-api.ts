@@ -12,7 +12,7 @@ import logger from "../../main/logger";
 import { apiManager } from "./api-manager";
 import { apiBase, apiKube } from "./index";
 import { createKubeApiURL, parseKubeApi } from "./kube-api-parse";
-import { KubeObjectConstructor, KubeObject, KubeStatus, isKubeStatusData, KubeJsonApiDataFor, KubeObjectConstructorData, KubeObjectMetadata } from "./kube-object";
+import { KubeObjectConstructor, KubeObject, KubeStatus, isKubeStatusData, KubeJsonApiDataFor, KubeObjectConstructorData, KubeObjectMetadata, KubeObjectScope } from "./kube-object";
 import byline from "byline";
 import type { IKubeWatchEvent } from "./kube-watch-event";
 import { KubeJsonApi, KubeJsonApiData } from "./kube-json-api";
@@ -26,14 +26,32 @@ import assert from "assert";
 /**
  * The options used for creating a `KubeApi`
  */
-export interface IKubeApiOptions<T extends KubeObject, Data extends KubeJsonApiDataFor<T> = KubeJsonApiDataFor<T>> {
+export interface IKubeApiOptions<T extends KubeObject<any, any, KubeObjectScope>, Data extends KubeJsonApiDataFor<T> = KubeJsonApiDataFor<T>> extends DerivedKubeApiOptions {
   /**
    * base api-path for listing all resources, e.g. "/api/v1/pods"
    *
    * If not specified then will be the one on the `objectConstructor`
+   * @deprecated should be specified by `objectConstructor`
    */
   apiBase?: string;
 
+  /**
+   * The constructor for the kube objects returned from the API
+   */
+  objectConstructor: KubeObjectConstructor<T, Data>;
+
+  /**
+   * @deprecated should be specified by `objectConstructor`
+   */
+  isNamespaced?: boolean;
+
+  /**
+   * @deprecated should be specified by `objectConstructor`
+   */
+  kind?: string;
+}
+
+export interface DerivedKubeApiOptions {
   /**
    * If the API uses a different API endpoint (e.g. apiBase) depending on the cluster version,
    * fallback API bases can be listed individually.
@@ -49,29 +67,12 @@ export interface IKubeApiOptions<T extends KubeObject, Data extends KubeJsonApiD
   checkPreferredVersion?: boolean;
 
   /**
-   * The constructor for the kube objects returned from the API
-   */
-  objectConstructor: KubeObjectConstructor<T, Data>;
-
-  /**
    * The api instance to use for making requests
    *
    * @default apiKube
    */
   request?: KubeJsonApi;
-
-  /**
-   * @deprecated should be specified by `objectConstructor`
-   */
-  isNamespaced?: boolean;
-
-  /**
-   * @deprecated should be specified by `objectConstructor`
-   */
-  kind?: string;
 }
-
-export type DerivedKubeApiOptions = Omit<IKubeApiOptions<KubeObject>, "objectConstructor" | "kind" | "isNamespaces">;
 
 /**
  * @deprecated This type is only present for backwards compatable typescript support
@@ -89,6 +90,10 @@ export interface IgnoredKubeApiOptions {
    * @deprecated this option is overridden and should not be used
    */
   isNamespaces?: any;
+  /**
+   * @deprecated this option is overridden and should not be used
+   */
+  apiBase?: any;
 }
 
 export interface IKubeApiQueryParams {
@@ -136,9 +141,11 @@ export type PropagationPolicy = undefined | "Orphan" | "Foreground" | "Backgroun
  */
 export interface IKubeApiCluster extends ILocalKubeApiConfig { }
 
-export type PartialKubeObject<T extends KubeObject> = Partial<Omit<T, "metadata">> & {
-  metadata?: Partial<T["metadata"]>;
-};
+export type PartialKubeObject<T> = T extends { metadata: infer Metadata }
+  ? Partial<Omit<T, "metadata">> & {
+    metadata?: Partial<Metadata>;
+  }
+  : never;
 
 export interface IRemoteKubeApiConfig {
   cluster: {
@@ -154,16 +161,19 @@ export interface IRemoteKubeApiConfig {
 }
 
 export function forCluster<
-  T extends KubeObject,
+  T extends KubeObject<any, any, KubeObjectScope>,
   Y extends KubeApi<T>,
->(cluster: ILocalKubeApiConfig, kubeClass: KubeObjectConstructor<T>, apiClass: new (apiOpts: IKubeApiOptions<T>) => Y): Y;
+  Data extends KubeJsonApiDataFor<T>,
+>(cluster: ILocalKubeApiConfig, kubeClass: KubeObjectConstructor<T, Data>, apiClass: new (apiOpts: IKubeApiOptions<T>) => Y): Y;
 export function forCluster<
-  T extends KubeObject,
->(cluster: ILocalKubeApiConfig, kubeClass: KubeObjectConstructor<T>, apiClass?: new (apiOpts: IKubeApiOptions<T>) => KubeApi<T>): KubeApi<T>;
+  T extends KubeObject<any, any, KubeObjectScope>,
+  Data extends KubeJsonApiDataFor<T>,
+>(cluster: ILocalKubeApiConfig, kubeClass: KubeObjectConstructor<T, Data>, apiClass?: new (apiOpts: IKubeApiOptions<T>) => KubeApi<T>): KubeApi<T>;
 
 export function forCluster<
-  T extends KubeObject,
->(cluster: ILocalKubeApiConfig, kubeClass: KubeObjectConstructor<T>, apiClass: (new (apiOpts: IKubeApiOptions<T>) => KubeApi<T>) = KubeApi): KubeApi<T> {
+  T extends KubeObject<any, any, KubeObjectScope>,
+  Data extends KubeJsonApiDataFor<T>,
+>(cluster: ILocalKubeApiConfig, kubeClass: KubeObjectConstructor<T, Data>, apiClass: (new (apiOpts: IKubeApiOptions<T>) => KubeApi<T>) = KubeApi): KubeApi<T> {
   const url = new URL(apiBase.config.serverAddress);
   const request = new KubeJsonApi({
     serverAddress: apiBase.config.serverAddress,
@@ -176,23 +186,26 @@ export function forCluster<
   });
 
   return new apiClass({
-    objectConstructor: kubeClass,
+    objectConstructor: kubeClass as KubeObjectConstructor<T, KubeJsonApiDataFor<T>>,
     request,
   });
 }
 
 export function forRemoteCluster<
-  T extends KubeObject,
+  T extends KubeObject<any, any, KubeObjectScope>,
   Y extends KubeApi<T>,
->(config: IRemoteKubeApiConfig, kubeClass: KubeObjectConstructor<T>, apiClass: new (apiOpts: IKubeApiOptions<T>) => Y): Y;
+  Data extends KubeJsonApiDataFor<T>,
+>(config: IRemoteKubeApiConfig, kubeClass: KubeObjectConstructor<T, Data>, apiClass: new (apiOpts: IKubeApiOptions<T>) => Y): Y;
 export function forRemoteCluster<
-  T extends KubeObject,
->(config: IRemoteKubeApiConfig, kubeClass: KubeObjectConstructor<T>, apiClass?: new (apiOpts: IKubeApiOptions<T>) => KubeApi<T>): KubeApi<T>;
+  T extends KubeObject<any, any, KubeObjectScope>,
+  Data extends KubeJsonApiDataFor<T>,
+>(config: IRemoteKubeApiConfig, kubeClass: KubeObjectConstructor<T, Data>, apiClass?: new (apiOpts: IKubeApiOptions<T>) => KubeApi<T>): KubeApi<T>;
 
 export function forRemoteCluster<
-  T extends KubeObject,
-  Y extends KubeApi<T>,
->(config: IRemoteKubeApiConfig, kubeClass: KubeObjectConstructor<T>, apiClass: new (apiOpts: IKubeApiOptions<T>) => KubeApi<T> = KubeApi): KubeApi<T> {
+  K extends KubeObject<any, any, KubeObjectScope>,
+  Y extends KubeApi<K>,
+  Data extends KubeJsonApiDataFor<K>,
+>(config: IRemoteKubeApiConfig, kubeClass: KubeObjectConstructor<K, Data>, apiClass: new (apiOpts: IKubeApiOptions<K>) => KubeApi<K> = KubeApi): KubeApi<K> {
   const reqInit: RequestInit = {};
   const agentOptions: AgentOptions = {};
 
@@ -231,20 +244,20 @@ export function forRemoteCluster<
   }, reqInit);
 
   if (!apiClass) {
-    apiClass = KubeApi as new (apiOpts: IKubeApiOptions<T>) => Y;
+    apiClass = KubeApi as new (apiOpts: IKubeApiOptions<K>) => Y;
   }
 
   return new apiClass({
-    objectConstructor: kubeClass as KubeObjectConstructor<T>,
+    objectConstructor: kubeClass as KubeObjectConstructor<K, KubeJsonApiDataFor<K>>,
     request,
   });
 }
 
 export type KubeApiWatchCallback<T extends KubeJsonApiData = KubeJsonApiData> = (data: IKubeWatchEvent<T>, error: any) => void;
 
-export interface KubeApiWatchOptions<T extends KubeObject> {
+export interface KubeApiWatchOptions<T extends KubeObject<any, any, KubeObjectScope>, Data extends KubeJsonApiDataFor<T>> {
   namespace: string;
-  callback?: KubeApiWatchCallback<KubeJsonApiDataFor<T>> | undefined;
+  callback?: KubeApiWatchCallback<Data> | undefined;
   abortController?: AbortController | undefined;
   watchId?: string | undefined;
   retry?: boolean | undefined;
@@ -284,7 +297,7 @@ export interface DeleteResourceDescriptor extends ResourceDescriptor {
   propagationPolicy?: PropagationPolicy;
 }
 
-export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data extends KubeJsonApiDataFor<T> = KubeJsonApiDataFor<T>> {
+export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data extends KubeJsonApiDataFor<K> = KubeJsonApiDataFor<K>> {
   readonly kind: string;
   readonly apiVersion: string;
   apiBase: string;
@@ -294,7 +307,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
   readonly apiResource: string;
   readonly isNamespaced: boolean;
 
-  public readonly objectConstructor: KubeObjectConstructor<T, Data> & Required<KubeObjectConstructorData>;
+  public readonly objectConstructor: KubeObjectConstructor<K, Data> & Required<KubeObjectConstructorData>;
   protected readonly request: KubeJsonApi;
   protected readonly resourceVersions = new Map<string, string>();
   protected readonly watchDisposer: Disposer | undefined;
@@ -311,7 +324,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
     apiBase: fullApiPathname = objectConstructor.apiBase,
     checkPreferredVersion: doCheckPreferredVersion = false,
     fallbackApiBases,
-  }: IKubeApiOptions<T, Data>) {
+  }: IKubeApiOptions<K, Data>) {
     assert(fullApiPathname);
 
     const { apiBase, apiPrefix, apiGroup, apiVersion, resource } = parseKubeApi(fullApiPathname);
@@ -337,7 +350,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
     });
 
     this.parseResponse = this.parseResponse.bind(this);
-    apiManager.registerApi(apiBase, this);
+    apiManager.registerApi<KubeApi<K, Data>>(apiBase, this);
   }
 
   get apiVersionWithGroup() {
@@ -418,7 +431,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
 
       if (this.apiVersionPreferred) {
         this.apiBase = this.computeApiBase();
-        apiManager.registerApi(this.apiBase, this);
+        apiManager.registerApi<KubeApi<K, Data>>(this.apiBase, this);
       }
     }
   }
@@ -467,7 +480,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
     return query;
   }
 
-  protected parseResponse(data: unknown, namespace?: string): T | T[] | null {
+  protected parseResponse(data: unknown, namespace?: string): K | K[] | null {
     if (!data) return null;
     const KubeObjectConstructor = this.objectConstructor;
 
@@ -478,47 +491,55 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
       this.setResourceVersion(namespace, metadata.resourceVersion);
       this.setResourceVersion("", metadata.resourceVersion);
 
-      return items.map((item) => {
-        const ensuredLinkData = this.ensureObjectSelfLink(item as Data);
+      return items
+        .map((item) => {
+          if (item.metadata) {
+            this.ensureMetadataSelfLink(item.metadata);
+          } else {
+            return undefined;
+          }
 
-        const object = new KubeObjectConstructor({
-          ...ensuredLinkData,
-          kind: this.kind,
-          apiVersion,
-        });
+          const object = new KubeObjectConstructor({
+            ...(item as Data),
+            kind: this.kind,
+            apiVersion,
+          });
 
-        return object;
-      });
+          return object;
+        })
+        .filter(isDefined);
     }
 
     // process a single item
     if (KubeObject.isJsonApiData(data)) {
-      const ensuredLinkData = this.ensureObjectSelfLink(data as Data);
+      this.ensureMetadataSelfLink(data.metadata);
 
-      return new KubeObjectConstructor(ensuredLinkData);
+      return new KubeObjectConstructor(data as never);
     }
 
     // custom apis might return array for list response, e.g. users, groups, etc.
     if (Array.isArray(data)) {
-      return data.map(data => new KubeObjectConstructor(data));
+      return data.map(data => {
+        this.ensureMetadataSelfLink(data.metadata);
+
+        return new KubeObjectConstructor(data);
+      });
     }
 
     return null;
   }
 
-  ensureObjectSelfLink<T extends { metadata: { selfLink?: string; namespace?: string; name: string }}>(data: T): T & { metadata: { selfLink: string }} {
-    data.metadata.selfLink ||= createKubeApiURL({
+  private ensureMetadataSelfLink<T extends { selfLink?: string; namespace?: string; name: string }>(metadata: T): asserts metadata is T & { selfLink: string } {
+    metadata.selfLink ||= createKubeApiURL({
       apiPrefix: this.apiPrefix,
       apiVersion: this.apiVersionWithGroup,
       resource: this.apiResource,
-      namespace: (this.isNamespaced ? data.metadata.namespace : undefined) as never,
-      name: data.metadata.name,
+      namespace: metadata.namespace,
+      name: metadata.name,
     });
-
-    return data as never;
   }
 
-  async list({ namespace = "", reqInit }: KubeApiListOptions = {}, query?: IKubeApiQueryParams): Promise<T[] | null> {
+  async list({ namespace = "", reqInit }: KubeApiListOptions = {}, query?: IKubeApiQueryParams): Promise<K[] | null> {
     await this.checkPreferredVersion();
 
     const url = this.getUrl({ namespace });
@@ -536,7 +557,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
     throw new Error(`GET multiple request to ${url} returned not an array: ${JSON.stringify(parsed)}`);
   }
 
-  async get(desc: ResourceDescriptor, query?: IKubeApiQueryParams): Promise<T | null> {
+  async get(desc: ResourceDescriptor, query?: IKubeApiQueryParams): Promise<K | null> {
     await this.checkPreferredVersion();
 
     const url = this.getUrl(desc);
@@ -550,7 +571,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
     return parsed;
   }
 
-  async create({ name, namespace }: Partial<ResourceDescriptor>, data?: PartialKubeObject<T>): Promise<T | null> {
+  async create({ name, namespace }: Partial<ResourceDescriptor>, data?: PartialKubeObject<K>): Promise<K | null> {
     await this.checkPreferredVersion();
 
     const apiUrl = this.getUrl({ namespace });
@@ -573,7 +594,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
     return parsed;
   }
 
-  async update({ name, namespace }: ResourceDescriptor, data: PartialKubeObject<T>): Promise<T | null> {
+  async update({ name, namespace }: ResourceDescriptor, data: PartialKubeObject<K>): Promise<K | null> {
     await this.checkPreferredVersion();
     const apiUrl = this.getUrl({ namespace, name });
 
@@ -594,7 +615,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
     return parsed;
   }
 
-  async patch(desc: ResourceDescriptor, data?: PartialKubeObject<T> | Patch, strategy: KubeApiPatchType = "strategic"): Promise<T | null> {
+  async patch(desc: ResourceDescriptor, data?: PartialKubeObject<K> | Patch, strategy: KubeApiPatchType = "strategic"): Promise<K | null> {
     await this.checkPreferredVersion();
     const apiUrl = this.getUrl(desc);
 
@@ -631,7 +652,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
     });
   }
 
-  watch(opts: KubeApiWatchOptions<T> = { namespace: "", retry: false }): () => void {
+  watch(opts: KubeApiWatchOptions<K, Data> = { namespace: "", retry: false }): () => void {
     let errorReceived = false;
     let timedRetry: NodeJS.Timeout;
     const { namespace, callback = noop, retry, timeout } = opts;
@@ -740,7 +761,7 @@ export class KubeApi<T extends KubeObject<KubeObjectMetadata, any, any>, Data ex
       return;
     }
 
-    this.ensureObjectSelfLink(event.object);
+    this.ensureMetadataSelfLink(event.object.metadata);
 
     const { namespace, resourceVersion } = event.object.metadata;
 
