@@ -23,19 +23,14 @@ interface Dependencies {
   welcomeBannerItems: IComputedValue<WelcomeBannerRegistration[]>;
 }
 
-const NonInjectedWelcome: React.FC<Dependencies> = ({ welcomeMenuItems, welcomeBannerItems }) => {
+const NonInjectedWelcome = observer(({ welcomeMenuItems, welcomeBannerItems }: Dependencies) => {
   const welcomeBanners = welcomeBannerItems.get();
 
   // if there is banner with specified width, use it to calculate the width of the container
-  const maxWidth = welcomeBanners.reduce((acc, curr) => {
-    const currWidth = curr.width ?? 0;
-
-    if (acc > currWidth) {
-      return acc;
-    }
-
-    return currWidth;
-  }, defaultWidth);
+  const maxWidth = Math.max(
+    ...welcomeBanners.map(banner => banner.width ?? 0),
+    defaultWidth,
+  );
 
   return (
     <div className="flex justify-center Welcome align-center">
@@ -120,15 +115,11 @@ const NonInjectedWelcome: React.FC<Dependencies> = ({ welcomeMenuItems, welcomeB
       </div>
     </div>
   );
-};
+});
 
-export const Welcome = withInjectables<Dependencies>(
-  observer(NonInjectedWelcome),
-
-  {
-    getProps: (di) => ({
-      welcomeMenuItems: di.inject(welcomeMenuItemsInjectable),
-      welcomeBannerItems: di.inject(welcomeBannerItemsInjectable),
-    }),
-  },
-);
+export const Welcome = withInjectables<Dependencies>(NonInjectedWelcome, {
+  getProps: (di) => ({
+    welcomeMenuItems: di.inject(welcomeMenuItemsInjectable),
+    welcomeBannerItems: di.inject(welcomeBannerItemsInjectable),
+  }),
+});

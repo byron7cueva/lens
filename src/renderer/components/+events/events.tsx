@@ -5,14 +5,14 @@
 
 import "./events.scss";
 
-import React, { Fragment } from "react";
+import React from "react";
 import { computed, observable, makeObservable } from "mobx";
 import { observer } from "mobx-react";
 import { orderBy } from "lodash";
 import { TabLayout } from "../layout/tab-layout";
 import { EventStore, eventStore } from "./event.store";
 import { KubeObjectListLayout, KubeObjectListLayoutProps } from "../kube-object-list-layout";
-import type { KubeEvent } from "../../../common/k8s-api/endpoints/events.api";
+import type { KubeEvent, KubeEventApi, KubeEventData } from "../../../common/k8s-api/endpoints/events.api";
 import type { TableSortCallbacks, TableSortParams } from "../table";
 import type { HeaderCustomizer } from "../item-object-list";
 import { Tooltip } from "../tooltip";
@@ -36,7 +36,7 @@ enum columnId {
   lastSeen = "last-seen",
 }
 
-export interface EventsProps extends Partial<KubeObjectListLayoutProps<KubeEvent>> {
+export interface EventsProps extends Partial<KubeObjectListLayoutProps<KubeEvent, KubeEventApi, KubeEventData>> {
   className?: IClassName;
   compact?: boolean;
   compactLimit?: number;
@@ -61,7 +61,7 @@ export class Events extends React.Component<EventsProps> {
     [columnId.object]: event => event.involvedObject.name,
     [columnId.count]: event => event.count,
     [columnId.age]: event => -event.getCreationTimestamp(),
-    [columnId.lastSeen]: event => -new Date(event.lastTimestamp).getTime(),
+    [columnId.lastSeen]: event => event.lastTimestamp ? -new Date(event.lastTimestamp).getTime() : 0,
   };
 
   constructor(props: EventsProps) {
@@ -79,7 +79,7 @@ export class Events extends React.Component<EventsProps> {
 
     // we must sort items before passing to "KubeObjectListLayout -> Table"
     // to make it work with "compact=true" (proper table sorting actions + initial items)
-    return orderBy(items, this.sortingCallbacks[sortBy], order as any);
+    return orderBy(items, this.sortingCallbacks[sortBy], order);
   }
 
   @computed get visibleItems(): KubeEvent[] {
@@ -172,12 +172,12 @@ export class Events extends React.Component<EventsProps> {
             {
               className: { warning: isWarning },
               title: (
-                <Fragment>
+                <>
                   <span id={tooltipId}>{message}</span>
                   <Tooltip targetId={tooltipId} formatters={{ narrow: true, warning: isWarning }}>
                     {message}
                   </Tooltip>
-                </Fragment>
+                </>
               ),
             },
             event.getNs(),
@@ -189,7 +189,9 @@ export class Events extends React.Component<EventsProps> {
             event.getSource(),
             event.count,
             <KubeObjectAge key="age" object={event} />,
-            <ReactiveDuration key="last-seen" timestamp={event.lastTimestamp} />,
+            event.lastTimestamp
+              ? <ReactiveDuration key="last-seen" timestamp={event.lastTimestamp} />
+              : "<unknown>",
           ];
         }}
       />

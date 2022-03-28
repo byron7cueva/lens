@@ -13,8 +13,6 @@ export interface ItemObject {
 }
 
 export abstract class ItemStore<Item extends ItemObject> {
-  abstract loadAll(...args: any[]): Promise<void | Item[]>;
-
   protected defaultSorting = (item: Item) => item.getName();
 
   @observable failedLoading = false;

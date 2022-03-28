@@ -16,6 +16,7 @@ import type { RequestInit } from "node-fetch";
 import AbortController from "abort-controller";
 import type { Patch } from "rfc6902";
 import assert from "assert";
+import type { PartialDeep } from "type-fest";
 
 export interface KubeObjectStoreLoadingParams {
   namespaces: string[];
@@ -68,7 +69,11 @@ export type KubeApiDataFrom<K extends KubeObject, A> = A extends KubeApi<K, infe
     : never
   : never;
 
-export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K, Data>, Data extends KubeJsonApiDataFor<K> = KubeApiDataFrom<K, A>> extends ItemStore<K> {
+export abstract class KubeObjectStore<
+  K extends KubeObject = KubeObject,
+  A extends KubeApi<K, D> = KubeApi<K, KubeJsonApiDataFor<K>>,
+  D extends KubeJsonApiDataFor<K> = KubeApiDataFrom<K, A>,
+> extends ItemStore<K> {
   static readonly defaultContext = observable.box<ClusterContext>(); // TODO: support multiple cluster contexts
 
   public readonly api: A;
@@ -327,11 +332,11 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K,
     return this.load({ name, namespace });
   }
 
-  protected async createItem(params: { name: string; namespace?: string }, data?: Partial<K>): Promise<K | null> {
+  protected async createItem(params: { name: string; namespace?: string }, data?: PartialDeep<K>): Promise<K | null> {
     return this.api.create(params, data);
   }
 
-  async create(params: { name: string; namespace?: string }, data?: Partial<K>): Promise<K> {
+  async create(params: { name: string; namespace?: string }, data?: PartialDeep<K>): Promise<K> {
     const newItem = await this.createItem(params, data);
 
     assert(newItem, "Failed to create item from kube");
@@ -368,7 +373,7 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K,
     return this.postUpdate(rawItem);
   }
 
-  async update(item: K, data: Partial<K>): Promise<K> {
+  async update(item: K, data: PartialDeep<K>): Promise<K> {
     const rawItem = await this.api.update(
       {
         name: item.getName(),
@@ -388,7 +393,7 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K,
   }
 
   async removeSelectedItems() {
-    return Promise.all(this.selectedItems.map(this.remove));
+    await Promise.all(this.selectedItems.map(this.remove));
   }
 
   async removeItems(items: K[]) {
@@ -396,7 +401,7 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K,
   }
 
   // collect items from watch-api events to avoid UI blowing up with huge streams of data
-  protected eventsBuffer = observable.array<IKubeWatchEvent<Data>>([], { deep: false });
+  protected eventsBuffer = observable.array<IKubeWatchEvent<D>>([], { deep: false });
 
   protected bindWatchEventsUpdater(delay = 1000) {
     reaction(() => this.eventsBuffer.length, this.updateFromEventsBuffer, {
@@ -440,7 +445,7 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K,
 
     const { signal } = abortController;
 
-    const callback: KubeApiWatchCallback<Data> = (data, error) => {
+    const callback: KubeApiWatchCallback<D> = (data, error) => {
       if (!this.isLoaded || error?.type === "aborted") return;
 
       if (error instanceof Response) {
@@ -493,7 +498,7 @@ export abstract class KubeObjectStore<K extends KubeObject, A extends KubeApi<K,
 
           // falls through
         case "MODIFIED": {
-          const newItem = new this.api.objectConstructor(event.object as Data);
+          const newItem = new this.api.objectConstructor(event.object as D);
 
           if (!item) {
             items.push(newItem);

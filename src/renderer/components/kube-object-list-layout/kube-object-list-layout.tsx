@@ -6,10 +6,10 @@
 import "./kube-object-list-layout.scss";
 
 import React from "react";
-import { computed, makeObservable, observable, reaction } from "mobx";
+import { computed, observable, reaction } from "mobx";
 import { disposeOnUnmount, observer } from "mobx-react";
 import { cssNames, Disposer, isDefined } from "../../utils";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
+import type { KubeJsonApiDataFor, KubeObject } from "../../../common/k8s-api/kube-object";
 import { ItemListLayout, ItemListLayoutProps } from "../item-object-list/list-layout";
 import type { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
 import { KubeObjectMenu } from "../kube-object-menu";
@@ -25,10 +25,14 @@ import kubeWatchApiInjectable from "../../kube-watch-api/kube-watch-api.injectab
 import type { SubscribableStore, SubscribeStores } from "../../kube-watch-api/kube-watch-api";
 import type { KubeApi } from "../../../common/k8s-api/kube-api";
 
-export interface KubeObjectListLayoutProps<K extends KubeObject, A extends KubeApi<K>> extends Omit<ItemListLayoutProps<K>, "getItems" | "dependentStores"> {
+export interface KubeObjectListLayoutProps<
+  K extends KubeObject,
+  A extends KubeApi<K, D>,
+  D extends KubeJsonApiDataFor<K>,
+> extends Omit<ItemListLayoutProps<K, false>, "getItems" | "dependentStores" | "preloadStores"> {
   items?: K[];
   getItems?: () => K[];
-  store: KubeObjectStore<K, A>;
+  store: KubeObjectStore<K, A, D>;
   dependentStores?: SubscribableStore[];
   subscribeStores?: boolean;
 }
@@ -39,18 +43,17 @@ interface Dependencies {
 }
 
 @observer
-class NonInjectedKubeObjectListLayout<K extends KubeObject, A extends KubeApi<K>> extends React.Component<KubeObjectListLayoutProps<K, A> & Dependencies> {
+class NonInjectedKubeObjectListLayout<
+  K extends KubeObject,
+  A extends KubeApi<K, D>,
+  D extends KubeJsonApiDataFor<K>,
+> extends React.Component<KubeObjectListLayoutProps<K, A, D> & Dependencies> {
   static defaultProps = {
     onDetails: (item: KubeObject) => toggleDetails(item.selfLink),
     subscribeStores: true,
   };
 
-  constructor(props: KubeObjectListLayoutProps<K, A> & Dependencies) {
-    super(props);
-    makeObservable(this);
-  }
-
-  @observable loadErrors: string[] = [];
+  private loadErrors = observable.array<string>();
 
   @computed get selectedItem() {
     return this.props.store.getByPath(kubeSelectedUrlParam.get());
@@ -103,7 +106,7 @@ class NonInjectedKubeObjectListLayout<K extends KubeObject, A extends KubeApi<K>
     const placeholderString = ResourceNames[ResourceKindMap[store.api.kind]] || store.api.kind;
 
     return (
-      <ItemListLayout
+      <ItemListLayout<K, false>
         className={cssNames("KubeObjectListLayout", className)}
         store={store}
         getItems={() => this.props.items || store.contextItems}
@@ -138,7 +141,10 @@ class NonInjectedKubeObjectListLayout<K extends KubeObject, A extends KubeApi<K>
   }
 }
 
-const InjectedKubeObjectListLayout = withInjectables<Dependencies, KubeObjectListLayoutProps<KubeObject, KubeApi<KubeObject>>>(NonInjectedKubeObjectListLayout, {
+const InjectedKubeObjectListLayout = withInjectables<
+  Dependencies,
+  KubeObjectListLayoutProps<KubeObject, KubeApi<KubeObject, KubeJsonApiDataFor<KubeObject>>, KubeJsonApiDataFor<KubeObject>>
+>(NonInjectedKubeObjectListLayout, {
   getProps: (di, props) => ({
     clusterFrameContext: di.inject(clusterFrameContextInjectable),
     subscribeToStores: di.inject(kubeWatchApiInjectable).subscribeStores,
@@ -146,6 +152,10 @@ const InjectedKubeObjectListLayout = withInjectables<Dependencies, KubeObjectLis
   }),
 });
 
-export function KubeObjectListLayout<K extends KubeObject, A extends KubeApi<K>>(props: KubeObjectListLayoutProps<K, A>) {
+export function KubeObjectListLayout<
+  K extends KubeObject,
+  A extends KubeApi<K, D>,
+  D extends KubeJsonApiDataFor<K> = KubeJsonApiDataFor<K>,
+>(props: KubeObjectListLayoutProps<K, A, D>) {
   return <InjectedKubeObjectListLayout {...(props as never)} />;
 }

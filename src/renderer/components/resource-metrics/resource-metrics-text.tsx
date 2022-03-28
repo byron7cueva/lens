@@ -4,14 +4,14 @@
  */
 
 import React from "react";
-import type { IPodMetrics } from "../../../common/k8s-api/endpoints";
+import type { PodMetrics } from "../../../common/k8s-api/endpoints";
 import { getMetricLastPoints } from "../../../common/k8s-api/endpoints/metrics.api";
 import { bytesToUnits } from "../../utils";
 import { Badge } from "../badge";
 import { DrawerItem } from "../drawer";
 
 export interface ResourceMetricsTextProps {
-  metrics: IPodMetrics | null | undefined;
+  metrics: PodMetrics | null | undefined;
 }
 
 export function ResourceMetricsText({ metrics }: ResourceMetricsTextProps) {

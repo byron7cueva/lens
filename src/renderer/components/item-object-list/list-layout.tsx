@@ -11,7 +11,7 @@ import type { ConfirmDialogParams } from "../confirm-dialog";
 import type { TableCellProps, TableProps, TableRowProps, TableSortCallbacks } from "../table";
 import { boundMethod, cssNames, IClassName, noop, SingleOrMany, StorageHelper } from "../../utils";
 import type { AddRemoveButtonsProps } from "../add-remove-buttons";
-import type { ItemObject, ItemStore } from "../../../common/item.store";
+import type { ItemObject } from "../../../common/item.store";
 import type { SearchInputUrlProps } from "../input";
 import { FilterType, pageFilters } from "./page-filters.store";
 import { PageFiltersList } from "./page-filters-list";
@@ -25,6 +25,7 @@ import groupBy from "lodash/groupBy";
 import { ItemListLayoutFilters } from "./filters";
 import { observer } from "mobx-react";
 import type { Primitive } from "type-fest";
+import type { SubscribableStore } from "../../kube-watch-api/kube-watch-api";
 
 export type SearchFilter<I extends ItemObject> = (item: I) => SingleOrMany<string | number | undefined | null>;
 export type SearchFilters<I extends ItemObject> = Record<string, SearchFilter<I>>;
@@ -42,13 +43,30 @@ function normalizeText(value: Primitive) {
   return String(value).toLowerCase();
 }
 
+export interface ItemListStore<T, PreLoadStores extends boolean> {
+  readonly isLoaded: boolean;
+  readonly failedLoading: boolean;
+  getTotalCount: () => number;
+  isSelected: (item: T) => boolean;
+  toggleSelection: (item: T) => void;
+  isSelectedAll: (items: T[]) => boolean;
+  toggleSelectionAll: (enabledItems: T[]) => void;
+  pickOnlySelected: (items: T[]) => T[];
+
+  removeItems?: (selectedItems: T[]) => Promise<void>;
+  removeSelectedItems?: () => Promise<void>;
+  loadAll: PreLoadStores extends true
+    ? (selectedNamespaces: string[]) => Promise<void>
+    : unknown;
+}
+
 export type HeaderCustomizer = (placeholders: HeaderPlaceholders) => HeaderPlaceholders;
-export interface ItemListLayoutProps<I extends ItemObject> {
+export type ItemListLayoutProps<I extends ItemObject, PreLoadStores extends boolean> = {
   tableId?: string;
   className: IClassName;
   getItems: () => I[];
-  store: ItemStore<I>;
-  dependentStores?: ItemStore<ItemObject>[];
+  store: ItemListStore<I, PreLoadStores>;
+  dependentStores?: SubscribableStore[];
   preloadStores?: boolean;
   hideFilters?: boolean;
   searchFilters?: SearchFilter<I>[];
@@ -58,7 +76,7 @@ export interface ItemListLayoutProps<I extends ItemObject> {
   // header (title, filtering, searching, etc.)
   showHeader?: boolean;
   headerClassName?: IClassName;
-  renderHeaderTitle?: ReactNode | ((parent: NonInjectedItemListLayout<I>) => ReactNode);
+  renderHeaderTitle?: ReactNode | ((parent: NonInjectedItemListLayout<I, PreLoadStores>) => ReactNode);
   customizeHeader?: HeaderCustomizer | HeaderCustomizer[];
 
   // items list configuration
@@ -70,7 +88,7 @@ export interface ItemListLayoutProps<I extends ItemObject> {
   tableProps?: Partial<TableProps<I>>; // low-level table configuration
   renderTableHeader?: TableCellProps[];
   renderTableContents: (item: I) => (ReactNode | TableCellProps)[];
-  renderItemMenu?: (item: I, store: ItemStore<I>) => ReactNode;
+  renderItemMenu?: (item: I, store: ItemListStore<I, PreLoadStores>) => ReactNode;
   customizeTableRowProps?: (item: I) => Partial<TableRowProps<I>>;
   addRemoveButtons?: Partial<AddRemoveButtonsProps>;
   virtual?: boolean;
@@ -82,7 +100,7 @@ export interface ItemListLayoutProps<I extends ItemObject> {
 
   // other
   customizeRemoveDialog?: (selectedItems: I[]) => Partial<ConfirmDialogParams>;
-  renderFooter?: (parent: NonInjectedItemListLayout<I>) => React.ReactNode;
+  renderFooter?: (parent: NonInjectedItemListLayout<I, PreLoadStores>) => React.ReactNode;
 
   /**
    * Message to display when a store failed to load
@@ -92,9 +110,17 @@ export interface ItemListLayoutProps<I extends ItemObject> {
   failedToLoadMessage?: React.ReactNode;
 
   filterCallbacks?: ItemsFilters<I>;
-}
+} & (
+  PreLoadStores extends true
+    ? {
+      preloadStores?: true;
+    }
+    : {
+      preloadStores: false;
+    }
+);
 
-const defaultProps: Partial<ItemListLayoutProps<ItemObject>> = {
+const defaultProps: Partial<ItemListLayoutProps<ItemObject, true>> = {
   showHeader: true,
   isSelectable: true,
   isConfigurable: false,
@@ -117,10 +143,10 @@ interface Dependencies {
 }
 
 @observer
-class NonInjectedItemListLayout<I extends ItemObject> extends React.Component<ItemListLayoutProps<I> & Dependencies> {
+class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores extends boolean> extends React.Component<ItemListLayoutProps<I, PreLoadStores> & Dependencies> {
   static defaultProps = defaultProps as object;
 
-  constructor(props: ItemListLayoutProps<I> & Dependencies) {
+  constructor(props: ItemListLayoutProps<I, PreLoadStores> & Dependencies) {
     super(props);
     makeObservable(this);
   }
@@ -133,15 +159,11 @@ class NonInjectedItemListLayout<I extends ItemObject> extends React.Component<It
     }
 
     if (preloadStores) {
-      this.loadStores();
+      const { store, dependentStores = [] } = this.props;
+      const stores = Array.from(new Set([store, ...dependentStores])) as ItemListStore<I, true>[];
+
+      stores.forEach(store => store.loadAll(this.props.namespaceStore.contextNamespaces));
     }
-  }
-
-  private loadStores() {
-    const { store, dependentStores = [] } = this.props;
-    const stores = Array.from(new Set([store, ...dependentStores]));
-
-    stores.forEach(store => store.loadAll(this.props.namespaceStore.contextNamespaces));
   }
 
   get showFilters(): boolean {
@@ -277,7 +299,7 @@ class NonInjectedItemListLayout<I extends ItemObject> extends React.Component<It
   }
 }
 
-const InjectedItemListLayout = withInjectables<Dependencies, ItemListLayoutProps<ItemObject>>(NonInjectedItemListLayout, {
+const InjectedItemListLayout = withInjectables<Dependencies, ItemListLayoutProps<ItemObject, boolean>>(NonInjectedItemListLayout, {
   getProps: (di, props) => ({
     namespaceStore: di.inject(namespaceStoreInjectable),
     itemListLayoutStorage: di.inject(itemListLayoutStorageInjectable),
@@ -285,7 +307,7 @@ const InjectedItemListLayout = withInjectables<Dependencies, ItemListLayoutProps
   }),
 });
 
-export function ItemListLayout<I extends ItemObject>(props: ItemListLayoutProps<I>) {
+export function ItemListLayout<I extends ItemObject, PreLoadStores extends boolean = true>(props: ItemListLayoutProps<I, PreLoadStores>) {
   return <InjectedItemListLayout {...(props as never)} />;
 }
 

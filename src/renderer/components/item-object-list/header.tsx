@@ -8,9 +8,9 @@ import "./item-list-layout.scss";
 import React, { ReactNode } from "react";
 import { observer } from "mobx-react";
 import { cssNames, IClassName, isDefined } from "../../utils";
-import type { ItemObject, ItemStore } from "../../../common/item.store";
+import type { ItemObject } from "../../../common/item.store";
 import type { Filter } from "./page-filters.store";
-import type { HeaderCustomizer, HeaderPlaceholders, SearchFilter } from "./list-layout";
+import type { HeaderCustomizer, HeaderPlaceholders, ItemListStore, SearchFilter } from "./list-layout";
 import { SearchInputUrl } from "../input";
 
 export interface ItemListLayoutHeaderProps<I extends ItemObject> {
@@ -18,7 +18,7 @@ export interface ItemListLayoutHeaderProps<I extends ItemObject> {
   getFilters: () => Filter[];
   toggleFilters: () => void;
 
-  store: ItemStore<I>;
+  store: ItemListStore<I>;
   searchFilters?: SearchFilter<I>[];
 
   // header (title, filtering, searching, etc.)

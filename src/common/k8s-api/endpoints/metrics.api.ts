@@ -9,15 +9,15 @@ import moment from "moment";
 import { apiBase } from "../index";
 import type { IMetricsQuery } from "../../../main/routes/metrics/metrics-query";
 
-export interface IMetrics {
+export interface MetricData {
   status: string;
   data: {
     resultType: string;
-    result: IMetricsResult[];
+    result: MetricResult[];
   };
 }
 
-export interface IMetricsResult {
+export interface MetricResult {
   metric: {
     [name: string]: string | undefined;
     instance?: string;
@@ -44,7 +44,7 @@ export interface IMetricsReqParams {
   namespace?: string;             // rbac-proxy validation param
 }
 
-export interface IResourceMetrics<T extends IMetrics> {
+export interface IResourceMetrics<T extends MetricData> {
   [metric: string]: T;
   cpuUsage: T;
   memoryUsage: T;
@@ -56,7 +56,7 @@ export interface IResourceMetrics<T extends IMetrics> {
 }
 
 export const metricsApi = {
-  async getMetrics<T = IMetricsQuery>(query: T, reqParams: IMetricsReqParams = {}): Promise<T extends object ? { [K in keyof T]: IMetrics } : IMetrics> {
+  async getMetrics<T = IMetricsQuery>(query: T, reqParams: IMetricsReqParams = {}): Promise<T extends object ? { [K in keyof T]: MetricData } : MetricData> {
     const { range = 3600, step = 60, namespace } = reqParams;
     let { start, end } = reqParams;
 
@@ -82,7 +82,7 @@ export const metricsApi = {
   },
 };
 
-export function normalizeMetrics(metrics: IMetrics | undefined | null, frames = 60): IMetrics {
+export function normalizeMetrics(metrics: MetricData | undefined | null, frames = 60): MetricData {
   if (!metrics?.data?.result) {
     return {
       data: {
@@ -131,17 +131,17 @@ export function normalizeMetrics(metrics: IMetrics | undefined | null, frames = 
     result.push({
       metric: {},
       values: [],
-    } as IMetricsResult);
+    } as MetricResult);
   }
 
   return metrics;
 }
 
-export function isMetricsEmpty(metrics: Partial<Record<string, IMetrics>>) {
+export function isMetricsEmpty(metrics: Partial<Record<string, MetricData>>) {
   return Object.values(metrics).every(metric => !metric?.data?.result?.length);
 }
 
-export function getItemMetrics(metrics: Partial<Record<string, IMetrics>> | null | undefined, itemName: string): Partial<Record<string, IMetrics>> | undefined {
+export function getItemMetrics(metrics: Partial<Record<string, MetricData>> | null | undefined, itemName: string): Partial<Record<string, MetricData>> | undefined {
   if (!metrics) {
     return undefined;
   }
@@ -162,7 +162,7 @@ export function getItemMetrics(metrics: Partial<Record<string, IMetrics>> | null
   return itemMetrics;
 }
 
-export function getMetricLastPoints<T extends Partial<Record<string, IMetrics>>>(metrics: T): Record<keyof T, number> {
+export function getMetricLastPoints<T extends Partial<Record<string, MetricData>>>(metrics: T): Record<keyof T, number> {
   const result: Partial<{ [metric: string]: number }> = {};
 
   Object.keys(metrics).forEach(metricName => {

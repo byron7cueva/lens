@@ -43,7 +43,7 @@ describe("kubeconfig-sync.source tests", () => {
     const di = getDiForUnitTesting({ doGeneralOverrides: true });
 
     di.override(kubeAuthProxyCaInjectable, () => Promise.resolve(Buffer.from("ca")));
-    di.override(createKubeAuthProxyCertFilesInjectable, () => ({} as any));
+    di.override(createKubeAuthProxyCertFilesInjectable, () => ({}));
 
     mockFs();
 

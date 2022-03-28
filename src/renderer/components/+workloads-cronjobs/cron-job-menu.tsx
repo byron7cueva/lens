@@ -29,7 +29,7 @@ export function CronJobMenu(props: KubeObjectMenuProps<CronJob>) {
             try {
               await cronJobApi.resume({ namespace: object.getNs(), name: object.getName() });
             } catch (err) {
-              Notifications.error(err);
+              Notifications.checkedError(err, "Unknown error occured while resuming CronJob");
             }
           },
           labelOk: `Resume`,
@@ -49,7 +49,7 @@ export function CronJobMenu(props: KubeObjectMenuProps<CronJob>) {
             try {
               await cronJobApi.suspend({ namespace: object.getNs(), name: object.getName() });
             } catch (err) {
-              Notifications.error(err);
+              Notifications.checkedError(err, "Unknown error occured while suspending CronJob");
             }
           },
           labelOk: `Suspend`,

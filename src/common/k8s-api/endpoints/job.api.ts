@@ -5,7 +5,7 @@
 
 import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { IPodContainer, IPodMetrics, PodSpec } from "./pods.api";
+import type { IPodContainer, PodMetrics, PodSpec } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 import { KubeObject, KubeObjectStatus, LabelSelector } from "../kube-object";
 
@@ -98,7 +98,7 @@ export class JobApi extends KubeApi<Job> {
   }
 }
 
-export function getMetricsForJobs(jobs: Job[], namespace: string, selector = ""): Promise<IPodMetrics> {
+export function getMetricsForJobs(jobs: Job[], namespace: string, selector = ""): Promise<PodMetrics> {
   const podSelector = jobs.map(job => `${job.getName()}-[[:alnum:]]{5}`).join("|");
   const opts = { category: "pods", pods: podSelector, namespace, selector };
 

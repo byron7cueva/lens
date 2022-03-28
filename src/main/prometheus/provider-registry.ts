@@ -4,7 +4,7 @@
  */
 
 import type { CoreV1Api } from "@kubernetes/client-node";
-import { Singleton } from "../../common/utils";
+import { isRequestError, Singleton } from "../../common/utils";
 
 export interface PrometheusService {
   id: string;
@@ -41,7 +41,7 @@ export abstract class PrometheusProvider {
         }
       }
     } catch (error) {
-      throw new Error(`Failed to list services for Prometheus${this.name} in all namespaces: ${(error as any).response.body.message}`);
+      throw new Error(`Failed to list services for Prometheus${this.name} in all namespaces: ${isRequestError(error) ? error.response?.body.message : error}`);
     }
 
     throw new Error(`No service found for Prometheus${this.name} from any namespace`);
@@ -62,7 +62,7 @@ export abstract class PrometheusProvider {
         port: service.spec.ports[0].port,
       };
     } catch(error) {
-      throw new Error(`Failed to list services for Prometheus${this.name} in namespace="${namespace}": ${(error as any).response.body.message}`);
+      throw new Error(`Failed to list services for Prometheus${this.name} in namespace="${namespace}": ${isRequestError(error) ? error.response?.body.message : error}`);
     }
   }
 }

@@ -265,15 +265,15 @@ describe("HotbarStore", () => {
     it("throws an error if getId is invalid or returns not a string", () => {
       const hotbarStore = HotbarStore.getInstance();
 
-      expect(() => hotbarStore.addToHotbar({} as any)).toThrowError(TypeError);
-      expect(() => hotbarStore.addToHotbar({ getId: () => true } as any)).toThrowError(TypeError);
+      expect(() => hotbarStore.addToHotbar({} as never)).toThrowError(TypeError);
+      expect(() => hotbarStore.addToHotbar({ getId: () => true } as never)).toThrowError(TypeError);
     });
 
     it("throws an error if getName is invalid or returns not a string", () => {
       const hotbarStore = HotbarStore.getInstance();
 
-      expect(() => hotbarStore.addToHotbar({ getId: () => "" } as any)).toThrowError(TypeError);
-      expect(() => hotbarStore.addToHotbar({ getId: () => "", getName: () => 4 } as any)).toThrowError(TypeError);
+      expect(() => hotbarStore.addToHotbar({ getId: () => "" } as never)).toThrowError(TypeError);
+      expect(() => hotbarStore.addToHotbar({ getId: () => "", getName: () => 4 } as never)).toThrowError(TypeError);
     });
 
     it("does nothing when item moved to same cell", () => {

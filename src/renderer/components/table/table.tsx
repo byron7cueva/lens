@@ -22,7 +22,7 @@ import type { ItemObject } from "../../../common/item.store";
 import assert from "assert";
 
 export type TableSortBy = string;
-export type TableOrderBy = "asc" | "desc" | string;
+export type TableOrderBy = "asc" | "desc";
 export interface TableSortParams {
   sortBy: TableSortBy;
   orderBy: TableOrderBy;

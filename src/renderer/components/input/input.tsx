@@ -437,7 +437,10 @@ export class Input extends React.Component<InputProps, State> {
         {tooltipError}
         <label className="input-area flex gaps align-center" id="">
           {this.renderIcon(iconLeft)}
-          {multiLine ? <textarea {...inputProps as any} /> : <input {...inputProps as any} />}
+          {multiLine
+            ? <textarea {...inputProps as never} />
+            : <input {...inputProps as never} />
+          }
           {this.renderIcon(iconRight)}
           {contentRight}
         </label>

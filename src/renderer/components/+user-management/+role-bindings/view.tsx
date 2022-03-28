@@ -10,7 +10,7 @@ import type { RouteComponentProps } from "react-router";
 import { KubeObjectListLayout } from "../../kube-object-list-layout";
 import { KubeObjectStatusIcon } from "../../kube-object-status-icon";
 import { RoleBindingDialog } from "./dialog";
-import { roleBindingsStore } from "./store";
+import { roleBindingStore } from "./store";
 import { rolesStore } from "../+roles/store";
 import { clusterRolesStore } from "../+cluster-roles/store";
 import { serviceAccountsStore } from "../+service-accounts/store";
@@ -36,7 +36,7 @@ export class RoleBindings extends React.Component<RoleBindingsProps> {
           isConfigurable
           tableId="access_role_bindings"
           className="RoleBindings"
-          store={roleBindingsStore}
+          store={roleBindingStore}
           dependentStores={[rolesStore, clusterRolesStore, serviceAccountsStore]}
           sortingCallbacks={{
             [columnId.name]: binding => binding.getName(),

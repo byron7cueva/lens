@@ -13,10 +13,10 @@ export interface RoleData extends KubeJsonApiData<KubeObjectMetadata<"namespace-
   rules?: PolicyRule[];
 }
 
-export class Role extends KubeObject<KubeObjectMetadata<"namespace-scoped">, void, void, "namespace-scoped"> {
-  static kind = "Role";
-  static namespaced = true;
-  static apiBase = "/apis/rbac.authorization.k8s.io/v1/roles";
+export class Role extends KubeObject<void, void, "namespace-scoped"> {
+  static readonly kind = "Role";
+  static readonly namespaced = true;
+  static readonly apiBase = "/apis/rbac.authorization.k8s.io/v1/roles";
   rules?: PolicyRule[];
 
   constructor({ rules, ...rest }: RoleData) {

@@ -8,8 +8,7 @@ import { Endpoints, EndpointsApi, endpointsApi, EndpointsData } from "../../../c
 import { apiManager } from "../../../common/k8s-api/api-manager";
 
 export class EndpointStore extends KubeObjectStore<Endpoints, EndpointsApi, EndpointsData> {
-  api = endpointsApi;
 }
 
-export const endpointStore = new EndpointStore();
+export const endpointStore = new EndpointStore(endpointsApi);
 apiManager.registerStore(endpointStore);

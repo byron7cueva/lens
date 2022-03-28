@@ -10,13 +10,8 @@ import { Select } from "../select";
 import { SubTitle } from "../layout/sub-title";
 import { SubHeader } from "../layout/sub-header";
 import { Input, InputValidators } from "../input";
-
-enum EditorLineNumbersStyles {
-  on = "On",
-  off = "Off",
-  relative = "Relative",
-  interval = "Interval",
-}
+import { string } from "../../utils";
+import { defaultEditorConfig } from "../../../common/user-store/preferences-helpers";
 
 export const Editor = observer(() => {
   const editorConfiguration = UserStore.getInstance().editorConfiguration;
@@ -42,7 +37,7 @@ export const Editor = observer(() => {
               themeName="lens"
               options={["left", "right"]}
               value={editorConfiguration.minimap.side}
-              onChange={({ value }) => editorConfiguration.minimap.side = value}
+              onChange={value => editorConfiguration.minimap.side = value ?? undefined}
             />
           </div>
         </div>
@@ -51,9 +46,15 @@ export const Editor = observer(() => {
       <section>
         <SubTitle title="Line numbers"/>
         <Select
-          options={Object.entries(EditorLineNumbersStyles).map(([value, label]) => ({ label, value }))}
+          options={[
+            "on",
+            "off",
+            "relative",
+            "interval",
+          ]}
+          getOptionLabel={string.uppercaseFirst}
           value={editorConfiguration.lineNumbers}
-          onChange={({ value }) => editorConfiguration.lineNumbers = value}
+          onChange={value => editorConfiguration.lineNumbers = value ?? defaultEditorConfig.lineNumbers}
           themeName="lens"
         />
       </section>

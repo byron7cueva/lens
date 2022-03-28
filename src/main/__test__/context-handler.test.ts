@@ -66,11 +66,11 @@ class TestProvider extends PrometheusProvider {
 }
 
 const clusterStub = {
-  getProxyKubeconfig: (): any => ({
-    makeApiClient: (): any => undefined,
+  getProxyKubeconfig: () => ({
+    makeApiClient: (): void => undefined,
   }),
   apiUrl: "http://localhost:81",
-} as Cluster;
+} as unknown as Cluster;
 
 describe("ContextHandler", () => {
   let createContextHandler: (cluster: Cluster) => ClusterContextHandler;
@@ -82,8 +82,8 @@ describe("ContextHandler", () => {
       "tmp": {},
     });
 
-    di.override(createKubeAuthProxyInjectable, () => ({} as any));
-    di.override(kubeAuthProxyCaInjectable, () => ({} as any));
+    di.override(createKubeAuthProxyInjectable, () => ({} as never));
+    di.override(kubeAuthProxyCaInjectable, () => ({} as never));
 
     await di.runSetups();
 
@@ -120,7 +120,7 @@ describe("ContextHandler", () => {
 
       expect(() => {
         // TODO: Unit test shouldn't access protected or private methods
-        const contextHandler = createContextHandler(clusterStub) as any;
+        const contextHandler = createContextHandler(clusterStub) as unknown as { getPrometheusService(): Promise<PrometheusService> };
 
         return contextHandler.getPrometheusService();
       }).rejects.toBeDefined();
@@ -150,7 +150,7 @@ describe("ContextHandler", () => {
       }
 
       // TODO: Unit test shouldn't access protected or private methods
-      const contextHandler = createContextHandler(clusterStub) as any;
+      const contextHandler = createContextHandler(clusterStub) as unknown as { getPrometheusService(): Promise<PrometheusService> };
 
       const service = await contextHandler.getPrometheusService();
 
@@ -181,7 +181,7 @@ describe("ContextHandler", () => {
       }
 
       // TODO: Unit test shouldn't access protected or private methods
-      const contextHandler = createContextHandler(clusterStub) as any;
+      const contextHandler = createContextHandler(clusterStub) as unknown as { getPrometheusService(): Promise<PrometheusService> };
 
       const service = await contextHandler.getPrometheusService();
 
@@ -218,7 +218,7 @@ describe("ContextHandler", () => {
       }
 
       // TODO: Unit test shouldn't access protected or private methods
-      const contextHandler = createContextHandler(clusterStub) as any;
+      const contextHandler = createContextHandler(clusterStub) as unknown as { getPrometheusService(): Promise<PrometheusService> };
 
       const service = await contextHandler.getPrometheusService();
 
@@ -234,7 +234,7 @@ describe("ContextHandler", () => {
       reg.registerProvider(new TestProvider(`id_${count++}`, ServiceResult.Success));
 
       // TODO: Unit test shouldn't access protected or private methods
-      const contextHandler = createContextHandler(clusterStub) as any;
+      const contextHandler = createContextHandler(clusterStub) as unknown as { getPrometheusService(): Promise<PrometheusService> };
 
       const service = await contextHandler.getPrometheusService();
 

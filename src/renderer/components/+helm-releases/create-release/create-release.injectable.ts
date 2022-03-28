@@ -5,7 +5,7 @@
 import { getInjectable } from "@ogre-tools/injectable";
 import {
   createRelease,
-  IReleaseCreatePayload,
+  HelmReleaseCreatePayload,
 } from "../../../../common/k8s-api/endpoints/helm-releases.api";
 import releasesInjectable from "../releases.injectable";
 
@@ -15,7 +15,7 @@ const createReleaseInjectable = getInjectable({
   instantiate: (di) => {
     const releases = di.inject(releasesInjectable);
 
-    return async (payload: IReleaseCreatePayload) => {
+    return async (payload: HelmReleaseCreatePayload) => {
       const release = await createRelease(payload);
 
       releases.invalidate();

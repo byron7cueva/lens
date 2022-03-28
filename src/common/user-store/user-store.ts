@@ -38,9 +38,6 @@ export class UserStore extends BaseStore<UserStoreModel> /* implements UserStore
     this.load();
   }
 
-  /**
-   * @deprecated No longer used
-   */
   @observable lastSeenAppVersion = "0.0.0";
 
   /**
@@ -167,11 +164,6 @@ export class UserStore extends BaseStore<UserStoreModel> /* implements UserStore
   saveLastSeenAppVersion() {
     appEventBus.emit({ name: "app", action: "whats-new-seen" });
     this.lastSeenAppVersion = getAppVersion();
-  }
-
-  @action
-  setLocaleTimezone(tz: string) {
-    this.localeTimezone = tz;
   }
 
   @action

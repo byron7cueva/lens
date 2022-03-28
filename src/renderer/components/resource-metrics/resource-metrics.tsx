@@ -9,10 +9,10 @@ import React, { createContext, useEffect, useState } from "react";
 import { Radio, RadioGroup } from "../radio";
 import { useInterval } from "../../hooks";
 import type { KubeObject } from "../../../common/k8s-api/kube-object";
-import { cssNames } from "../../utils";
+import { cssNames, noop } from "../../utils";
 import { Spinner } from "../spinner";
 import type { MetricsTab } from "../chart/options";
-import type { IMetrics } from "../../../common/k8s-api/endpoints/metrics.api";
+import type { MetricData } from "../../../common/k8s-api/endpoints/metrics.api";
 
 export type AtLeastOneMetricTab = [MetricsTab, ...MetricsTab[]];
 
@@ -22,27 +22,22 @@ export interface ResourceMetricsProps extends React.HTMLProps<any> {
   loader?: () => void;
   interval?: number;
   className?: string;
-  metrics: Partial<Record<string, IMetrics>> | null | undefined;
+  metrics: Partial<Record<string, MetricData>> | null | undefined;
 }
 
 export interface ResourceMetricsValue {
   object: KubeObject;
   tab: MetricsTab;
-  metrics: Partial<Record<string, IMetrics>> | null | undefined;
+  metrics: Partial<Record<string, MetricData>> | null | undefined;
 }
 
 export const ResourceMetricsContext = createContext<ResourceMetricsValue | null>(null);
 
-export function ResourceMetrics({ object, loader, interval = 60, tabs, children, className, metrics }: ResourceMetricsProps) {
+export function ResourceMetrics({ object, loader = noop, interval = 60, tabs, children, className, metrics }: ResourceMetricsProps) {
   const [tab, setTab] = useState<MetricsTab>(tabs[0]);
 
-  useEffect(() => {
-    if (loader) loader();
-  }, [object]);
-
-  useInterval(() => {
-    if (loader) loader();
-  }, interval * 1000);
+  useEffect(loader, [object]);
+  useInterval(loader, interval * 1000);
 
   const renderContents = () => {
     return (
@@ -52,13 +47,15 @@ export function ResourceMetrics({ object, loader, interval = 60, tabs, children,
             asButtons
             className="flex box grow gaps"
             value={tab}
-            onChange={value => setTab(value as MetricsTab)}
+            onChange={setTab}
           >
             {tabs.map((tab, index) => (
-              <Radio key={index}
+              <Radio
+                key={index}
                 className="box grow"
                 label={tab}
-                value={tab}/>
+                value={tab}
+              />
             ))}
           </RadioGroup>
         </div>

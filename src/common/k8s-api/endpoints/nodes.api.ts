@@ -5,7 +5,7 @@
 
 import { BaseKubeObjectCondition, KubeObject } from "../kube-object";
 import { cpuUnitsToNumber, unitsToBytes } from "../../../renderer/utils";
-import { IMetrics, metricsApi } from "./metrics.api";
+import { MetricData, metricsApi } from "./metrics.api";
 import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 import { TypedRegEx } from "typed-regex";
@@ -19,7 +19,7 @@ export class NodeApi extends KubeApi<Node> {
   }
 }
 
-export function getMetricsForAllNodes(): Promise<INodeMetrics> {
+export function getMetricsForAllNodes(): Promise<NodeMetricData> {
   const opts = { category: "nodes" };
 
   return metricsApi.getMetrics({
@@ -34,16 +34,15 @@ export function getMetricsForAllNodes(): Promise<INodeMetrics> {
   });
 }
 
-export interface INodeMetrics<T = IMetrics> {
-  [metric: string]: T;
-  memoryUsage: T;
-  workloadMemoryUsage: T;
-  memoryCapacity: T;
-  memoryAllocatableCapacity: T;
-  cpuUsage: T;
-  cpuCapacity: T;
-  fsUsage: T;
-  fsSize: T;
+export interface NodeMetricData extends Partial<Record<string, MetricData>> {
+  memoryUsage: MetricData;
+  workloadMemoryUsage: MetricData;
+  memoryCapacity: MetricData;
+  memoryAllocatableCapacity: MetricData;
+  cpuUsage: MetricData;
+  cpuCapacity: MetricData;
+  fsUsage: MetricData;
+  fsSize: MetricData;
 }
 
 export interface NodeTaint {
@@ -86,54 +85,82 @@ export interface NodeSpec {
   unschedulable?: boolean;
 }
 
+export interface NodeAddress {
+  type: "Hostname" | "ExternalIP" | "InternalIP";
+  address: string;
+}
+
+export interface NodeStatusResources extends Partial<Record<string, string>> {
+  cpu?: string;
+  "ephemeral-storage"?: string;
+  "hugepages-1Gi"?: string;
+  "hugepages-2Mi"?: string;
+  memory?: string;
+  pods?: string;
+}
+
+export interface ConfigMapNodeConfigSource {
+  kubeletConfigKey: string;
+  name: string;
+  namespace: string;
+  resourceVersion?: string;
+  uid?: string;
+}
+
+export interface NodeConfigSource {
+  configMap?: ConfigMapNodeConfigSource;
+}
+
+export interface NodeConfigStatus {
+  active?: NodeConfigSource;
+  assigned?: NodeConfigSource;
+  lastKnownGood?: NodeConfigSource;
+  error?: string;
+}
+
+export interface DaemonEndpoint {
+  Port: number; //it must be uppercase for backwards compatibility
+}
+
+export interface NodeDaemonEndpoints {
+  kubeletEndpoint?: DaemonEndpoint;
+}
+
+export interface ContainerImage {
+  names?: string[];
+  sizeBytes?: number;
+}
+
+export interface NodeSystemInfo {
+  architecture: string;
+  bootID: string;
+  containerRuntimeVersion: string;
+  kernelVersion: string;
+  kubeProxyVersion: string;
+  kubeletVersion: string;
+  machineID: string;
+  operatingSystem: string;
+  osImage: string;
+  systemUUID: string;
+}
+
+export interface AttachedVolume {
+  name: string;
+  devicePath: string;
+}
+
 export interface NodeStatus {
-  capacity?: {
-    cpu: string;
-    "ephemeral-storage": string;
-    "hugepages-1Gi": string;
-    "hugepages-2Mi": string;
-    memory: string;
-    pods: string;
-  };
-  allocatable?: {
-    cpu: string;
-    "ephemeral-storage": string;
-    "hugepages-1Gi": string;
-    "hugepages-2Mi": string;
-    memory: string;
-    pods: string;
-  };
+  capacity?: NodeStatusResources;
+  allocatable?: NodeStatusResources;
   conditions?: NodeCondition[];
-  addresses?: {
-    type: string;
-    address: string;
-  }[];
-  daemonEndpoints?: {
-    kubeletEndpoint: {
-      Port: number; //it must be uppercase for backwards compatibility
-    };
-  };
-  nodeInfo?: {
-    machineID: string;
-    systemUUID: string;
-    bootID: string;
-    kernelVersion: string;
-    osImage: string;
-    containerRuntimeVersion: string;
-    kubeletVersion: string;
-    kubeProxyVersion: string;
-    operatingSystem: string;
-    architecture: string;
-  };
-  images?: {
-    names: string[];
-    sizeBytes?: number;
-  }[];
+  addresses?: NodeAddress[];
+  config?: NodeConfigStatus;
+  daemonEndpoints?: NodeDaemonEndpoints;
+  images?: ContainerImage[];
+  nodeInfo?: NodeSystemInfo;
+  phase?: string;
   volumesInUse?: string[];
-  volumesAttached?: {
-    name: string;
-    devicePath: string;
-  }[];
+  volumesAttached?: AttachedVolume[];
 }
 
 export class Node extends KubeObject<NodeStatus, NodeSpec, "cluster-scoped"> {

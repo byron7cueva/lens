@@ -15,7 +15,7 @@ import { PodDetailsAffinities } from "../+workloads-pods/pod-details-affinities"
 import { daemonSetStore } from "./daemonsets.store";
 import { podsStore } from "../+workloads-pods/pods.store";
 import type { KubeObjectDetailsProps } from "../kube-object-details";
-import { DaemonSet, getMetricsForDaemonSets, type IPodMetrics } from "../../../common/k8s-api/endpoints";
+import { DaemonSet, getMetricsForDaemonSets, type PodMetrics } from "../../../common/k8s-api/endpoints";
 import { ResourceMetrics, ResourceMetricsText } from "../resource-metrics";
 import { PodCharts, podMetricTabs } from "../+workloads-pods/pod-charts";
 import { makeObservable, observable, reaction } from "mobx";
@@ -38,7 +38,7 @@ interface Dependencies {
 
 @observer
 class NonInjectedDaemonSetDetails extends React.Component<DaemonSetDetailsProps & Dependencies> {
-  @observable metrics: IPodMetrics | null = null;
+  @observable metrics: PodMetrics | null = null;
 
   constructor(props: DaemonSetDetailsProps & Dependencies) {
     super(props);

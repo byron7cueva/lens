@@ -33,7 +33,7 @@ export class BaseRegistry<T, I = T> extends Singleton {
 
   // eslint-disable-next-line unused-imports/no-unused-vars-ts
   protected getRegisteredItem(item: T, extension?: LensExtension): I {
-    return item as any;
+    return item as never;
   }
 
   @action

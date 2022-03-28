@@ -6,7 +6,7 @@
 import "./namespaces.scss";
 
 import React from "react";
-import { NamespaceStatus } from "../../../common/k8s-api/endpoints";
+import { NamespaceStatusKind } from "../../../common/k8s-api/endpoints";
 import { AddNamespaceDialog } from "./add-namespace-dialog";
 import { TabLayout } from "../layout/tab-layout";
 import { Badge } from "../badge";
@@ -17,8 +17,7 @@ import { KubeObjectStatusIcon } from "../kube-object-status-icon";
 import type { NamespacesRouteParams } from "../../../common/routes";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import namespaceStoreInjectable from "./namespace-store/namespace-store.injectable";
-import addNamespaceDialogModelInjectable
-  from "./add-namespace-dialog-model/add-namespace-dialog-model.injectable";
+import addNamespaceDialogModelInjectable from "./add-namespace-dialog-model/add-namespace-dialog-model.injectable";
 import { KubeObjectAge } from "../kube-object/age";
 
 enum columnId {
@@ -75,7 +74,7 @@ export const NonInjectedNamespacesRoute = ({ namespaceStore, openAddNamespaceDia
         onAdd: openAddNamespaceDialog,
       }}
       customizeTableRowProps={item => ({
-        disabled: item.getStatus() === NamespaceStatus.TERMINATING,
+        disabled: item.getStatus() === NamespaceStatusKind.TERMINATING,
       })}
     />
     <AddNamespaceDialog/>

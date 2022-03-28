@@ -36,6 +36,10 @@ export class HelmCharts extends Component<HelmChartsProps> {
   get selectedChart() {
     const { match: { params: { chartName, repo }}} = this.props;
 
+    if (!chartName || !repo) {
+      return undefined;
+    }
+
     return helmChartStore.getByName(chartName, repo);
   }
 
@@ -47,7 +51,7 @@ export class HelmCharts extends Component<HelmChartsProps> {
     }
   };
 
-  showDetails = (chart: HelmChart) => {
+  showDetails = (chart: HelmChart | null) => {
     if (!chart) {
       navigation.push(helmChartsURL());
     }

@@ -10,7 +10,7 @@ import kebabCase from "lodash/kebabCase";
 import { disposeOnUnmount, observer } from "mobx-react";
 import { DrawerItem } from "../drawer";
 import { Badge } from "../badge";
-import { Deployment, getMetricsForDeployments, IPodMetrics } from "../../../common/k8s-api/endpoints";
+import { Deployment, getMetricsForDeployments, PodMetrics } from "../../../common/k8s-api/endpoints";
 import { PodDetailsTolerations } from "../+workloads-pods/pod-details-tolerations";
 import { PodDetailsAffinities } from "../+workloads-pods/pod-details-affinities";
 import { podsStore } from "../+workloads-pods/pods.store";
@@ -40,7 +40,7 @@ interface Dependencies {
 
 @observer
 class NonInjectedDeploymentDetails extends React.Component<DeploymentDetailsProps & Dependencies> {
-  @observable metrics: IPodMetrics | null = null;
+  @observable metrics: PodMetrics | null = null;
 
   constructor(props: DeploymentDetailsProps & Dependencies) {
     super(props);

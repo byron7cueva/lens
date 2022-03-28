@@ -23,7 +23,7 @@ import { Input } from "../../input";
 import { EditorPanel } from "../editor-panel";
 import { navigate } from "../../../navigation";
 import { releaseURL } from "../../../../common/routes";
-import type { IReleaseCreatePayload, IReleaseUpdateDetails } from "../../../../common/k8s-api/endpoints/helm-releases.api";
+import type { HelmReleaseCreatePayload, HelmReleaseUpdateDetails } from "../../../../common/k8s-api/endpoints/helm-releases.api";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import installChartTabStoreInjectable from "./store.injectable";
 import dockStoreInjectable from "../dock/store.injectable";
@@ -36,7 +36,7 @@ export interface InstallCharProps {
 }
 
 interface Dependencies {
-  createRelease: (payload: IReleaseCreatePayload) => Promise<IReleaseUpdateDetails>;
+  createRelease: (payload: HelmReleaseCreatePayload) => Promise<HelmReleaseUpdateDetails>;
   installChartStore: InstallChartTabStore;
   dockStore: DockStore;
 }
@@ -72,7 +72,7 @@ class NonInjectedInstallChart extends Component<InstallCharProps & Dependencies>
     return this.props.installChartStore.details.getData(this.tabId);
   }
 
-  viewRelease = ({ release }: IReleaseUpdateDetails) => {
+  viewRelease = ({ release }: HelmReleaseUpdateDetails) => {
     navigate(releaseURL({
       params: {
         name: release.name,

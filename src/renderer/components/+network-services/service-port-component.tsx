@@ -61,20 +61,24 @@ class NonInjectedServicePortComponent extends React.Component<ServicePortCompone
   @action
   async checkExistingPortForwarding() {
     const { service, port } = this.props;
-    let portForward: ForwardedPort = {
-      kind: "service",
-      name: service.getName(),
-      namespace: service.getNs(),
-      port: port.port,
-      forwardPort: this.forwardPort,
-    };
+    let portForward: ForwardedPort | undefined;
 
     try {
-      portForward = await this.portForwardStore.getPortForward(portForward);
+      portForward = await this.portForwardStore.getPortForward({
+        kind: "service",
+        name: service.getName(),
+        namespace: service.getNs(),
+        port: port.port,
+        forwardPort: this.forwardPort,
+      });
     } catch (error) {
       this.isPortForwarded = false;
       this.isActive = false;
 
+      return;
+    }
+
+    if (!portForward) {
       return;
     }
 

@@ -14,20 +14,21 @@ import { boundMethod, cssNames, IClassName, isReactNode, prevDefault, stopPropag
 import { AddRemoveButtons, AddRemoveButtonsProps } from "../add-remove-buttons";
 import { NoItems } from "../no-items";
 import { Spinner } from "../spinner";
-import type { ItemObject, ItemStore } from "../../../common/item.store";
+import type { ItemObject } from "../../../common/item.store";
 import { Filter, pageFilters } from "./page-filters.store";
 import { ThemeStore } from "../../theme.store";
 import { MenuActions } from "../menu/menu-actions";
 import { MenuItem } from "../menu";
 import { Checkbox } from "../checkbox";
 import { UserStore } from "../../../common/user-store";
+import type { ItemListStore } from "./list-layout";
 
 export interface ItemListLayoutContentProps<I extends ItemObject> {
   getFilters: () => Filter[];
   tableId?: string;
   className: IClassName;
   getItems: () => I[];
-  store: ItemStore<I>;
+  store: ItemListStore<I>;
   getIsReady: () => boolean; // show loading indicator while not ready
   isSelectable?: boolean; // show checkbox in rows for selecting items
   isConfigurable?: boolean;
@@ -36,7 +37,7 @@ export interface ItemListLayoutContentProps<I extends ItemObject> {
   tableProps?: Partial<TableProps<I>>; // low-level table configuration
   renderTableHeader?: TableCellProps[];
   renderTableContents: (item: I) => (ReactNode | TableCellProps)[];
-  renderItemMenu?: (item: I, store: ItemStore<I>) => ReactNode;
+  renderItemMenu?: (item: I, store: ItemListStore<I>) => ReactNode;
   customizeTableRowProps?: (item: I) => Partial<TableRowProps<I>>;
   addRemoveButtons?: Partial<AddRemoveButtonsProps>;
   virtual?: boolean;

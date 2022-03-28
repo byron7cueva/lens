@@ -7,7 +7,7 @@ import { action, makeObservable } from "mobx";
 import type { TabId } from "../dock/store";
 import { DockTabStorageState, DockTabStore } from "../dock-tab-store/dock-tab.store";
 import { getChartDetails, getChartValues } from "../../../../common/k8s-api/endpoints/helm-charts.api";
-import type { IReleaseUpdateDetails } from "../../../../common/k8s-api/endpoints/helm-releases.api";
+import type { HelmReleaseUpdateDetails } from "../../../../common/k8s-api/endpoints/helm-releases.api";
 import type { StorageHelper } from "../../../utils";
 import { waitUntilDefinied } from "../../../../common/utils/wait";
 
@@ -25,7 +25,7 @@ export interface IChartInstallData {
 interface Dependencies {
   createStorage: <T>(storageKey: string, options: DockTabStorageState<T>) => StorageHelper<DockTabStorageState<T>>;
   versionsStore: DockTabStore<string[]>;
-  detailsStore: DockTabStore<IReleaseUpdateDetails>;
+  detailsStore: DockTabStore<HelmReleaseUpdateDetails>;
 }
 
 export class InstallChartTabStore extends DockTabStore<IChartInstallData> {

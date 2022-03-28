@@ -9,12 +9,12 @@ import { UserStore } from "../common/user-store";
 import logger from "../main/logger";
 import lensDarkTheme from "./themes/lens-dark";
 import lensLightTheme from "./themes/lens-light";
-import type { SelectOption } from "./components/select";
 import type { MonacoTheme } from "./components/monaco-editor";
 import { defaultTheme } from "../common/vars";
 import { camelCase } from "lodash";
 import { ipcRenderer } from "electron";
 import { getNativeThemeChannel, setNativeThemeChannel } from "../common/ipc/native-theme";
+import type { ReadonlyDeep } from "type-fest/source/readonly-deep";
 
 export type ThemeId = string;
 
@@ -30,7 +30,7 @@ export interface Theme {
 export class ThemeStore extends Singleton {
   private terminalColorPrefix = "terminal";
 
-  private themes = observable.map<ThemeId, Theme>({
+  #themes = observable.map<ThemeId, Theme>({
     "lens-dark": lensDarkTheme,
     "lens-light": lensLightTheme,
   });
@@ -47,14 +47,14 @@ export class ThemeStore extends Singleton {
 
   @computed get activeTheme(): Theme {
     return this.systemTheme
-      ?? this.themes.get(this.activeThemeId)
+      ?? this.#themes.get(this.activeThemeId)
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      ?? this.themes.get(defaultTheme)!;
+      ?? this.#themes.get(defaultTheme)!;
   }
 
   @computed get terminalColors(): [string, string][] {
     const theme = this.terminalThemeId
-      ? this.themes.get(this.terminalThemeId) ?? this.activeTheme
+      ? this.#themes.get(this.terminalThemeId) ?? this.activeTheme
       : this.activeTheme;
 
     return Object
@@ -73,16 +73,13 @@ export class ThemeStore extends Singleton {
     );
   }
 
-  @computed get themeOptions(): SelectOption<string>[] {
-    return Array.from(this.themes).map(([themeId, theme]) => ({
-      label: theme.name,
-      value: themeId,
-    }));
+  get themes() {
+    return this.#themes as ReadonlyDeep<Map<string, Theme>>;
   }
 
   @computed get systemTheme() {
     if (this.activeThemeId == "system" && this.osNativeTheme) {
-      return this.themes.get(`lens-${this.osNativeTheme}`);
+      return this.#themes.get(`lens-${this.osNativeTheme}`);
     }
 
     return null;
@@ -131,7 +128,7 @@ export class ThemeStore extends Singleton {
   }
 
   getThemeById(themeId: ThemeId): Theme | undefined {
-    return this.themes.get(themeId);
+    return this.#themes.get(themeId);
   }
 
   protected applyActiveTheme() {

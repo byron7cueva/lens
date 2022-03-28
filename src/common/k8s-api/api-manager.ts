@@ -22,8 +22,8 @@ export type KubeObjectStoreFrom<A> = A extends KubeApi<infer K, infer D>
   : never;
 
 export class ApiManager {
-  private readonly apis = observable.map<string, KubeApi<KubeObject>>();
-  private readonly stores = observable.map<string, KubeObjectStore<KubeObject, KubeApi<KubeObject>, KubeJsonApiDataFor<KubeObject>>>();
+  private readonly apis = observable.map<string, KubeApi>();
+  private readonly stores = observable.map<string, KubeObjectStore>();
 
   constructor() {
     makeObservable(this);
@@ -56,13 +56,13 @@ export class ApiManager {
     }
   }
 
-  protected resolveApi(api?: string | KubeApi<KubeObject>): KubeApi<KubeObject> | undefined {
+  protected resolveApi(api: undefined | string | KubeApi): KubeApi | undefined {
     if (!api) {
       return undefined;
     }
 
     if (typeof api === "string") {
-      return this.getApi(api) as KubeApi<KubeObject>;
+      return this.getApi(api);
     }
 
     return api;
@@ -93,13 +93,13 @@ export class ApiManager {
     }
   }
 
-  getStore(api: string): KubeObjectStore<KubeObject, KubeApi<KubeObject>, KubeJsonApiDataFor<KubeObject>> | undefined;
+  getStore(api: string): KubeObjectStore | undefined;
   getStore<A>(api: RegisterableApi<A>): KubeObjectStoreFrom<A> | undefined;
   /**
    * @deprecated use an actual cast instead of hiding it with this unused type param
    */
-  getStore<S extends KubeObjectStore<KubeObject, KubeApi<KubeObject>, KubeJsonApiDataFor<KubeObject>>>(api: string | KubeApi<KubeObject>): S | undefined ;
-  getStore(api: string | KubeApi<KubeObject>): KubeObjectStore<KubeObject, KubeApi<KubeObject>, KubeJsonApiDataFor<KubeObject>> | undefined {
+  getStore<S extends KubeObjectStore>(api: string | KubeApi): S | undefined ;
+  getStore(api: string | KubeApi): KubeObjectStore | undefined {
     const { apiBase } = this.resolveApi(api) ?? {};
 
     if (apiBase) {

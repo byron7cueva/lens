@@ -5,10 +5,15 @@
 import { apiManager } from "../../../common/k8s-api/api-manager";
 import { Ingress, IngressApi, ingressApi } from "../../../common/k8s-api/endpoints";
 import { KubeObjectStore } from "../../../common/k8s-api/kube-object.store";
+import { isClusterPageContext } from "../../utils";
 
 export class IngressStore extends KubeObjectStore<Ingress, IngressApi> {
-  api = ingressApi;
 }
 
-export const ingressStore = new IngressStore();
-apiManager.registerStore(ingressStore);
+export const ingressStore = isClusterPageContext()
+  ? new IngressStore(ingressApi)
+  : undefined as never;
+
+if (isClusterPageContext()) {
+  apiManager.registerStore(ingressStore);
+}

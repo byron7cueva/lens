@@ -71,7 +71,7 @@ export class MenuActions extends React.Component<MenuActionsProps> {
     if (isValidElement<HTMLElement>(triggerIcon)) {
       className = cssNames(triggerIcon.props.className, { active: this.isOpen });
 
-      return React.cloneElement(triggerIcon, { id: this.id, className } as any);
+      return React.cloneElement(triggerIcon, { id: this.id, className });
     }
     const iconProps: Partial<IconProps> = {
       id: this.id,

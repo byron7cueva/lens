@@ -6,17 +6,15 @@
 import { action, comparer, computed, IReactionDisposer, makeObservable, reaction } from "mobx";
 import { autoBind, noop, StorageHelper, toggle } from "../../../utils";
 import { KubeObjectStore, KubeObjectStoreLoadingParams } from "../../../../common/k8s-api/kube-object.store";
-import { Namespace, NamespaceApi, namespacesApi } from "../../../../common/k8s-api/endpoints/namespaces.api";
+import { Namespace, NamespaceApi } from "../../../../common/k8s-api/endpoints/namespaces.api";
 
 interface Dependencies {
   storage: StorageHelper<string[] | undefined>;
 }
 
 export class NamespaceStore extends KubeObjectStore<Namespace, NamespaceApi> {
-  api = namespacesApi;
-
-  constructor(private dependencies: Dependencies) {
-    super();
+  constructor(protected readonly dependencies: Dependencies, api: NamespaceApi) {
+    super(api);
     makeObservable(this);
     autoBind(this);
 

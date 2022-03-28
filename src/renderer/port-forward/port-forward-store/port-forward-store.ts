@@ -81,7 +81,7 @@ export class PortForwardStore extends ItemStore<PortForwardItem> {
     const index = this.getIndexById(id);
 
     if (index === -1) {
-      return null;
+      return undefined;
     }
 
     return this.getItems()[index];

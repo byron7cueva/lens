@@ -7,7 +7,7 @@ import { Router } from "./router";
 import parseRequestInjectable from "./parse-request.injectable";
 import type { Route } from "./route";
 
-export const routeInjectionToken = getInjectionToken<Route<any, any>>({
+export const routeInjectionToken = getInjectionToken<Route<unknown, string>>({
   id: "route-injection-token",
 });
 

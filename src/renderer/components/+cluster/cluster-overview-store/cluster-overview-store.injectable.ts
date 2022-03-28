@@ -11,6 +11,7 @@ import {
 } from "./cluster-overview-store";
 import createStorageInjectable from "../../../utils/create-storage/create-storage.injectable";
 import apiManagerInjectable from "../../kube-object-menu/dependencies/api-manager.injectable";
+import { clusterApi } from "../../../../common/k8s-api/endpoints";
 
 const clusterOverviewStoreInjectable = getInjectable({
   id: "cluster-overview-store",
@@ -28,7 +29,7 @@ const clusterOverviewStoreInjectable = getInjectable({
 
     const store = new ClusterOverviewStore({
       storage,
-    });
+    }, clusterApi);
 
     const apiManager = di.inject(apiManagerInjectable);
 

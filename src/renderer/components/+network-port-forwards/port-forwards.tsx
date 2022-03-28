@@ -46,6 +46,10 @@ class NonInjectedPortForwards extends React.Component<PortForwardsProps & Depend
   get selectedPortForward() {
     const { match: { params: { forwardport }}} = this.props;
 
+    if (!forwardport) {
+      return undefined;
+    }
+
     return this.props.portForwardStore.getById(forwardport);
   }
 

@@ -3,11 +3,10 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import type { RouteProps } from "react-router";
-import { buildURL } from "../utils/buildUrl";
+import { buildURL, UrlRouteProps } from "../utils/buildUrl";
 import { helmRoute } from "./helm";
 
-export const helmChartsRoute: RouteProps = {
+export const helmChartsRoute: UrlRouteProps = {
   path: `${helmRoute.path}/charts/:repo?/:chartName?`,
 };
 

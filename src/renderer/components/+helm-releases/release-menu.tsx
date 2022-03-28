@@ -11,8 +11,9 @@ import { MenuItem } from "../menu";
 import { Icon } from "../icon";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import createUpgradeChartTabInjectable from "../dock/upgrade-chart/create-upgrade-chart-tab.injectable";
-import releaseRollbackDialogModelInjectable from "./release-rollback-dialog-model/release-rollback-dialog-model.injectable";
 import deleteReleaseInjectable from "./delete-release/delete-release.injectable";
+import type { OpenHelmReleaseRollbackDialog } from "./dialog/open.injectable";
+import openHelmReleaseRollbackDialogInjectable from "./dialog/open.injectable";
 
 export interface HelmReleaseMenuProps extends MenuActionsProps {
   release: HelmRelease;
@@ -22,7 +23,7 @@ export interface HelmReleaseMenuProps extends MenuActionsProps {
 interface Dependencies {
   deleteRelease: (release: HelmRelease) => Promise<any>;
   createUpgradeChartTab: (release: HelmRelease) => void;
-  openRollbackDialog: (release: HelmRelease) => void;
+  openRollbackDialog: OpenHelmReleaseRollbackDialog;
 }
 
 class NonInjectedHelmReleaseMenu extends React.Component<HelmReleaseMenuProps & Dependencies> {
@@ -83,16 +84,11 @@ class NonInjectedHelmReleaseMenu extends React.Component<HelmReleaseMenuProps & 
   }
 }
 
-export const HelmReleaseMenu = withInjectables<Dependencies, HelmReleaseMenuProps>(
-  NonInjectedHelmReleaseMenu,
-
-  {
-    getProps: (di, props) => ({
-      deleteRelease: di.inject(deleteReleaseInjectable),
-      createUpgradeChartTab: di.inject(createUpgradeChartTabInjectable),
-      openRollbackDialog: di.inject(releaseRollbackDialogModelInjectable).open,
-
-      ...props,
-    }),
-  },
-);
+export const HelmReleaseMenu = withInjectables<Dependencies, HelmReleaseMenuProps>(NonInjectedHelmReleaseMenu, {
+  getProps: (di, props) => ({
+    ...props,
+    deleteRelease: di.inject(deleteReleaseInjectable),
+    createUpgradeChartTab: di.inject(createUpgradeChartTabInjectable),
+    openRollbackDialog: di.inject(openHelmReleaseRollbackDialogInjectable),
+  }),
+});

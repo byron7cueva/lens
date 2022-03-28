@@ -6,13 +6,13 @@
 import styles from "./helm-charts.module.scss";
 
 import React from "react";
-import { computed, observable, makeObservable } from "mobx";
+import { observable, makeObservable } from "mobx";
 
 import { HelmRepo, HelmRepoManager } from "../../../main/helm/helm-repo-manager";
 import { Button } from "../button";
 import { Icon } from "../icon";
 import { Notifications } from "../notifications";
-import { Select, SelectOption } from "../select";
+import { Select } from "../select";
 import { AddHelmRepoDialog } from "./add-helm-repo-dialog";
 import { observer } from "mobx-react";
 import { RemovableItem } from "./removable-item";
@@ -30,13 +30,6 @@ export class HelmCharts extends React.Component {
   constructor(props: {}) {
     super(props);
     makeObservable(this);
-  }
-
-  @computed get options(): SelectOption<HelmRepo>[] {
-    return this.repos.map(repo => ({
-      label: repo.name,
-      value: repo,
-    }));
   }
 
   componentDidMount() {
@@ -92,25 +85,31 @@ export class HelmCharts extends React.Component {
     }
   }
 
-  onRepoSelect = async ({ value: repo }: SelectOption<HelmRepo>): Promise<void> => {
-    const isAdded = this.addedRepos.has(repo.name);
+  onRepoSelect = async (repo: HelmRepo | null): Promise<void> => {
+    if (!repo) {
+      return;
+    }
 
-    if (isAdded) {
-      return void Notifications.ok(<>Helm branch <b>{repo.name}</b> already in use</>);
+    if (this.addedRepos.has(repo.name)) {
+      return void Notifications.ok(<>Helm repo <b>{repo.name}</b> already in use</>);
     }
 
     await this.addRepo(repo);
   };
 
-  formatOptionLabel = ({ value: repo }: SelectOption<HelmRepo>) => {
+  formatOptionLabel = (repo: HelmRepo) => {
     const isAdded = this.addedRepos.has(repo.name);
 
     return (
       <div className="flex gaps">
         <span>{repo.name}</span>
-        {isAdded && <Icon small
-          material="check"
-          className="box right"/>}
+        {isAdded && (
+          <Icon
+            small
+            material="check"
+            className="box right"
+          />
+        )}
       </div>
     );
   };
@@ -152,9 +151,10 @@ export class HelmCharts extends React.Component {
             placeholder="Repositories"
             isLoading={this.loadingAvailableRepos}
             isDisabled={this.loadingAvailableRepos}
-            options={this.options}
+            options={this.repos}
             onChange={this.onRepoSelect}
             formatOptionLabel={this.formatOptionLabel}
+            getOptionLabel={repo => repo.name}
             controlShouldRenderValue={false}
             className="box grow"
             themeName="lens"

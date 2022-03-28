@@ -8,7 +8,7 @@ import { RoleBinding, RoleBindingApi, roleBindingApi, RoleBindingData } from "..
 import type { Subject } from "../../../../common/k8s-api/endpoints/types/subject";
 import { KubeObjectStore } from "../../../../common/k8s-api/kube-object.store";
 import { HashSet, isClusterPageContext } from "../../../utils";
-import { hashRoleBindingSubject } from "./hashers";
+import { hashSubject } from "../hashers";
 
 export class RoleBindingStore extends KubeObjectStore<RoleBinding, RoleBindingApi, RoleBindingData> {
   protected sortItems(items: RoleBinding[]) {
@@ -26,7 +26,7 @@ export class RoleBindingStore extends KubeObjectStore<RoleBinding, RoleBindingAp
   }
 
   async removeSubjects(roleBinding: RoleBinding, subjectsToRemove: Iterable<Subject>) {
-    const currentSubjects = new HashSet(roleBinding.getSubjects(), hashRoleBindingSubject);
+    const currentSubjects = new HashSet(roleBinding.getSubjects(), hashSubject);
 
     for (const subject of subjectsToRemove) {
       currentSubjects.delete(subject);
@@ -36,10 +36,10 @@ export class RoleBindingStore extends KubeObjectStore<RoleBinding, RoleBindingAp
   }
 }
 
-export const roleBindingsStore = isClusterPageContext()
+export const roleBindingStore = isClusterPageContext()
   ? new RoleBindingStore(roleBindingApi)
   : undefined as never;
 
 if (isClusterPageContext()) {
-  apiManager.registerStore(roleBindingsStore);
+  apiManager.registerStore(roleBindingStore);
 }

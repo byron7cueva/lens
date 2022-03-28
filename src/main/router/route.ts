@@ -67,12 +67,12 @@ export interface Route<TResponse, Path extends string> extends BaseRoutePaths<Pa
 }
 
 export interface BindHandler<Path extends string> {
-  <TResponse>(handler: RouteHandler<TResponse, Path>): Route<TResponse, Path>;
+  <TResponse>(handler: RouteHandler<TResponse, Path>): Route<TResponse, string>;
 }
 
 export function route<Path extends string>(parts: BaseRoutePaths<Path>): BindHandler<Path> {
   return (handler) => ({
     ...parts,
     handler,
-  });
+  } as never);
 }

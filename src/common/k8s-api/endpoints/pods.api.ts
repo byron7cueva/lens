@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { IMetrics, metricsApi } from "./metrics.api";
+import { MetricData, metricsApi } from "./metrics.api";
 import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 import { KubeObject, Affinity, Toleration, LocalObjectReference, LabelSelector } from "../kube-object";
@@ -23,7 +23,7 @@ export class PodApi extends KubeApi<Pod> {
   };
 }
 
-export function getMetricsForPods(pods: Pod[], namespace: string, selector = "pod, namespace"): Promise<IPodMetrics> {
+export function getMetricsForPods(pods: Pod[], namespace: string, selector = "pod, namespace"): Promise<PodMetricData> {
   const podSelector = pods.map(pod => pod.getName()).join("|");
   const opts = { category: "pods", pods: podSelector, namespace, selector };
 
@@ -44,18 +44,18 @@ export function getMetricsForPods(pods: Pod[], namespace: string, selector = "po
   });
 }
 
-export interface IPodMetrics extends Partial<Record<string, IMetrics>> {
-  cpuUsage: IMetrics;
-  memoryUsage: IMetrics;
-  fsUsage: IMetrics;
-  fsWrites: IMetrics;
-  fsReads: IMetrics;
-  networkReceive: IMetrics;
-  networkTransmit: IMetrics;
-  cpuRequests?: IMetrics;
-  cpuLimits?: IMetrics;
-  memoryRequests?: IMetrics;
-  memoryLimits?: IMetrics;
+export interface PodMetricData extends Partial<Record<string, MetricData>> {
+  cpuUsage: MetricData;
+  memoryUsage: MetricData;
+  fsUsage: MetricData;
+  fsWrites: MetricData;
+  fsReads: MetricData;
+  networkReceive: MetricData;
+  networkTransmit: MetricData;
+  cpuRequests?: MetricData;
+  cpuLimits?: MetricData;
+  memoryRequests?: MetricData;
+  memoryLimits?: MetricData;
 }
 
 // Reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#read-log-pod-v1-core

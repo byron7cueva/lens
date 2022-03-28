@@ -99,7 +99,7 @@ describe("protocol router tests", () => {
     });
 
     extensionLoader.instances.set(extId, ext);
-    (extensionsStore as any).state.set(extId, { enabled: true, name: "@mirantis/minikube" });
+    extensionsStore.mergeState([[extId, { enabled: true, name: "@mirantis/minikube" }]]);
 
     lpr.addInternalHandler("/", noop);
 
@@ -178,7 +178,7 @@ describe("protocol router tests", () => {
       });
 
     extensionLoader.instances.set(extId, ext);
-    (extensionsStore as any).state.set(extId, { enabled: true, name: "@foobar/icecream" });
+    extensionsStore.mergeState([[extId, { enabled: true, name: "@foobar/icecream" }]]);
 
     try {
       expect(await lpr.route("lens://extension/@foobar/icecream/page/foob")).toBeUndefined();
@@ -216,7 +216,7 @@ describe("protocol router tests", () => {
         });
 
       extensionLoader.instances.set(extId, ext);
-      (extensionsStore as any).state.set(extId, { enabled: true, name: "@foobar/icecream" });
+      extensionsStore.mergeState([[extId, { enabled: true, name: "@foobar/icecream" }]]);
     }
 
     {
@@ -241,11 +241,13 @@ describe("protocol router tests", () => {
         });
 
       extensionLoader.instances.set(extId, ext);
-      (extensionsStore as any).state.set(extId, { enabled: true, name: "icecream" });
+      extensionsStore.mergeState([[extId, { enabled: true, name: "icecream" }]]);
     }
 
-    (extensionsStore as any).state.set("@foobar/icecream", { enabled: true, name: "@foobar/icecream" });
-    (extensionsStore as any).state.set("icecream", { enabled: true, name: "icecream" });
+    extensionsStore.mergeState([
+      ["@foobar/icecream", { enabled: true, name: "@foobar/icecream" }],
+      ["icecream", { enabled: true, name: "icecream" }],
+    ]);
 
     try {
       expect(await lpr.route("lens://extension/icecream/page")).toBeUndefined();

@@ -28,7 +28,7 @@ interface RuleGroup {
 
 @observer
 export class PodSecurityPolicyDetails extends React.Component<PodSecurityPolicyDetailsProps> {
-  renderRuleGroup( title: React.ReactNode, group: RuleGroup) {
+  renderRuleGroup(title: React.ReactNode, group: RuleGroup | undefined) {
     if (!group) return null;
     const { rule, ranges } = group;
 

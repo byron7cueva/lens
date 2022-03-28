@@ -35,7 +35,7 @@ export class EditResourceTabStore extends DockTabStore<EditingResource> {
     return super.isReady(tabId) && Boolean(this.getResource(tabId)); // ready to edit resource
   }
 
-  getStore(tabId: TabId): KubeObjectStore<KubeObject> | undefined {
+  getStore(tabId: TabId): KubeObjectStore | undefined {
     const apiPath = this.getResourcePath(tabId);
 
     return apiPath

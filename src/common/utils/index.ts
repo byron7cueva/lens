@@ -50,6 +50,7 @@ import * as tuple from "./tuple";
 import * as base64 from "./base64";
 import * as object from "./objects";
 import * as json from "./json";
+import * as string from "./string";
 
 export {
   iter,
@@ -58,4 +59,5 @@ export {
   base64,
   object,
   json,
+  string,
 };

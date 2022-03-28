@@ -49,8 +49,8 @@ export class AddClusterRoleDialog extends React.Component<AddClusterRoleDialogPr
       showDetails(role.selfLink);
       this.reset();
       AddClusterRoleDialog.close();
-    } catch (err) {
-      Notifications.error(err.toString());
+    } catch (error) {
+      Notifications.checkedError(error, "Unknown error occured while creating the role");
     }
   };
 

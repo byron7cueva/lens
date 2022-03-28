@@ -125,6 +125,6 @@ describe("parseApi unit tests", () => {
   });
 
   it.each(throwtests)("testing %j should throw", (url) => {
-    expect(() => parseKubeApi(url as any)).toThrowError("invalid apiPath");
+    expect(() => parseKubeApi(url as never)).toThrowError("invalid apiPath");
   });
 });

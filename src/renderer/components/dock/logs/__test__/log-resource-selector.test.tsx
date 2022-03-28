@@ -6,7 +6,6 @@
 import React from "react";
 import "@testing-library/jest-dom/extend-expect";
 import * as selectEvent from "react-select-event";
-import { Pod } from "../../../../../common/k8s-api/endpoints";
 import { LogResourceSelector } from "../resource-selector";
 import { dockerPod, deploymentPod1, deploymentPod2 } from "./pod.mock";
 import { ThemeStore } from "../../../../theme.store";
@@ -63,7 +62,7 @@ function mockLogTabViewModel(tabId: TabId, deps: Partial<LogTabViewModelDependen
 }
 
 const getOnePodViewModel = (tabId: TabId, deps: Partial<LogTabViewModelDependencies> = {}): LogTabViewModel => {
-  const selectedPod = new Pod(dockerPod);
+  const selectedPod = dockerPod;
 
   return mockLogTabViewModel(tabId, {
     getLogTabData: () => ({
@@ -85,8 +84,8 @@ const getOnePodViewModel = (tabId: TabId, deps: Partial<LogTabViewModelDependenc
 };
 
 const getFewPodsTabData = (tabId: TabId, deps: Partial<LogTabViewModelDependencies> = {}): LogTabViewModel => {
-  const selectedPod = new Pod(deploymentPod1);
-  const anotherPod = new Pod(deploymentPod2);
+  const selectedPod = deploymentPod1;
+  const anotherPod = deploymentPod2;
 
   return mockLogTabViewModel(tabId, {
     getLogTabData: () => ({

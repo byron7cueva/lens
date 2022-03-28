@@ -51,7 +51,7 @@ interface SubPageTest {
 type CommonPageTest = TopPageTest | SubPageTest;
 
 function isTopPageTest(test: CommonPageTest): test is TopPageTest {
-  return typeof (test as any).page === "object";
+  return typeof (test as TopPageTest).page === "object";
 }
 
 const commonPageTests: CommonPageTest[] = [{

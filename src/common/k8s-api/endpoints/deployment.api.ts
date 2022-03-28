@@ -7,7 +7,7 @@ import moment from "moment";
 
 import { DerivedKubeApiOptions, KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { IPodMetrics, PodSpec } from "./pods.api";
+import type { PodMetrics, PodSpec } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 import { KubeObject, KubeObjectStatus, LabelSelector } from "../kube-object";
 import { hasTypedProperty, isNumber, isObject } from "../../utils";
@@ -69,7 +69,7 @@ export class DeploymentApi extends KubeApi<Deployment> {
   }
 }
 
-export function getMetricsForDeployments(deployments: Deployment[], namespace: string, selector = ""): Promise<IPodMetrics> {
+export function getMetricsForDeployments(deployments: Deployment[], namespace: string, selector = ""): Promise<PodMetrics> {
   const podSelector = deployments.map(deployment => `${deployment.getName()}-[[:alnum:]]{9,}-[[:alnum:]]{5}`).join("|");
   const opts = { category: "pods", pods: podSelector, namespace, selector };
 

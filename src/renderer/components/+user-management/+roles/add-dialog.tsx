@@ -54,7 +54,7 @@ export class AddRoleDialog extends React.Component<AddRoleDialogProps> {
       this.reset();
       AddRoleDialog.close();
     } catch (err) {
-      Notifications.error(err.toString());
+      Notifications.checkedError(err, "Unknown error occured while creating role");
     }
   };
 
@@ -88,7 +88,7 @@ export class AddRoleDialog extends React.Component<AddRoleDialogProps> {
             <NamespaceSelect
               themeName="light"
               value={this.namespace}
-              onChange={({ value }) => this.namespace = value}
+              onChange={namespace => this.namespace = namespace ?? "default"}
             />
           </WizardStep>
         </Wizard>

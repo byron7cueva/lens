@@ -4,11 +4,14 @@
  */
 
 import React from "react";
-import type { KubeObject } from "../../../common/k8s-api/kube-object";
 import { ReactiveDuration } from "../duration/reactive-duration";
 
 export interface KubeObjectAgeProps {
-  object: KubeObject;
+  object: {
+    metadata: {
+      creationTimestamp?: string;
+    };
+  };
 
   /**
    * Whether the display string should prefer length over precision

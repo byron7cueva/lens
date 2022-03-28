@@ -4,7 +4,7 @@
  */
 import { getInjectable } from "@ogre-tools/injectable";
 import {
-  IReleaseUpdatePayload,
+  HelmReleaseUpdatePayload,
   updateRelease,
 } from "../../../../common/k8s-api/endpoints/helm-releases.api";
 import releasesInjectable from "../releases.injectable";
@@ -18,7 +18,7 @@ const updateReleaseInjectable = getInjectable({
     return async (
       name: string,
       namespace: string,
-      payload: IReleaseUpdatePayload,
+      payload: HelmReleaseUpdatePayload,
     ) => {
       const result = await updateRelease(name, namespace, payload);
 

@@ -39,7 +39,16 @@ export class HelmChartStore extends ItemStore<HelmChart> {
     }
   }
 
-  getByName(name: string, repo: string) {
+  getByName(name: string, repo?: string) {
+    if (typeof repo !== "string") {
+      /**
+       * FIXME:
+       * This is here because in strict mode `getByName` MUST be 100% compatiable if called in the
+       * situation where it is only a "ItemStore"
+       */
+      throw new TypeError("repo must be provided");
+    }
+
     return this.items.find(chart => chart.getName() === name && chart.getRepository() === repo);
   }
 
@@ -51,7 +60,7 @@ export class HelmChartStore extends ItemStore<HelmChart> {
   };
 
   async getVersions(chartName: string, force?: boolean): Promise<IChartVersion[]> {
-    let versions = this.versions.get(chartName);
+    const versions = this.versions.get(chartName);
 
     if (versions && !force) {
       return versions;
@@ -73,13 +82,13 @@ export class HelmChartStore extends ItemStore<HelmChart> {
       .filter(chart => chart.getName() === chartName)
       .map(chart => chart.getRepository());
 
-    versions = await Promise.all(repos.map(loadVersions))
+    const newVersions = await Promise.all(repos.map(loadVersions))
       .then(flatten)
       .then(this.sortVersions);
 
-    this.versions.set(chartName, versions);
+    this.versions.set(chartName, newVersions);
 
-    return versions;
+    return newVersions;
   }
 
   reset() {

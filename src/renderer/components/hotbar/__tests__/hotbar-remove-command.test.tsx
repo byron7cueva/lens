@@ -18,11 +18,11 @@ import { UserStore } from "../../../../common/user-store";
 import mockFs from "mock-fs";
 import directoryForUserDataInjectable from "../../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 
-const mockHotbars: { [id: string]: any } = {
+const mockHotbars: Partial<Record<string, any>> = {
   "1": {
     id: "1",
     name: "Default",
-    items: [] as any,
+    items: [],
   },
 };
 
@@ -64,7 +64,7 @@ describe("<HotbarRemoveCommand />", () => {
       },
       hotbarIndex: () => 0,
       getDisplayLabel: () => "1: Default",
-    }) as any as HotbarStore);
+    }) as unknown as HotbarStore);
 
     await di.runSetups();
 
@@ -82,7 +82,7 @@ describe("<HotbarRemoveCommand />", () => {
       remove: removeMock,
       hotbarIndex: () => 0,
       getDisplayLabel: () => "1: Default",
-    }) as any as HotbarStore);
+    }) as unknown as HotbarStore);
 
     await di.runSetups();
 

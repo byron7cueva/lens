@@ -16,7 +16,7 @@ import { PodDetailsAffinities } from "../+workloads-pods/pod-details-affinities"
 import { podsStore } from "../+workloads-pods/pods.store";
 import { statefulSetStore } from "./statefulset.store";
 import type { KubeObjectDetailsProps } from "../kube-object-details";
-import { getMetricsForStatefulSets, type IPodMetrics, StatefulSet } from "../../../common/k8s-api/endpoints";
+import { getMetricsForStatefulSets, type PodMetrics, StatefulSet } from "../../../common/k8s-api/endpoints";
 import { ResourceMetrics, ResourceMetricsText } from "../resource-metrics";
 import { PodCharts, podMetricTabs } from "../+workloads-pods/pod-charts";
 import { PodDetailsList } from "../+workloads-pods/pod-details-list";
@@ -38,7 +38,7 @@ interface Dependencies {
 
 @observer
 class NonInjectedStatefulSetDetails extends React.Component<StatefulSetDetailsProps & Dependencies> {
-  @observable metrics: IPodMetrics | null = null;
+  @observable metrics: PodMetrics | null = null;
 
   constructor(props: StatefulSetDetailsProps & Dependencies) {
     super(props);

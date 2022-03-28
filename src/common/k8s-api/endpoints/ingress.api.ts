@@ -4,7 +4,7 @@
  */
 
 import { KubeObject } from "../kube-object";
-import { IMetrics, metricsApi } from "./metrics.api";
+import { MetricData, metricsApi } from "./metrics.api";
 import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 import type { RequireExactlyOne } from "type-fest";
@@ -21,7 +21,7 @@ export class IngressApi extends KubeApi<Ingress> {
   }
 }
 
-export function getMetricsForIngress(ingress: string, namespace: string): Promise<IIngressMetrics> {
+export function getMetricsForIngress(ingress: string, namespace: string): Promise<IngressMetricData> {
   const opts = { category: "ingress", ingress, namespace };
 
   return metricsApi.getMetrics({
@@ -34,12 +34,11 @@ export function getMetricsForIngress(ingress: string, namespace: string): Promis
   });
 }
 
-export interface IIngressMetrics<T = IMetrics> {
-  [metric: string]: T;
-  bytesSentSuccess: T;
-  bytesSentFailure: T;
-  requestDurationSeconds: T;
-  responseDurationSeconds: T;
+export interface IngressMetricData extends Partial<Record<string, MetricData>> {
+  bytesSentSuccess: MetricData;
+  bytesSentFailure: MetricData;
+  requestDurationSeconds: MetricData;
+  responseDurationSeconds: MetricData;
 }
 
 export interface ILoadBalancerIngress {

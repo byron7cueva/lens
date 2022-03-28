@@ -10,7 +10,7 @@ import { computed, makeObservable, observable, reaction } from "mobx";
 import { disposeOnUnmount, observer } from "mobx-react";
 import { DrawerItem } from "../drawer";
 import { boundMethod, cssNames } from "../../utils";
-import { getMetricsForNamespace, type IPodMetrics, Namespace } from "../../../common/k8s-api/endpoints";
+import { getMetricsForNamespace, type PodMetrics, Namespace } from "../../../common/k8s-api/endpoints";
 import type { KubeObjectDetailsProps } from "../kube-object-details";
 import { Link } from "react-router-dom";
 import { Spinner } from "../spinner";
@@ -37,7 +37,7 @@ interface Dependencies {
 
 @observer
 class NonInjectedNamespaceDetails extends React.Component<NamespaceDetailsProps & Dependencies> {
-  @observable metrics: IPodMetrics | null = null;
+  @observable metrics: PodMetrics | null = null;
 
   constructor(props: NamespaceDetailsProps & Dependencies) {
     super(props);

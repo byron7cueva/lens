@@ -5,7 +5,7 @@
 
 import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { IPodMetrics } from "./pods.api";
+import type { PodMetrics } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 import { KubeObject, LabelSelector } from "../kube-object";
 import type { PodTemplateSpec } from "./types/pod-template-spec";
@@ -45,7 +45,7 @@ export class StatefulSetApi extends KubeApi<StatefulSet> {
   }
 }
 
-export function getMetricsForStatefulSets(statefulSets: StatefulSet[], namespace: string, selector = ""): Promise<IPodMetrics> {
+export function getMetricsForStatefulSets(statefulSets: StatefulSet[], namespace: string, selector = ""): Promise<PodMetrics> {
   const podSelector = statefulSets.map(statefulset => `${statefulset.getName()}-[[:digit:]]+`).join("|");
   const opts = { category: "pods", pods: podSelector, namespace, selector };
 

@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { stat } from "fs/promises";
 import { Notifications } from "../../../notifications";
 import type { Stats } from "fs";
+import type { Cluster } from "../../../../../common/cluster/cluster";
 
 const mockStat = stat as jest.MockedFunction<typeof stat>;
 
@@ -29,7 +30,7 @@ describe("ClusterLocalTerminalSettings", () => {
   });
 
   it("should render without errors", () => {
-    const dom = render(<ClusterLocalTerminalSetting cluster={null as any}/>);
+    const dom = render(<ClusterLocalTerminalSetting cluster={null as never}/>);
 
     expect(dom.container).toBeInstanceOf(HTMLElement);
   });
@@ -43,7 +44,7 @@ describe("ClusterLocalTerminalSettings", () => {
       getKubeconfig: jest.fn(() => ({
         getContextObject: jest.fn(() => ({})),
       })),
-    } as any;
+    } as unknown as Cluster;
     const dom = render(<ClusterLocalTerminalSetting cluster={cluster}/>);
 
     expect(await dom.findByDisplayValue("/foobar")).toBeDefined();
@@ -60,7 +61,7 @@ describe("ClusterLocalTerminalSettings", () => {
           namespace: "blat",
         })),
       })),
-    } as any;
+    } as unknown as Cluster;
     const dom = render(<ClusterLocalTerminalSetting cluster={cluster}/>);
 
     expect(await dom.findByDisplayValue("/foobar")).toBeDefined();
@@ -75,7 +76,7 @@ describe("ClusterLocalTerminalSettings", () => {
       getKubeconfig: jest.fn(() => ({
         getContextObject: jest.fn(() => ({})),
       })),
-    } as any;
+    } as unknown as Cluster;
 
     const dom = render(<ClusterLocalTerminalSetting cluster={cluster}/>);
     const dn = await dom.findByTestId("default-namespace");
@@ -100,7 +101,7 @@ describe("ClusterLocalTerminalSettings", () => {
       getKubeconfig: jest.fn(() => ({
         getContextObject: jest.fn(() => ({})),
       })),
-    } as any;
+    } as unknown as Cluster;
 
     const dom = render(<ClusterLocalTerminalSetting cluster={cluster}/>);
     const dn = await dom.findByTestId("working-directory");
@@ -126,7 +127,7 @@ describe("ClusterLocalTerminalSettings", () => {
       getKubeconfig: jest.fn(() => ({
         getContextObject: jest.fn(() => ({})),
       })),
-    } as any;
+    } as unknown as Cluster;
 
     const dom = render(<ClusterLocalTerminalSetting cluster={cluster}/>);
     const dn = await dom.findByTestId("working-directory");

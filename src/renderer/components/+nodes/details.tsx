@@ -14,7 +14,7 @@ import { Badge } from "../badge";
 import { ResourceMetrics } from "../resource-metrics";
 import { podsStore } from "../+workloads-pods/pods.store";
 import type { KubeObjectDetailsProps } from "../kube-object-details";
-import { formatNodeTaint, getMetricsByNodeNames, IClusterMetrics, Node } from "../../../common/k8s-api/endpoints";
+import { formatNodeTaint, getMetricsByNodeNames, ClusterMetricData, Node } from "../../../common/k8s-api/endpoints";
 import { NodeCharts } from "./node-charts";
 import { makeObservable, observable, reaction } from "mobx";
 import { PodDetailsList } from "../+workloads-pods/pod-details-list";
@@ -38,7 +38,7 @@ interface Dependencies {
 
 @observer
 class NonInjectedNodeDetails extends React.Component<NodeDetailsProps & Dependencies> {
-  @observable metrics: Partial<IClusterMetrics> | null = null;
+  @observable metrics: Partial<ClusterMetricData> | null = null;
 
   constructor(props: NodeDetailsProps & Dependencies) {
     super(props);
@@ -77,8 +77,7 @@ class NonInjectedNodeDetails extends React.Component<NodeDetailsProps & Dependen
       return null;
     }
 
-    const { status } = node;
-    const { nodeInfo, addresses } = status;
+    const { nodeInfo, addresses } = node.status ?? {};
     const conditions = node.getActiveConditions();
     const taints = node.getTaints();
     const childPods = podsStore.getPodsByNode(node.getName());

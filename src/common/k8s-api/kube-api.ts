@@ -22,6 +22,7 @@ import type AbortController from "abort-controller";
 import { Agent, AgentOptions } from "https";
 import type { Patch } from "rfc6902";
 import assert from "assert";
+import type { PartialDeep } from "type-fest";
 
 /**
  * The options used for creating a `KubeApi`
@@ -140,12 +141,6 @@ export type PropagationPolicy = undefined | "Orphan" | "Foreground" | "Backgroun
  * @deprecated
  */
 export interface IKubeApiCluster extends ILocalKubeApiConfig { }
-
-export type PartialKubeObject<T> = T extends { metadata: infer Metadata }
-  ? Partial<Omit<T, "metadata">> & {
-    metadata?: Partial<Metadata>;
-  }
-  : never;
 
 export interface IRemoteKubeApiConfig {
   cluster: {
@@ -297,7 +292,10 @@ export interface DeleteResourceDescriptor extends ResourceDescriptor {
   propagationPolicy?: PropagationPolicy;
 }
 
-export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data extends KubeJsonApiDataFor<K> = KubeJsonApiDataFor<K>> {
+export class KubeApi<
+  K extends KubeObject = KubeObject,
+  D extends KubeJsonApiDataFor<K> = KubeJsonApiDataFor<K>,
+> {
   readonly kind: string;
   readonly apiVersion: string;
   apiBase: string;
@@ -307,7 +305,7 @@ export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data exten
   readonly apiResource: string;
   readonly isNamespaced: boolean;
 
-  public readonly objectConstructor: KubeObjectConstructor<K, Data> & Required<KubeObjectConstructorData>;
+  public readonly objectConstructor: KubeObjectConstructor<K, D> & Required<KubeObjectConstructorData>;
   protected readonly request: KubeJsonApi;
   protected readonly resourceVersions = new Map<string, string>();
   protected readonly watchDisposer: Disposer | undefined;
@@ -324,7 +322,7 @@ export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data exten
     apiBase: fullApiPathname = objectConstructor.apiBase,
     checkPreferredVersion: doCheckPreferredVersion = false,
     fallbackApiBases,
-  }: IKubeApiOptions<K, Data>) {
+  }: IKubeApiOptions<K, D>) {
     assert(fullApiPathname);
 
     const { apiBase, apiPrefix, apiGroup, apiVersion, resource } = parseKubeApi(fullApiPathname);
@@ -350,7 +348,7 @@ export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data exten
     });
 
     this.parseResponse = this.parseResponse.bind(this);
-    apiManager.registerApi<KubeApi<K, Data>>(apiBase, this);
+    apiManager.registerApi<KubeApi<K, D>>(apiBase, this);
   }
 
   get apiVersionWithGroup() {
@@ -431,7 +429,7 @@ export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data exten
 
       if (this.apiVersionPreferred) {
         this.apiBase = this.computeApiBase();
-        apiManager.registerApi<KubeApi<K, Data>>(this.apiBase, this);
+        apiManager.registerApi<KubeApi<K, D>>(this.apiBase, this);
       }
     }
   }
@@ -500,7 +498,7 @@ export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data exten
           }
 
           const object = new KubeObjectConstructor({
-            ...(item as Data),
+            ...(item as D),
             kind: this.kind,
             apiVersion,
           });
@@ -571,7 +569,7 @@ export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data exten
     return parsed;
   }
 
-  async create({ name, namespace }: Partial<ResourceDescriptor>, data?: PartialKubeObject<K>): Promise<K | null> {
+  async create({ name, namespace }: Partial<ResourceDescriptor>, data?: PartialDeep<K>): Promise<K | null> {
     await this.checkPreferredVersion();
 
     const apiUrl = this.getUrl({ namespace });
@@ -594,7 +592,7 @@ export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data exten
     return parsed;
   }
 
-  async update({ name, namespace }: ResourceDescriptor, data: PartialKubeObject<K>): Promise<K | null> {
+  async update({ name, namespace }: ResourceDescriptor, data: PartialDeep<K>): Promise<K | null> {
     await this.checkPreferredVersion();
     const apiUrl = this.getUrl({ namespace, name });
 
@@ -615,7 +613,7 @@ export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data exten
     return parsed;
   }
 
-  async patch(desc: ResourceDescriptor, data?: PartialKubeObject<K> | Patch, strategy: KubeApiPatchType = "strategic"): Promise<K | null> {
+  async patch(desc: ResourceDescriptor, data?: PartialDeep<K> | Patch, strategy: KubeApiPatchType = "strategic"): Promise<K | null> {
     await this.checkPreferredVersion();
     const apiUrl = this.getUrl(desc);
 
@@ -652,7 +650,7 @@ export class KubeApi<K extends KubeObject<any, any, KubeObjectScope>, Data exten
     });
   }
 
-  watch(opts: KubeApiWatchOptions<K, Data> = { namespace: "", retry: false }): () => void {
+  watch(opts: KubeApiWatchOptions<K, D> = { namespace: "", retry: false }): () => void {
     let errorReceived = false;
     let timedRetry: NodeJS.Timeout;
     const { namespace, callback = noop, retry, timeout } = opts;

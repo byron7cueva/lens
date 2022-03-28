@@ -12,6 +12,7 @@ import merge from "lodash/merge";
 import { SemVer } from "semver";
 import { defaultTheme, defaultEditorFontFamily, defaultFontSize, defaultTerminalFontFamily } from "../vars";
 import { observable, ObservableMap } from "mobx";
+import { readonly } from "../utils/readonly";
 
 export interface KubeconfigSyncEntry extends KubeconfigSyncValue {
   filePath: string;
@@ -29,8 +30,11 @@ export const defaultTerminalConfig: TerminalConfig = {
   fontFamily: defaultTerminalFontFamily,
 };
 
-export type EditorConfiguration = Pick<editor.IStandaloneEditorConstructionOptions,
-  "minimap" | "tabSize" | "lineNumbers" | "fontSize" | "fontFamily">;
+interface BaseEditorConfiguration extends Required<Pick<editor.IStandaloneEditorConstructionOptions, "minimap" | "tabSize" | "fontSize" | "fontFamily">> {
+  lineNumbers: NonNullable<Exclude<editor.IStandaloneEditorConstructionOptions["lineNumbers"], Function>>;
+}
+
+export type EditorConfiguration = Required<BaseEditorConfiguration>;
 
 export const defaultEditorConfig: EditorConfiguration = {
   tabSize: 2,
@@ -92,12 +96,14 @@ const terminalTheme: PreferenceDescription<string | undefined> = {
   },
 };
 
+export const defaultLocaleTimezone = "UTC";
+
 const localeTimezone: PreferenceDescription<string> = {
   fromStore(val) {
-    return val || moment.tz.guess(true) || "UTC";
+    return val || moment.tz.guess(true) || defaultLocaleTimezone;
   },
   toStore(val) {
-    if (!val || val === moment.tz.guess(true) || val === "UTC") {
+    if (!val || val === moment.tz.guess(true) || val === defaultLocaleTimezone) {
       return undefined;
     }
 
@@ -284,7 +290,7 @@ const syncKubeconfigEntries: PreferenceDescription<KubeconfigSyncEntry[], Observ
   },
 };
 
-const editorConfiguration: PreferenceDescription<EditorConfiguration, EditorConfiguration> = {
+const editorConfiguration: PreferenceDescription<Partial<EditorConfiguration> | undefined, EditorConfiguration> = {
   fromStore(val) {
     return merge(defaultEditorConfig, val);
   },
@@ -306,7 +312,7 @@ export interface UpdateChannelInfo {
   label: string;
 }
 
-const updateChannels = new Map<string, UpdateChannelInfo>([
+export const updateChannels = readonly(new Map<string, UpdateChannelInfo>([
   ["latest", {
     label: "Stable",
   }],
@@ -316,8 +322,8 @@ const updateChannels = new Map<string, UpdateChannelInfo>([
   ["alpha", {
     label: "Alpha",
   }],
-]);
-const defaultUpdateChannel = new SemVer(getAppVersion()).prerelease[0]?.toString() || "latest";
+]));
+export const defaultUpdateChannel = new SemVer(getAppVersion()).prerelease[0]?.toString() || "latest";
 
 const updateChannel: PreferenceDescription<string> = {
   fromStore(val) {
@@ -334,29 +340,27 @@ const updateChannel: PreferenceDescription<string> = {
   },
 };
 
-export enum ExtensionRegistryLocation {
-  DEFAULT = "default",
-  NPMRC = "npmrc",
-  CUSTOM = "custom",
-}
+export type ExtensionRegistryLocation = "default" | "npmrc" | "custom";
+
 export type ExtensionRegistry = {
-  location: ExtensionRegistryLocation.DEFAULT | ExtensionRegistryLocation.NPMRC;
+  location: "default" | "npmrc";
   customUrl?: undefined;
 } | {
-  location: ExtensionRegistryLocation.CUSTOM;
+  location: "custom";
   customUrl: string;
 };
 
+export const defaultExtensionRegistryUrlLocation = "default";
 export const defaultExtensionRegistryUrl = "https://registry.npmjs.org";
 
 const extensionRegistryUrl: PreferenceDescription<ExtensionRegistry> = {
   fromStore(val) {
     return val ?? {
-      location: ExtensionRegistryLocation.DEFAULT,
+      location: defaultExtensionRegistryUrlLocation,
     };
   },
   toStore(val) {
-    if (val.location === ExtensionRegistryLocation.DEFAULT) {
+    if (val.location === defaultExtensionRegistryUrlLocation) {
       return undefined;
     }
 
@@ -396,8 +400,4 @@ export const DESCRIPTORS = {
   terminalConfig,
   updateChannel,
   extensionRegistryUrl,
-};
-
-export const CONSTANTS = {
-  updateChannels,
 };

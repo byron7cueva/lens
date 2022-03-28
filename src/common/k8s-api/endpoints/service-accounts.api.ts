@@ -14,7 +14,7 @@ export interface ServiceAccountData extends KubeJsonApiData<KubeObjectMetadata<"
   secrets?: ObjectReference[];
 }
 
-export class ServiceAccount extends KubeObject<KubeObjectMetadata<"namespace-scoped">, void, void, "namespace-scoped"> {
+export class ServiceAccount extends KubeObject<void, void, "namespace-scoped"> {
   static readonly kind = "ServiceAccount";
   static readonly namespaced = true;
   static readonly apiBase = "/api/v1/serviceaccounts";

@@ -5,7 +5,7 @@
 
 import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { metricsApi } from "./metrics.api";
-import type { IPodMetrics } from "./pods.api";
+import type { PodMetrics } from "./pods.api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 import { KubeObject, KubeObjectStatus, LabelSelector } from "../kube-object";
 import type { PodTemplateSpec } from "./types/pod-template-spec";
@@ -86,7 +86,7 @@ export class DaemonSetApi extends KubeApi<DaemonSet> {
   }
 }
 
-export function getMetricsForDaemonSets(daemonsets: DaemonSet[], namespace: string, selector = ""): Promise<IPodMetrics> {
+export function getMetricsForDaemonSets(daemonsets: DaemonSet[], namespace: string, selector = ""): Promise<PodMetrics> {
   const podSelector = daemonsets.map(daemonset => `${daemonset.getName()}-[[:alnum:]]{5}`).join("|");
   const opts = { category: "pods", pods: podSelector, namespace, selector };
 

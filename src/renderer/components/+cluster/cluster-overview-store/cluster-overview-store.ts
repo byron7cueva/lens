@@ -5,7 +5,7 @@
 
 import { action, observable, reaction, when, makeObservable } from "mobx";
 import { KubeObjectStore } from "../../../../common/k8s-api/kube-object.store";
-import { Cluster, ClusterApi, clusterApi, getMetricsByNodeNames, type IClusterMetrics } from "../../../../common/k8s-api/endpoints";
+import { Cluster, ClusterApi, getMetricsByNodeNames, type ClusterMetricData } from "../../../../common/k8s-api/endpoints";
 import { autoBind, StorageHelper } from "../../../utils";
 import { type IMetricsReqParams, normalizeMetrics } from "../../../../common/k8s-api/endpoints/metrics.api";
 import { nodesStore } from "../../+nodes/nodes.store";
@@ -30,9 +30,7 @@ interface Dependencies {
 }
 
 export class ClusterOverviewStore extends KubeObjectStore<Cluster, ClusterApi> implements ClusterOverviewStorageState {
-  api = clusterApi;
-
-  @observable metrics: Partial<IClusterMetrics> = {};
+  @observable metrics: Partial<ClusterMetricData> = {};
   @observable metricsLoaded = false;
 
   get metricType(): MetricType {
@@ -51,8 +49,8 @@ export class ClusterOverviewStore extends KubeObjectStore<Cluster, ClusterApi> i
     this.dependencies.storage.merge({ metricNodeRole: value });
   }
 
-  constructor(private dependencies: Dependencies ) {
-    super();
+  constructor(protected readonly dependencies: Dependencies, api: ClusterApi) {
+    super(api);
     makeObservable(this);
     autoBind(this);
 
@@ -87,7 +85,7 @@ export class ClusterOverviewStore extends KubeObjectStore<Cluster, ClusterApi> i
     this.metricsLoaded = true;
   }
 
-  getMetricsValues(source: Partial<IClusterMetrics>): [number, string][] {
+  getMetricsValues(source: Partial<ClusterMetricData>): [number, string][] {
     switch (this.metricType) {
       case MetricType.CPU:
         return normalizeMetrics(source.cpuUsage).data.result[0].values;

@@ -95,7 +95,7 @@ export class Endpoints extends KubeObject<void, void, "namespace-scoped"> {
     }));
   }
 
-  getEndpointSubsets(): EndpointSubset[] {
+  getEndpointSubsets() {
     return this.subsets;
   }
 

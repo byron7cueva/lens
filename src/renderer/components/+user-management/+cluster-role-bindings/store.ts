@@ -7,10 +7,10 @@ import { apiManager } from "../../../../common/k8s-api/api-manager";
 import { ClusterRoleBinding, ClusterRoleBindingApi, clusterRoleBindingApi, ClusterRoleBindingData } from "../../../../common/k8s-api/endpoints";
 import type { Subject } from "../../../../common/k8s-api/endpoints/types/subject";
 import { KubeObjectStore } from "../../../../common/k8s-api/kube-object.store";
-import { HashSet } from "../../../utils";
+import { HashSet, isClusterPageContext } from "../../../utils";
 import { hashClusterRoleBindingSubject } from "./hashers";
 
-export class ClusterRoleBindingsStore extends KubeObjectStore<ClusterRoleBinding, ClusterRoleBindingApi, ClusterRoleBindingData> {
+export class ClusterRoleBindingStore extends KubeObjectStore<ClusterRoleBinding, ClusterRoleBindingApi, ClusterRoleBindingData> {
   protected sortItems(items: ClusterRoleBinding[]) {
     return super.sortItems(items, [
       clusterRoleBinding => clusterRoleBinding.kind,
@@ -36,5 +36,11 @@ export class ClusterRoleBindingsStore extends KubeObjectStore<ClusterRoleBinding
   }
 }
 
-export const clusterRoleBindingsStore = new ClusterRoleBindingsStore(clusterRoleBindingApi);
-apiManager.registerStore(clusterRoleBindingsStore);
+export const clusterRoleBindingStore = isClusterPageContext()
+  ? new ClusterRoleBindingStore(clusterRoleBindingApi)
+  : undefined as never;
+
+if (isClusterPageContext()) {
+  apiManager.registerStore(clusterRoleBindingStore);
+}
+

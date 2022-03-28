@@ -14,7 +14,7 @@ import { Badge } from "../badge";
 import { ContainerEnvironment } from "./pod-container-env";
 import { PodContainerPort } from "./pod-container-port";
 import { ResourceMetrics } from "../resource-metrics";
-import type { IMetrics } from "../../../common/k8s-api/endpoints/metrics.api";
+import type { MetricData } from "../../../common/k8s-api/endpoints/metrics.api";
 import { ContainerCharts } from "./container-charts";
 import { LocaleDate } from "../locale-date";
 import { getActiveClusterEntity } from "../../api/catalog-entity-registry";
@@ -27,7 +27,7 @@ import portForwardStoreInjectable from "../../port-forward/port-forward-store/po
 export interface PodDetailsContainerProps {
   pod: Pod;
   container: IPodContainer;
-  metrics?: Partial<Record<string, IMetrics>>;
+  metrics?: Partial<Record<string, MetricData>>;
 }
 
 interface Dependencies {

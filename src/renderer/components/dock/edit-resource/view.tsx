@@ -33,7 +33,7 @@ interface Dependencies {
 interface SaveDraftArgs {
   tabData: EditingResource;
   resource: KubeObject;
-  store: KubeObjectStore<KubeObject>;
+  store: KubeObjectStore;
 }
 
 @observer

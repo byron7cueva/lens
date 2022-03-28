@@ -41,7 +41,7 @@ export class PersistentVolumeDetails extends React.Component<PersistentVolumeDet
       <div className="PersistentVolumeDetails">
         <KubeObjectMeta object={volume}/>
         <DrawerItem name="Capacity">
-          {capacity.storage}
+          {capacity?.storage}
         </DrawerItem>
 
         {mountOptions && (
@@ -51,7 +51,7 @@ export class PersistentVolumeDetails extends React.Component<PersistentVolumeDet
         )}
 
         <DrawerItem name="Access Modes">
-          {accessModes.join(", ")}
+          {accessModes?.join(", ")}
         </DrawerItem>
         <DrawerItem name="Reclaim Policy">
           {persistentVolumeReclaimPolicy}

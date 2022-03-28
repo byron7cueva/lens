@@ -11,7 +11,7 @@ import { cssNames, interval } from "../../utils";
 import { TabLayout } from "../layout/tab-layout";
 import { nodesStore } from "./nodes.store";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
-import { formatNodeTaint, getMetricsForAllNodes, INodeMetrics, Node } from "../../../common/k8s-api/endpoints/nodes.api";
+import { formatNodeTaint, getMetricsForAllNodes, NodeMetricData, Node } from "../../../common/k8s-api/endpoints/nodes.api";
 import { LineProgress } from "../line-progress";
 import { bytesToUnits } from "../../../common/utils/convertMemory";
 import { Tooltip, TooltipPosition } from "../tooltip";
@@ -52,7 +52,7 @@ interface UsageArgs {
 
 @observer
 export class NodesRoute extends React.Component<NodesRouteProps> {
-  @observable.ref metrics: Partial<INodeMetrics> = {};
+  @observable.ref metrics: Partial<NodeMetricData> = {};
   private metricsWatcher = interval(30, async () => this.metrics = await getMetricsForAllNodes());
 
   constructor(props: NodesRouteProps) {
@@ -149,7 +149,7 @@ export class NodesRoute extends React.Component<NodesRouteProps> {
   }
 
   renderConditions(node: Node) {
-    if (!node.status.conditions) {
+    if (!node.status?.conditions) {
       return null;
     }
 

@@ -19,7 +19,7 @@ import { NamespaceSelectFilter } from "../+namespaces/namespace-select-filter";
 import { kebabCase } from "lodash/fp";
 import { HelmReleaseMenu } from "./release-menu";
 import type { ItemStore } from "../../../common/item.store";
-import { ReleaseRollbackDialog } from "./release-rollback-dialog";
+import { ReleaseRollbackDialog } from "./dialog/dialog";
 import { ReleaseDetails } from "./release-details/release-details";
 import removableReleasesInjectable from "./removable-releases.injectable";
 import type { RemovableHelmRelease } from "./removable-releases";

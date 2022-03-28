@@ -3,16 +3,44 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { KubeObject } from "../kube-object";
+import { KubeObject, LabelSelector, ObjectReference, TypedLocalObjecReference } from "../kube-object";
 import { unitsToBytes } from "../../utils";
 import { DerivedKubeApiOptions, KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
+import type { ResourceRequirements } from "./types/resource-requirements";
 
 export interface PersistentVolumeSpec {
-  capacity: {
-    storage: string; // 8Gi
-  };
-  flexVolume: {
+  /**
+   * AccessModes contains the desired access modes the volume should have.
+   *
+   * More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1
+   */
+  accessModes?: string[];
+  dataSource?: TypedLocalObjecReference;
+  dataSourceRef?: TypedLocalObjecReference;
+  resources?: ResourceRequirements;
+  selector?: LabelSelector;
+
+  /**
+   * Name of the StorageClass required by the claim.
+   *
+   * More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1
+   */
+  storageClassName?: string;
+
+  /**
+   * Defines what type of volume is required by the claim. Value of Filesystem is implied when not
+   * included in claim spec.
+   */
+  volumeMode?: string;
+
+  /**
+   * A description of the persistent volume\'s resources and capacity.
+   *
+   * More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#capacity
+   */
+  capacity?: Partial<Record<string, string>>;
+  flexVolume?: {
     driver: string; // ceph.rook.io/rook-ceph-system,
     options: {
       clusterNamespace: string; // rook-ceph,
@@ -22,17 +50,8 @@ export interface PersistentVolumeSpec {
     };
   };
   mountOptions?: string[];
-  accessModes: string[]; // [ReadWriteOnce]
-  claimRef: {
-    kind: string; // PersistentVolumeClaim,
-    namespace: string; // storage,
-    name: string; // nfs-provisioner,
-    uid: string; // c5d7c485-9f1b-11e8-b0ea-9600000e54fb,
-    apiVersion: string; // v1,
-    resourceVersion: string; // 292180
-  };
-  persistentVolumeReclaimPolicy: string; // Delete,
-  storageClassName: string; // rook-ceph-block
+  claimRef?: ObjectReference;
+  persistentVolumeReclaimPolicy?: string; // Delete,
   nfs?: {
     path: string;
     server: string;
@@ -52,7 +71,7 @@ export class PersistentVolume extends KubeObject<PersistentVolumeStatus, Persist
   getCapacity(inBytes = false) {
     const capacity = this.spec.capacity;
 
-    if (capacity) {
+    if (capacity?.storage) {
       if (inBytes) return unitsToBytes(capacity.storage);
 
       return capacity.storage;
@@ -66,7 +85,7 @@ export class PersistentVolume extends KubeObject<PersistentVolumeStatus, Persist
   }
 
   getStorageClass(): string {
-    return this.spec.storageClassName;
+    return this.spec.storageClassName ?? "";
   }
 
   getClaimRefName(): string {

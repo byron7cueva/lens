@@ -12,7 +12,7 @@ import type { IsAllowedResource } from "../../../common/utils/is-allowed-resourc
 import { object } from "../../utils";
 
 interface Dependencies {
-  workloadStores: Record<keyof typeof workloadURL, KubeObjectStore<KubeObject> & StatusProvider<KubeObject>>;
+  workloadStores: Record<keyof typeof workloadURL, KubeObjectStore & StatusProvider<KubeObject>>;
   isAllowedResource: IsAllowedResource;
   namespaceStore: NamespaceStore;
 }

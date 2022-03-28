@@ -16,7 +16,7 @@ import { Spinner } from "../../spinner";
 import { Badge } from "../../badge";
 import { EditorPanel } from "../editor-panel";
 import { helmChartStore, type IChartVersion } from "../../+helm-charts/helm-chart.store";
-import type { HelmRelease, IReleaseUpdateDetails, IReleaseUpdatePayload } from "../../../../common/k8s-api/endpoints/helm-releases.api";
+import type { HelmRelease, HelmReleaseUpdateDetails, HelmReleaseUpdatePayload } from "../../../../common/k8s-api/endpoints/helm-releases.api";
 import { Select } from "../../select";
 import { IAsyncComputed, withInjectables } from "@ogre-tools/injectable-react";
 import upgradeChartTabStoreInjectable from "./store.injectable";
@@ -32,7 +32,7 @@ export interface UpgradeChartProps {
 interface Dependencies {
   releases: IAsyncComputed<HelmRelease[]>;
   upgradeChartTabStore: UpgradeChartTabStore;
-  updateRelease: (name: string, namespace: string, payload: IReleaseUpdatePayload) => Promise<IReleaseUpdateDetails>;
+  updateRelease: (name: string, namespace: string, payload: HelmReleaseUpdatePayload) => Promise<HelmReleaseUpdateDetails>;
 }
 
 @observer

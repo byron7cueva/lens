@@ -4,11 +4,12 @@
  */
 
 import { KubeObject, LabelSelector, TypedLocalObjecReference } from "../kube-object";
-import { IMetrics, metricsApi } from "./metrics.api";
+import { MetricData, metricsApi } from "./metrics.api";
 import type { Pod } from "./pods.api";
 import { DerivedKubeApiOptions, IgnoredKubeApiOptions, KubeApi } from "../kube-api";
 import { isClusterPageContext } from "../../utils/cluster-id-url-parsing";
 import { object } from "../../utils";
+import type { ResourceRequirements } from "./types/resource-requirements";
 
 export class PersistentVolumeClaimApi extends KubeApi<PersistentVolumeClaim> {
   constructor(opts: DerivedKubeApiOptions & IgnoredKubeApiOptions = {}) {
@@ -19,7 +20,7 @@ export class PersistentVolumeClaimApi extends KubeApi<PersistentVolumeClaim> {
   }
 }
 
-export function getMetricsForPvc(pvc: PersistentVolumeClaim): Promise<IPvcMetrics> {
+export function getMetricsForPvc(pvc: PersistentVolumeClaim): Promise<PersistentVolumeClaimMetricData> {
   const opts = { category: "pvc", pvc: pvc.getName(), namespace: pvc.getNs() };
 
   return metricsApi.getMetrics({
@@ -30,14 +31,9 @@ export function getMetricsForPvc(pvc: PersistentVolumeClaim): Promise<IPvcMetric
   });
 }
 
-export interface IPvcMetrics {
-  diskUsage: IMetrics;
-  diskCapacity: IMetrics;
-}
-
-export interface ResourceRequirements {
-  limits?: Partial<Record<string, string>>;
-  requests?: Partial<Record<string, string>>;
+export interface PersistentVolumeClaimMetricData extends Partial<Record<string, MetricData>> {
+  diskUsage: MetricData;
+  diskCapacity: MetricData;
 }
 
 export interface PersistentVolumeClaimSpec {

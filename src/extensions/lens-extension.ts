@@ -65,7 +65,7 @@ export class LensExtension {
   private readonly dependencies!: LensExtensionDependencies;
 
   [setLensExtensionDependencies] = (dependencies: LensExtensionDependencies) => {
-    (this as any).dependencies = dependencies;
+    (this as unknown as { dependencies: LensExtensionDependencies }).dependencies = dependencies;
   };
 
   /**

@@ -38,9 +38,11 @@ export class EndpointsDetails extends React.Component<EndpointsDetailsProps> {
         <DrawerTitle title="Subsets"/>
         {
           endpoint.getEndpointSubsets().map((subset) => (
-            <EndpointSubsetList key={subset.toString()}
+            <EndpointSubsetList
+              key={subset.toString()}
               subset={subset}
-              endpoint={endpoint} />
+              endpoint={endpoint}
+            />
           ))
         }
       </div>
