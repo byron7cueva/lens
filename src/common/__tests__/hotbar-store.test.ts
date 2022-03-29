@@ -12,6 +12,7 @@ import { getDiForUnitTesting } from "../../main/getDiForUnitTesting";
 import getConfigurationFileModelInjectable from "../get-configuration-file-model/get-configuration-file-model.injectable";
 import appVersionInjectable from "../get-configuration-file-model/app-version/app-version.injectable";
 import type { DiContainer } from "@ogre-tools/injectable";
+import { runSetupables } from "../setupable-injection-token/run-setupables";
 
 jest.mock("../../main/catalog/catalog-entity-registry", () => ({
   catalogEntityRegistry: {
@@ -127,6 +128,7 @@ describe("HotbarStore", () => {
   beforeEach(async () => {
     di = getDiForUnitTesting({ doGeneralOverrides: true });
 
+
     di.permitSideEffects(getConfigurationFileModelInjectable);
     di.permitSideEffects(appVersionInjectable);
   });
@@ -139,7 +141,7 @@ describe("HotbarStore", () => {
     beforeEach(async () => {
       mockFs();
 
-      await di.runSetups();
+      await runSetupables(di);
     });
 
     describe("load", () => {
@@ -400,7 +402,7 @@ describe("HotbarStore", () => {
 
       mockFs(configurationToBeMigrated);
 
-      await di.runSetups();
+      await runSetupables(di);
     });
 
     it("allows to retrieve a hotbar", () => {
