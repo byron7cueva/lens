@@ -60,13 +60,14 @@ import windowManagerInjectable from "./window-manager.injectable";
 import navigateToPreferencesInjectable from "../common/front-end-routing/routes/preferences/navigate-to-preferences.injectable";
 import syncGeneralCatalogEntitiesInjectable from "./catalog-sources/sync-general-catalog-entities.injectable";
 import hotbarStoreInjectable from "../common/hotbar-store.injectable";
+import { runSetups } from "../common/setupable-injection-token/run-setups";
 
 const di = getDi();
 
 app.setName(appName);
 
 app.on("ready", async () => {
-  await di.runSetups();
+  await runSetups(di);
 
   injectSystemCAs();
 
