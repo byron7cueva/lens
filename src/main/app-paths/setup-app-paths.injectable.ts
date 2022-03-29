@@ -30,7 +30,7 @@ const setupAppPathsInjectable = getInjectable({
     const directoryForIntegrationTesting = di.inject(directoryForIntegrationTestingInjectable);
 
     return {
-      doSetup: () => {
+      runSetup: () => {
         if (directoryForIntegrationTesting) {
           setElectronAppPath("appData", directoryForIntegrationTesting);
         }
