@@ -17,7 +17,7 @@ describe("kube-object-status-icon", () => {
   let render: DiRender;
   let kubeObjectStatusRegistrations: KubeObjectStatusRegistration[];
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // TODO: Make mocking of date in unit tests global
     global.Date.now = () => new Date("2015-10-21T07:28:00Z").getTime();
 
@@ -34,8 +34,6 @@ describe("kube-object-status-icon", () => {
     di.override(rendererExtensionsInjectable, () =>
       computed(() => [someTestExtension]),
     );
-
-    await di.runSetups();
   });
 
   it("given no statuses, when rendered, renders as empty", () => {

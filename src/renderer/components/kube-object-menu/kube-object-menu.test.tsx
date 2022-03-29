@@ -50,7 +50,7 @@ describe("kube-object-menu", () => {
   let di: DiContainer;
   let render: DiRender;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     const MenuItemComponent: React.FC = () => <li>Some menu item</li>;
 
     const kubeObjectMenuItems = [
@@ -82,8 +82,6 @@ describe("kube-object-menu", () => {
     di.override(rendererExtensionsInjectable, () =>
       computed(() => [someTestExtension]),
     );
-
-    await di.runSetups();
 
     di.override(
       clusterInjectable,

@@ -74,7 +74,7 @@ const clusterStub = {
 describe("ContextHandler", () => {
   let createContextHandler: (cluster: Cluster) => ContextHandler;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     const di = getDiForUnitTesting({ doGeneralOverrides: true });
 
     mockFs({
@@ -82,8 +82,6 @@ describe("ContextHandler", () => {
     });
 
     di.override(createKubeAuthProxyInjectable, () => ({} as any));
-
-    await di.runSetups();
 
     createContextHandler = di.inject(createContextHandlerInjectable);
 

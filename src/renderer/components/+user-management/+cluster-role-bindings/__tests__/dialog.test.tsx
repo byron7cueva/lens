@@ -16,10 +16,8 @@ jest.mock("../../+cluster-roles/store");
 describe("ClusterRoleBindingDialog tests", () => {
   let render: DiRender;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     const di = getDiForUnitTesting({ doGeneralOverrides: true });
-
-    await di.runSetups();
 
     render = renderFor(di);
 

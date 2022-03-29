@@ -11,7 +11,7 @@ import registerChannelInjectable from "../register-channel/register-channel.inje
 describe("get-electron-app-path", () => {
   let getElectronAppPath: (name: string) => string | null;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     const di = getDiForUnitTesting({ doGeneralOverrides: false });
 
     const appStub = {
@@ -31,8 +31,6 @@ describe("get-electron-app-path", () => {
 
     di.override(electronAppInjectable, () => appStub);
     di.override(registerChannelInjectable, () => () => undefined);
-
-    await di.runSetups();
 
     getElectronAppPath = di.inject(getElectronAppPathInjectable);
   });

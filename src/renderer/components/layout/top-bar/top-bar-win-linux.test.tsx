@@ -34,14 +34,12 @@ jest.mock("../../../../common/vars", () => {
 describe("<TopBar/> in Windows and Linux", () => {
   let render: DiRender;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     const di = getDiForUnitTesting({ doGeneralOverrides: true });
 
     mockFs();
 
     di.override(directoryForUserDataInjectable, () => "some-directory-for-user-data");
-
-    await di.runSetups();
 
     render = renderFor(di);
   });
