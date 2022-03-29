@@ -19,9 +19,3 @@ export const appName = isDevelopment
 export const htmlTemplate = path.resolve(rendererDir, "template.html");
 export const publicPath = "/build/";
 export const sassCommonVars = path.resolve(rendererDir, "components/vars.scss");
-
-export function ignoreIf<T>(check: boolean, src: T[]): T[] {
-  return check
-    ? []
-    : src;
-}

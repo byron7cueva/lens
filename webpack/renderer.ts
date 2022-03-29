@@ -13,7 +13,7 @@ import CircularDependencyPlugin from "circular-dependency-plugin";
 import ReactRefreshWebpackPlugin from "@pmmmwh/react-refresh-webpack-plugin";
 import type { WebpackPluginInstance } from "webpack";
 import getTypescriptLoader from "./get-typescript-loader";
-import { assetsFolderName, isDevelopment, rendererDir, buildDir, appName, htmlTemplate, publicPath, sassCommonVars, ignoreIf } from "./vars";
+import { assetsFolderName, isDevelopment, rendererDir, buildDir, appName, htmlTemplate, publicPath, sassCommonVars } from "./vars";
 
 export function webpackLensRenderer({ showVars = true } = {}): webpack.Configuration {
   if (showVars) {
@@ -115,9 +115,11 @@ export function webpackLensRenderer({ showVars = true } = {}): webpack.Configura
         filename: "[name].css",
       }),
 
-      ...ignoreIf(isDevelopment, [
-        new ReactRefreshWebpackPlugin(),
-      ]),
+      ...(
+        isDevelopment
+          ? []
+          : [new ReactRefreshWebpackPlugin()]
+      ),
     ],
   };
 }
